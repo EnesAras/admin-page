@@ -1,38 +1,146 @@
-.App {
-  text-align: center;
+.app {
+  display: flex;
+  height: 100vh;
 }
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.sidebar {
+  width: 240px;
+  background-color: #020617;
+  color: #e5e7eb;
+  padding: 24px 16px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  gap: 24px;
+  border-right: 1px solid #1f2937;
+}
+.logo {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.menu-item {
+  display: block;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #9ca3af;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.menu-item:hover {
+  background-color: #111827;
+  color: #e5e7eb;
+  transform: translateY(-2px);
+}
+.menu-item.active {
+  background: linear-gradient(135deg, #facc15, #f97316);
+  color: #ffffff;
+  font-weight: 600;
+}
+.main{
+  flex : 1;
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+  color: #e5e7eb;
+  min-height: 100vh;
+}
+.topbar { 
+  padding : 16px 24px;
+  border-bottom : 1px solid #1f2937;
+  display : flex;
+  align-items : center;
+  justify-content : space-between;
+  background: #0f172a;
+}
+.topbar-left { 
+  margin: 0;
+  font-size: 1.5rem;
+}
+.topbar-left p {
+  margin: 4px 0 0 ;
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+.content {
+  padding: 24px;
+  width: 100%;
+  display: block;
+}
+.stat-box { 
+  background: #020617;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  padding: 16px 20px;
+  max-width: 260px;
+}
+.stat-box h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #cbd5f5;
+}
+.stat-number {
+  margin: 8px 0 4px;
+  font-size: 1.8rem;
+  font-weight: 700;
   color: white;
 }
-
-.App-link {
-  color: #61dafb;
+.stat-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
 }
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.cards {
+  display: flex;
+  gap: 16px;
+}
+.active {
+  background-color: orange;
+}
+.role-badge {
+  display: inline-block;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+.role-admin {
+  background-color: rgba(249, 115, 22, 0.18);
+  color: #f97316;
+}
+.role-user {
+  background-color: rgba(59, 130, 246, 0.18);
+  color: #60a5fa;
+}
+.role-moderator {
+  background-color: rgba(168, 85, 247, 0.18);
+  color: #a855f7;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.status-active {
+  background-color: rgba(34, 197, 94, 0.18);
+  color: #22c55e;
+}
+.status-inactive {
+  background-color: rgba(248, 113, 113, 0.18);
+  color: #f87171;
 }
