@@ -2,28 +2,7 @@
 import "./App.css";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import UsersPage from "./pages/UsersPage";
-
-function DashboardPage() {
-  return (
-    <div className="cards">
-      <div className="stat-box">
-        <h2>Total Users</h2>
-        <p className="stat-number">1,248</p>
-        <p className="stat-desc">This week +28</p>
-      </div>
-      <div className="stat-box">
-        <h2>Total Orders</h2>
-        <p className="stat-number">312</p>
-        <p className="stat-desc">Today +9</p>
-      </div>
-      <div className="stat-box">
-        <h2>Reveneu</h2>
-        <p className="stat-number">$8.420</p>
-        <p className="stat-desc">Last 7 days</p>
-      </div>
-    </div>
-  );
-}
+import DashboardPage from "./pages/DashboardPage"; // ✅ yeni import
 
 function SettingsPage() {
   return <h2>Settings Page</h2>;
@@ -34,7 +13,7 @@ function OrdersPage() {
 }
 
 function App() {
-  const location = useLocation(); // şu anki URL
+  const location = useLocation(); 
 
   return (
     <div className="app">

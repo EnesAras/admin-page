@@ -42,6 +42,16 @@ function UsersPage() {
     localStorage.setItem("admin_users", JSON.stringify(users));
   }, [users]);
 
+  // 🔐 Şimdilik sabit: giriş yapan kullanıcının rolü
+  const CURRENT_USER_ROLE = "Admin"; // "Moderator" veya "User" yapıp test edebilirsin
+
+  // Sadece Admin edit yapabilsin
+  const canEditUsers = CURRENT_USER_ROLE === "Admin";
+
+  // Admin + Moderator status değiştirebilsin
+  const canToggleStatus =
+    CURRENT_USER_ROLE === "Admin" || CURRENT_USER_ROLE === "Moderator";
+
   // 🔹 Add User form state'leri
   const [isAdding, setIsAdding] = useState(false);
   const [newUserName, setNewUserName] = useState("");
@@ -50,34 +60,94 @@ function UsersPage() {
   const [newUserStatus, setNewUserStatus] = useState("Active");
   const [addError, setAddError] = useState("");
 
+  // 🔹 Edit User state'leri
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editUserName, setEditUserName] = useState("");
+  const [editUserEmail, setEditUserEmail] = useState("");
+  const [editUserRole, setEditUserRole] = useState("User");
+  const [editUserStatus, setEditUserStatus] = useState("Active");
 
-const handleAddUser = () => {
-  setAddError("");
+  // ✅ Add User
+  const handleAddUser = () => {
+    setAddError("");
 
-  if (!newUserName || !newUserEmail) {
-    setAddError("Name and email are required.");
-    return;
-  }
+    if (!newUserName || !newUserEmail) {
+      setAddError("Name and email are required.");
+      return;
+    }
 
-  const newUser = {
-    id: Date.now(),
-    name: newUserName,
-    email: newUserEmail,
-    role: newUserRole,
-    status: newUserStatus,
+    const newUser = {
+      id: Date.now(),
+      name: newUserName,
+      email: newUserEmail,
+      role: newUserRole,
+      status: newUserStatus,
+    };
+
+    setUsers((prevUsers) => [...prevUsers, newUser]);
+
+    setNewUserName("");
+    setNewUserEmail("");
+    setNewUserRole("User");
+    setNewUserStatus("Active");
+    setIsAdding(false);
   };
 
-  setUsers((prevUsers) => [...prevUsers, newUser]);
+  // ✅ Update (Edit) User
+  const handleUpdateUser = () => {
+    if (!editUserName || !editUserEmail) return;
 
-  setNewUserName("");
-  setNewUserEmail("");
-  setNewUserRole("User");
-  setNewUserStatus("Active");
-  setIsAdding(false);
-};
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === editingUserId
+          ? {
+              ...user,
+              name: editUserName,
+              email: editUserEmail,
+              role: editUserRole,
+              status: editUserStatus,
+            }
+          : user
+      )
+    );
 
+    setIsEditing(false);
+    setEditingUserId(null);
+    setEditUserName("");
+    setEditUserEmail("");
+    setEditUserRole("User");
+    setEditUserStatus("Active");
+  };
 
+  const handleEditClick = (user) => {
+    if (!canEditUsers) return; // yetkisi yoksa çık
 
+    setIsAdding(false); // Add panel açıksa kapat
+    setIsEditing(true); // Edit panelini aç
+
+    setEditingUserId(user.id);
+    setEditUserName(user.name);
+    setEditUserEmail(user.email);
+    setEditUserRole(user.role);
+    setEditUserStatus(user.status);
+  };
+
+  // ✅ Status toggle
+  const handleToggleStatus = (id) => {
+    if (!canToggleStatus) return; // yetkisi yoksa çık
+
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === id
+          ? {
+              ...user,
+              status: user.status === "Active" ? "Inactive" : "Active",
+            }
+          : user
+      )
+    );
+  };
 
   const filteredUsers = users.filter((user) => {
     const term = searchTerm.toLowerCase();
@@ -103,7 +173,10 @@ const handleAddUser = () => {
 
         <button
           className="add-user-btn"
-          onClick={() => setIsAdding(true)}
+          onClick={() => {
+            setIsAdding(true);
+            setIsEditing(false); // edit açıksa kapat
+          }}
         >
           + Add User
         </button>
@@ -146,62 +219,128 @@ const handleAddUser = () => {
         />
       </div>
 
-{isAdding && (
-  <div className="add-user-panel">
-    <div className="add-user-header">
-      <h3>New User</h3>
-      <span className="add-user-subtitle">Fill in the details and save the user.</span>
-    </div>
+      {/* ✅ Add User panel */}
+      {isAdding && (
+        <div className="add-user-panel">
+          <div className="add-user-header">
+            <h3>New User</h3>
+            <span className="add-user-subtitle">
+              Fill in the details and save the user.
+            </span>
+          </div>
 
-    <div className="add-user-grid">
-      <input
-        type="text"
-        placeholder="Full name"
-        value={newUserName}
-        onChange={(e) => setNewUserName(e.target.value)}
-      />
+          <div className="add-user-grid">
+            <input
+              type="text"
+              placeholder="Full name"
+              value={newUserName}
+              onChange={(e) => setNewUserName(e.target.value)}
+            />
 
-      <input
-        type="email"
-        placeholder="Email address"
-        value={newUserEmail}
-        onChange={(e) => setNewUserEmail(e.target.value)}
-      />
+            <input
+              type="email"
+              placeholder="Email address"
+              value={newUserEmail}
+              onChange={(e) => setNewUserEmail(e.target.value)}
+            />
 
-      <select
-        value={newUserRole}
-        onChange={(e) => setNewUserRole(e.target.value)}
-      >
-        <option value="User">User</option>
-        <option value="Admin">Admin</option>
-        <option value="Moderator">Moderator</option>
-      </select>
+            <select
+              value={newUserRole}
+              onChange={(e) => setNewUserRole(e.target.value)}
+            >
+              <option value="User">User</option>
+              <option value="Admin">Admin</option>
+              <option value="Moderator">Moderator</option>
+            </select>
 
-      <select
-        value={newUserStatus}
-        onChange={(e) => setNewUserStatus(e.target.value)}
-      >
-        <option value="Active">Active</option>
-        <option value="Inactive">Inactive</option>
-      </select>
-    </div>
-{addError && (
-  <p className="add-user-error">
-    {addError}
-  </p>
-)}
+            <select
+              value={newUserStatus}
+              onChange={(e) => setNewUserStatus(e.target.value)}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
 
-    <div className="add-user-actions">
-      <button className="btn-primary" onClick={handleAddUser}>
-        Add User
-      </button>
-      <button className="btn-ghost" onClick={() => setIsAdding(false)}>
-        Cancel
-      </button>
-    </div>
-  </div>
-)}
+          {addError && <p className="add-user-error">{addError}</p>}
 
+          <div className="add-user-actions">
+            <button className="btn-primary" onClick={handleAddUser}>
+              Add User
+            </button>
+            <button
+              className="btn-ghost"
+              onClick={() => setIsAdding(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Edit User panel */}
+      {isEditing && canEditUsers && (
+        <div className="add-user-panel">
+          <div className="add-user-header">
+            <h3>Edit User</h3>
+            <span className="add-user-subtitle">
+              Update the user information and save changes.
+            </span>
+          </div>
+
+          <div className="add-user-grid">
+            <input
+              type="text"
+              placeholder="Full name"
+              value={editUserName}
+              onChange={(e) => setEditUserName(e.target.value)}
+            />
+
+            <input
+              type="email"
+              placeholder="Email address"
+              value={editUserEmail}
+              onChange={(e) => setEditUserEmail(e.target.value)}
+            />
+
+            <select
+              value={editUserRole}
+              onChange={(e) => setEditUserRole(e.target.value)}
+            >
+              <option value="User">User</option>
+              <option value="Admin">Admin</option>
+              <option value="Moderator">Moderator</option>
+            </select>
+
+            <select
+              value={editUserStatus}
+              onChange={(e) => setEditUserStatus(e.target.value)}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div className="add-user-actions">
+            <button className="btn-primary" onClick={handleUpdateUser}>
+              Save Changes
+            </button>
+            <button
+              className="btn-ghost"
+              onClick={() => {
+                setIsEditing(false);
+                setEditingUserId(null);
+                setEditUserName("");
+                setEditUserEmail("");
+                setEditUserRole("User");
+                setEditUserStatus("Active");
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <table className="users-table">
         <thead>
@@ -232,13 +371,25 @@ const handleAddUser = () => {
 
               <td>
                 <span
-                  className={`status-badge status-${user.status.toLowerCase()}`}
+                  className={`status-badge status-${user.status.toLowerCase()} ${
+                    canToggleStatus ? "clickable" : ""
+                  }`}
+                  onClick={() => handleToggleStatus(user.id)}
                 >
                   {user.status}
                 </span>
               </td>
 
               <td>
+                {canEditUsers && (
+                  <button
+                    className="edit-btn"
+                    onClick={() => handleEditClick(user)}
+                  >
+                    Edit
+                  </button>
+                )}
+
                 <button
                   className="delete-btn"
                   onClick={() => handleDelete(user.id)}
@@ -249,7 +400,6 @@ const handleAddUser = () => {
             </tr>
           ))}
         </tbody>
-
       </table>
     </div>
   );

@@ -235,3 +235,26 @@
   box-shadow: none;
   transform: none;
 }
+.edit-btn {
+    margin-right: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #4b5563;
+  background-color: #111827;
+  color: #e5e7eb;
+  font-size: 12px;
+  cursor: pointer;
+}
+.edit-btn:hover {
+  background: red;
+}
+.status-badge.clickable {
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.status-badge.clickable:hover {
+  opacity: 1;
+  transform: scale(1.05);
+  transition: 0.15s;
+}
