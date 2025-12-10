@@ -1,8 +1,9 @@
+// src/context/SettingsContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
 
 const defaultSettings = {
   displayName: "Admin User",
-  theme: "dark",
+  theme: "dark", // "dark" | "light" | "system"
   language: "en",
   emailAlerts: true,
   weeklySummary: true,
@@ -15,7 +16,10 @@ export function SettingsProvider({ children }) {
     const stored = localStorage.getItem("admin_settings");
     if (stored) {
       try {
-        return JSON.parse(stored);
+        return {
+          ...defaultSettings,
+          ...JSON.parse(stored),
+        };
       } catch {
         return defaultSettings;
       }
@@ -23,25 +27,38 @@ export function SettingsProvider({ children }) {
     return defaultSettings;
   });
 
+  // 💾 Her değişiklikte localStorage'a kaydet
   useEffect(() => {
     localStorage.setItem("admin_settings", JSON.stringify(settings));
   }, [settings]);
 
+  // 🎨 Tema sınıflarını yönet (body / html)
   useEffect(() => {
-    let theme = settings.theme;
-    if (theme === "system" && window.matchMedia) {
+    let effectiveTheme = settings.theme;
+
+    // system seçiliyse OS tercihine göre karar ver
+    if (effectiveTheme === "system" && window.matchMedia) {
       const prefersLight = window.matchMedia(
         "(prefers-color-scheme: light)"
       ).matches;
-      theme = prefersLight ? "light" : "dark";
+      effectiveTheme = prefersLight ? "light" : "dark";
     }
-    if (theme === "light") {
+
+    // Önce önceki sınıfları temizle
+    document.body.classList.remove("theme-light", "theme-dark");
+
+    // Sonra aktif temayı ekle
+    if (effectiveTheme === "light") {
       document.body.classList.add("theme-light");
     } else {
-      document.body.classList.remove("theme-light");
+      document.body.classList.add("theme-dark");
     }
+
+    // İstersen ileride CSS'te kullanmak için
+    document.documentElement.setAttribute("data-theme", effectiveTheme);
   }, [settings.theme]);
 
+  // 🔧 Genel update fonksiyonu (SettingsPage için)
   const updateSettings = (patch) => {
     setSettings((prev) => ({
       ...prev,
@@ -49,8 +66,34 @@ export function SettingsProvider({ children }) {
     }));
   };
 
+  // 🔥 Tema için helper'lar
+  const setTheme = (theme) => {
+    updateSettings({ theme });
+  };
+
+  const toggleTheme = () => {
+    updateSettings({
+      theme: settings.theme === "light" ? "dark" : "light",
+    });
+  };
+
+  // 🌍 Dil için helper
+  const setLanguage = (language) => {
+    updateSettings({ language });
+  };
+
+  const value = {
+    settings,
+    updateSettings,
+    theme: settings.theme,
+    language: settings.language,
+    setTheme,
+    toggleTheme,
+    setLanguage,
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );

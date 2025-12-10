@@ -135,8 +135,7 @@ const productTexts = {
   },
   de: {
     title: "Produkte",
-    subtitle:
-      "Verwalte deine Anime-, Manga- und Gaming-Artikel.",
+    subtitle: "Verwalte deine Anime-, Manga- und Gaming-Artikel.",
     addProduct: "Produkt hinzufügen",
     editProduct: "Produkt bearbeiten",
     nameLabel: "Name",
@@ -145,8 +144,7 @@ const productTexts = {
     priceLabel: "Preis (€)",
     stockLabel: "Bestand",
     statusLabel: "Status",
-    searchPlaceholder:
-      "Nach Name, Universum oder Kategorie suchen...",
+    searchPlaceholder: "Nach Name, Universum oder Kategorie suchen...",
     filterAll: "Alle",
     filterCategoryAll: "Alle Kategorien",
     filterStatusAll: "Alle Status",
@@ -160,13 +158,11 @@ const productTexts = {
     empty: "Für diesen Filter wurden keine Produkte gefunden.",
     errorNameRequired: "Name ist erforderlich.",
     errorPriceInvalid: "Gib einen gültigen Preis ein.",
-    errorStockInvalid:
-      "Bestand muss 0 oder größer sein.",
+    errorStockInvalid: "Bestand muss 0 oder größer sein.",
   },
   fr: {
     title: "Produits",
-    subtitle:
-      "Gérez vos articles d’anime, de manga et de gaming.",
+    subtitle: "Gérez vos articles d’anime, de manga et de gaming.",
     addProduct: "Ajouter un produit",
     editProduct: "Modifier le produit",
     nameLabel: "Nom",
@@ -175,8 +171,7 @@ const productTexts = {
     priceLabel: "Prix (€)",
     stockLabel: "Stock",
     statusLabel: "Statut",
-    searchPlaceholder:
-      "Rechercher par nom, univers, catégorie...",
+    searchPlaceholder: "Rechercher par nom, univers, catégorie...",
     filterAll: "Tous",
     filterCategoryAll: "Toutes les catégories",
     filterStatusAll: "Tous les statuts",
@@ -187,18 +182,14 @@ const productTexts = {
     cancelButton: "Annuler",
     editButton: "Modifier",
     deleteButton: "Supprimer",
-    empty:
-      "Aucun produit trouvé pour ce filtre.",
+    empty: "Aucun produit trouvé pour ce filtre.",
     errorNameRequired: "Le nom est obligatoire.",
-    errorPriceInvalid:
-      "Saisissez un prix valide.",
-    errorStockInvalid:
-      "Le stock doit être supérieur ou égal à 0.",
+    errorPriceInvalid: "Saisissez un prix valide.",
+    errorStockInvalid: "Le stock doit être supérieur ou égal à 0.",
   },
   it: {
     title: "Prodotti",
-    subtitle:
-      "Gestisci i tuoi articoli anime, manga e gaming.",
+    subtitle: "Gestisci i tuoi articoli anime, manga e gaming.",
     addProduct: "Aggiungi prodotto",
     editProduct: "Modifica prodotto",
     nameLabel: "Nome",
@@ -207,8 +198,7 @@ const productTexts = {
     priceLabel: "Prezzo (€)",
     stockLabel: "Stock",
     statusLabel: "Stato",
-    searchPlaceholder:
-      "Cerca per nome, universo, categoria...",
+    searchPlaceholder: "Cerca per nome, universo, categoria...",
     filterAll: "Tutti",
     filterCategoryAll: "Tutte le categorie",
     filterStatusAll: "Tutti gli stati",
@@ -219,18 +209,14 @@ const productTexts = {
     cancelButton: "Annulla",
     editButton: "Modifica",
     deleteButton: "Elimina",
-    empty:
-      "Nessun prodotto trovato per questo filtro.",
+    empty: "Nessun prodotto trovato per questo filtro.",
     errorNameRequired: "Il nome è obbligatorio.",
-    errorPriceInvalid:
-      "Inserisci un prezzo valido.",
-    errorStockInvalid:
-      "Lo stock deve essere 0 o maggiore.",
+    errorPriceInvalid: "Inserisci un prezzo valido.",
+    errorStockInvalid: "Lo stock deve essere 0 o maggiore.",
   },
   ru: {
     title: "Товары",
-    subtitle:
-      "Управляйте товарами по аниме, манге и играм.",
+    subtitle: "Управляйте товарами по аниме, манге и играм.",
     addProduct: "Добавить товар",
     editProduct: "Редактировать товар",
     nameLabel: "Название",
@@ -239,8 +225,7 @@ const productTexts = {
     priceLabel: "Цена (€)",
     stockLabel: "Остаток",
     statusLabel: "Статус",
-    searchPlaceholder:
-      "Поиск по названию, вселенной, категории...",
+    searchPlaceholder: "Поиск по названию, вселенной, категории...",
     filterAll: "Все",
     filterCategoryAll: "Все категории",
     filterStatusAll: "Все статусы",
@@ -251,21 +236,20 @@ const productTexts = {
     cancelButton: "Отмена",
     editButton: "Изменить",
     deleteButton: "Удалить",
-    empty:
-      "Для этого фильтра товары не найдены.",
+    empty: "Для этого фильтра товары не найдены.",
     errorNameRequired: "Название обязательно.",
-    errorPriceInvalid:
-      "Введите корректную цену.",
-    errorStockInvalid:
-      "Остаток должен быть 0 или больше.",
+    errorPriceInvalid: "Введите корректную цену.",
+    errorStockInvalid: "Остаток должен быть 0 или больше.",
   },
 };
 
 const statusOptions = ["Active", "Hidden", "OutOfStock"];
 
 function ProductsPage({ language }) {
-  const { settings } = useSettings();
-  const currentLang = language || settings?.language || "en";
+  const { settings, language: ctxLanguage } = useSettings();
+
+  // Dil önceliği: prop > context.language > settings.language > "en"
+  const currentLang = language || ctxLanguage || settings?.language || "en";
   const t = productTexts[currentLang] || productTexts.en;
 
   const [products, setProducts] = useState(() => {
@@ -375,9 +359,7 @@ function ProductsPage({ language }) {
     } else {
       setProducts((prev) =>
         prev.map((p) =>
-          p.id === editingId
-            ? { ...p, ...payload }
-            : p
+          p.id === editingId ? { ...p, ...payload } : p
         )
       );
     }
@@ -459,9 +441,7 @@ function ProductsPage({ language }) {
       {isPanelOpen && (
         <div className="products-panel">
           <div className="products-panel-header">
-            <h3>
-              {editingId == null ? t.addProduct : t.editProduct}
-            </h3>
+            <h3>{editingId == null ? t.addProduct : t.editProduct}</h3>
           </div>
 
           <div className="products-panel-grid">
@@ -545,6 +525,7 @@ function ProductsPage({ language }) {
         </div>
       )}
 
+      {/* Users tablosunun stilini de kullanıyoruz: users-table + products-table */}
       <table className="users-table products-table">
         <thead>
           <tr>

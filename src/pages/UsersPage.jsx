@@ -1,3 +1,4 @@
+// src/pages/UsersPage.jsx
 import { useState, useEffect } from "react";
 import "./UsersPage.css";
 import { useSettings } from "../context/SettingsContext";
@@ -26,6 +27,7 @@ const usersData = [
   },
 ];
 
+// Çok dilli textler
 const userTexts = {
   en: {
     title: "Users",
@@ -209,84 +211,31 @@ const userTexts = {
 };
 
 const statusLabels = {
-  en: {
-    Active: "Active",
-    Inactive: "Inactive",
-    Pending: "Pending",
-  },
-  tr: {
-    Active: "Aktif",
-    Inactive: "Pasif",
-    Pending: "Beklemede",
-  },
-  es: {
-    Active: "Activo",
-    Inactive: "Inactivo",
-    Pending: "Pendiente",
-  },
-  de: {
-    Active: "Aktiv",
-    Inactive: "Inaktiv",
-    Pending: "Ausstehend",
-  },
-  fr: {
-    Active: "Actif",
-    Inactive: "Inactif",
-    Pending: "En attente",
-  },
-  it: {
-    Active: "Attivo",
-    Inactive: "Inattivo",
-    Pending: "In sospeso",
-  },
-  ru: {
-    Active: "Активен",
-    Inactive: "Неактивен",
-    Pending: "В ожидании",
-  },
+  en: { Active: "Active", Inactive: "Inactive", Pending: "Pending" },
+  tr: { Active: "Aktif", Inactive: "Pasif", Pending: "Beklemede" },
+  es: { Active: "Activo", Inactive: "Inactivo", Pending: "Pendiente" },
+  de: { Active: "Aktiv", Inactive: "Inaktiv", Pending: "Ausstehend" },
+  fr: { Active: "Actif", Inactive: "Inactif", Pending: "En attente" },
+  it: { Active: "Attivo", Inactive: "Inattivo", Pending: "In sospeso" },
+  ru: { Active: "Активен", Inactive: "Неактивен", Pending: "В ожидании" },
 };
 
 const roleLabels = {
-  en: {
-    Admin: "Admin",
-    User: "User",
-    Moderator: "Moderator",
-  },
-  tr: {
-    Admin: "Yönetici",
-    User: "Kullanıcı",
-    Moderator: "Moderatör",
-  },
-  es: {
-    Admin: "Administrador",
-    User: "Usuario",
-    Moderator: "Moderador",
-  },
-  de: {
-    Admin: "Administrator",
-    User: "Benutzer",
-    Moderator: "Moderator",
-  },
-  fr: {
-    Admin: "Admin",
-    User: "Utilisateur",
-    Moderator: "Modérateur",
-  },
-  it: {
-    Admin: "Admin",
-    User: "Utente",
-    Moderator: "Moderatore",
-  },
-  ru: {
-    Admin: "Админ",
-    User: "Пользователь",
-    Moderator: "Модератор",
-  },
+  en: { Admin: "Admin", User: "User", Moderator: "Moderator" },
+  tr: { Admin: "Yönetici", User: "Kullanıcı", Moderator: "Moderatör" },
+  es: { Admin: "Administrador", User: "Usuario", Moderator: "Moderador" },
+  de: { Admin: "Administrator", User: "Benutzer", Moderator: "Moderator" },
+  fr: { Admin: "Admin", User: "Utilisateur", Moderator: "Modérateur" },
+  it: { Admin: "Admin", User: "Utente", Moderator: "Moderatore" },
+  ru: { Admin: "Админ", User: "Пользователь", Moderator: "Модератор" },
 };
 
 function UsersPage({ language }) {
-  const { settings } = useSettings();
-  const lang = language || settings?.language || "en";
+  const { settings, language: ctxLanguage } = useSettings();
+
+  // Dil öncelik sırası: prop > context.language > settings.language > "en"
+  const lang = language || ctxLanguage || settings?.language || "en";
+
   const t = userTexts[lang] || userTexts.en;
   const s = statusLabels[lang] || statusLabels.en;
   const r = roleLabels[lang] || roleLabels.en;
@@ -311,9 +260,7 @@ function UsersPage({ language }) {
   }, [users]);
 
   const CURRENT_USER_ROLE = "Admin";
-
   const canEditUsers = CURRENT_USER_ROLE === "Admin";
-
   const canToggleStatus =
     CURRENT_USER_ROLE === "Admin" || CURRENT_USER_ROLE === "Moderator";
 
@@ -343,10 +290,8 @@ function UsersPage({ language }) {
 
   const isNewNameInvalid =
     newUserName.trim() !== "" && !isValidName(newUserName);
-
   const isNewEmailInvalid =
     newUserEmail.trim() !== "" && !isValidEmail(newUserEmail);
-
   const isNewEmailDuplicate =
     newUserEmail.trim() !== "" &&
     users.some(

@@ -1,3 +1,4 @@
+// src/pages/SettingsPage.jsx
 import { useState, useEffect } from "react";
 import "./SettingsPage.css";
 import { useSettings } from "../context/SettingsContext";
@@ -183,8 +184,8 @@ const languageOptions = [
   { value: "ru", label: "Русский" },
 ];
 
-function SettingsPage() {
-  const { settings, updateSettings } = useSettings();
+function SettingsPage({ language }) {
+  const { settings, updateSettings, language: ctxLanguage } = useSettings();
   const [savedState, setSavedState] = useState("");
 
   const safeSettings = settings || {
@@ -195,8 +196,9 @@ function SettingsPage() {
     weeklySummary: false,
   };
 
-  const t =
-    translations[safeSettings.language] || translations.en;
+  // Dil önceliği: prop > context.language > settings.language > "en"
+  const langKey = language || ctxLanguage || safeSettings.language || "en";
+  const t = translations[langKey] || translations.en;
 
   useEffect(() => {
     if (!settings) return;
@@ -224,6 +226,7 @@ function SettingsPage() {
       </div>
 
       <div className="settings-grid">
+        {/* PROFILE */}
         <section className="settings-card">
           <h3>{t.profileTitle}</h3>
           <p className="settings-description">
@@ -243,6 +246,7 @@ function SettingsPage() {
           </div>
         </section>
 
+        {/* PREFERENCES */}
         <section className="settings-card">
           <h3>{t.prefsTitle}</h3>
           <p className="settings-description">
@@ -280,6 +284,7 @@ function SettingsPage() {
           </div>
         </section>
 
+        {/* NOTIFICATIONS */}
         <section className="settings-card">
           <h3>{t.notifTitle}</h3>
           <p className="settings-description">

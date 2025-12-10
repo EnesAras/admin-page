@@ -8,6 +8,8 @@ import SettingsPage from "./pages/SettingsPage";
 import ProductsPage from "./pages/ProductsPage";
 import { useSettings } from "./context/SettingsContext";
 
+// Şimdilik çeviri objesini burada tutuyoruz.
+// İleride istersen bunu ayrı bir dosyaya (src/i18n/uiTexts.js) taşıyabiliriz.
 const uiTexts = {
   en: {
     logo: "My Admin",
@@ -111,38 +113,52 @@ const uiTexts = {
 
 function App() {
   const location = useLocation();
-  const { settings } = useSettings();
 
-  const lang = settings?.language || "en";
-  const theme = settings?.theme || "dark";
+  // SettingsContext’i bu şekilde kullanacağız:
+  // { theme, language, ... } döndüğünü varsayıyoruz.
+  const { theme = "dark", language = "en" } = useSettings();
 
-  const t = uiTexts[lang] || uiTexts.en;
+  const t = uiTexts[language] || uiTexts.en;
 
   const getPageTitle = (path) => {
-    if (path === "/") return t.titleDashboard;
-    if (path === "/users") return t.titleUsers;
-    if (path === "/products") return t.titleProducts;
-    if (path === "/orders") return t.titleOrders;
-    if (path === "/settings") return t.titleSettings;
-    return t.titleDashboard;
+    switch (path) {
+      case "/":
+        return t.titleDashboard;
+      case "/users":
+        return t.titleUsers;
+      case "/products":
+        return t.titleProducts;
+      case "/orders":
+        return t.titleOrders;
+      case "/settings":
+        return t.titleSettings;
+      default:
+        return t.titleDashboard;
+    }
   };
 
   return (
-    <div className={`app ${theme === "light" ? "theme-light" : "theme-dark"}`}>
+    // Tema class'ını sadeleştirdik:
+    // .app.app-dark ve .app.app-light üzerinden stil vereceğiz.
+    <div className={`app app-${theme === "light" ? "light" : "dark"}`}>
       <aside className="sidebar">
         <div className="logo">{t.logo}</div>
 
         <nav className="menu">
           <Link
             to="/"
-            className={`menu-item ${location.pathname === "/" ? "active" : ""}`}
+            className={`menu-item ${
+              location.pathname === "/" ? "active" : ""
+            }`}
           >
             {t.navDashboard}
           </Link>
 
           <Link
             to="/users"
-            className={`menu-item ${location.pathname === "/users" ? "active" : ""}`}
+            className={`menu-item ${
+              location.pathname === "/users" ? "active" : ""
+            }`}
           >
             {t.navUsers}
           </Link>
@@ -186,11 +202,20 @@ function App() {
 
         <main className="content">
           <Routes>
-            <Route path="/" element={<DashboardPage language={lang} />} />
-            <Route path="/users" element={<UsersPage language={lang} />} />
-            <Route path="/products" element={<ProductsPage language={lang} />} />
-            <Route path="/orders" element={<OrdersPage language={lang} />} />
-            <Route path="/settings" element={<SettingsPage language={lang} />} />
+            <Route path="/" element={<DashboardPage language={language} />} />
+            <Route path="/users" element={<UsersPage language={language} />} />
+            <Route
+              path="/products"
+              element={<ProductsPage language={language} />}
+            />
+            <Route
+              path="/orders"
+              element={<OrdersPage language={language} />}
+            />
+            <Route
+              path="/settings"
+              element={<SettingsPage language={language} />}
+            />
           </Routes>
         </main>
       </div>

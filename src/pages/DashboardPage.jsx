@@ -249,9 +249,10 @@ const TRANSLATIONS = {
   },
 };
 
-function DashboardPage({ language }) {
-  const { settings } = useSettings();
-  const currentLang = language || settings?.language || "en";
+function DashboardPage() {
+  const { language } = useSettings();
+
+  const currentLang = language || "en";
 
   const [users] = useState(() => {
     const stored = localStorage.getItem("admin_users");

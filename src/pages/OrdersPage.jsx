@@ -205,8 +205,10 @@ const TEXTS = {
 };
 
 function OrdersPage({ language }) {
-  const { settings } = useSettings();
-  const langKey = language || settings?.language || "en";
+  const { settings, language: ctxLanguage } = useSettings();
+
+  // Dil önceliği: prop > context.language > settings.language > "en"
+  const langKey = language || ctxLanguage || settings?.language || "en";
   const t = TEXTS[langKey] || TEXTS.en;
   const s = statusLabels[langKey] || statusLabels.en;
 
