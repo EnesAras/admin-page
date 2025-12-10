@@ -85,9 +85,18 @@ body.theme-light .users-table tr:hover td {
 
 .users-header {
   display: flex;
-  flex-direction: column;   /* 🔥 başlık üstte, alt bar altta */
+  flex-direction: column; /* başlık üstte, alt bar altta */
   gap: 10px;
   margin-bottom: 12px;
+}
+
+/* üst satır: başlık + küçük istatistikler */
+.users-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .users-header h2 {
@@ -106,7 +115,7 @@ body.theme-light .users-header h2 {
   color: #111827;
 }
 
-/* alt satır: filtreler + button + search */
+/* alt satır: filtreler + search + add user */
 .users-header-bottom {
   display: flex;
   justify-content: space-between;
@@ -114,6 +123,67 @@ body.theme-light .users-header h2 {
   flex-wrap: wrap;
   width: 100%;
   align-items: center;
+}
+
+/* sağ taraf: search + add button */
+.users-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* =============== STATS PILL'LERİ =============== */
+
+.users-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.users-stat-pill {
+  min-width: 70px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* Dark stats */
+body.theme-dark .users-stat-pill {
+  background: radial-gradient(circle at top left, #1e293b, #020617);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  color: #e5e7eb;
+}
+
+/* Light stats */
+body.theme-light .users-stat-pill {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  color: #111827;
+}
+
+.users-stat-pill .label {
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.users-stat-pill .value {
+  font-weight: 600;
+}
+
+/* Aktif / pasif renk vurguları */
+.users-stat-active .value {
+  color: #22c55e;
+}
+
+.users-stat-inactive .value {
+  color: #ef4444;
 }
 
 /* SEARCH INPUT */
@@ -169,9 +239,18 @@ body.theme-light .search-input:focus {
     align-items: stretch;
   }
 
+  .users-header-top {
+    align-items: flex-start;
+  }
+
   .users-header-bottom {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .users-header-right {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .search-input {
@@ -184,6 +263,7 @@ body.theme-light .search-input:focus {
 .filters {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .filter-btn {
@@ -638,4 +718,77 @@ body.theme-light .status-inactive {
 .status-badge.clickable:hover {
   opacity: 1;
   transform: scale(1.05) translateY(-1px);
+}
+
+/* =============== USER CELL (AVATAR + NAME) =============== */
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* Dark avatar */
+body.theme-dark .user-avatar {
+  background: radial-gradient(circle at top left, #1e293b, #020617);
+  color: #f9fafb;
+  border: 1px solid #475569;
+}
+
+/* Light avatar */
+body.theme-light .user-avatar {
+  background: #eef2ff;
+  color: #1d4ed8;
+  border: 1px solid #c7d2fe;
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+/* =============== SIRALANABİLİR KOLONLAR =============== */
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  filter: brightness(1.05);
+}
+
+.sort-indicator {
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* =============== EMPTY STATE =============== */
+
+.empty-state {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 14px;
+}
+
+/* Dark empty */
+body.theme-dark .empty-state {
+  color: #9ca3af;
+}
+
+/* Light empty */
+body.theme-light .empty-state {
+  color: #6b7280;
 }

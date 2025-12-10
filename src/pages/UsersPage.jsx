@@ -53,6 +53,11 @@ const userTexts = {
     roleColumn: "Role",
     statusColumn: "Status",
     actionsColumn: "Actions",
+    // yeni
+    emptyState: "No users found for this filter.",
+    statsTotal: "Total",
+    statsActive: "Active",
+    statsInactive: "Inactive",
   },
   tr: {
     title: "Kullanıcılar",
@@ -78,6 +83,11 @@ const userTexts = {
     roleColumn: "Rol",
     statusColumn: "Durum",
     actionsColumn: "İşlemler",
+    // yeni
+    emptyState: "Bu filtreyle eşleşen kullanıcı bulunamadı.",
+    statsTotal: "Toplam",
+    statsActive: "Aktif",
+    statsInactive: "Pasif",
   },
   es: {
     title: "Usuarios",
@@ -103,6 +113,10 @@ const userTexts = {
     roleColumn: "Rol",
     statusColumn: "Estado",
     actionsColumn: "Acciones",
+    emptyState: "No se encontraron usuarios para este filtro.",
+    statsTotal: "Total",
+    statsActive: "Activos",
+    statsInactive: "Inactivos",
   },
   de: {
     title: "Benutzer",
@@ -129,6 +143,10 @@ const userTexts = {
     roleColumn: "Rolle",
     statusColumn: "Status",
     actionsColumn: "Aktionen",
+    emptyState: "Keine Benutzer für diesen Filter gefunden.",
+    statsTotal: "Gesamt",
+    statsActive: "Aktiv",
+    statsInactive: "Inaktiv",
   },
   fr: {
     title: "Utilisateurs",
@@ -155,6 +173,10 @@ const userTexts = {
     roleColumn: "Rôle",
     statusColumn: "Statut",
     actionsColumn: "Actions",
+    emptyState: "Aucun utilisateur trouvé pour ce filtre.",
+    statsTotal: "Total",
+    statsActive: "Actifs",
+    statsInactive: "Inactifs",
   },
   it: {
     title: "Utenti",
@@ -181,6 +203,10 @@ const userTexts = {
     roleColumn: "Ruolo",
     statusColumn: "Stato",
     actionsColumn: "Azioni",
+    emptyState: "Nessun utente trovato per questo filtro.",
+    statsTotal: "Totali",
+    statsActive: "Attivi",
+    statsInactive: "Non attivi",
   },
   ru: {
     title: "Пользователи",
@@ -207,6 +233,10 @@ const userTexts = {
     roleColumn: "Роль",
     statusColumn: "Статус",
     actionsColumn: "Действия",
+    emptyState: "Пользователи для этого фильтра не найдены.",
+    statsTotal: "Всего",
+    statsActive: "Активные",
+    statsInactive: "Неактивные",
   },
 };
 
@@ -277,6 +307,10 @@ function UsersPage({ language }) {
   const [editUserEmail, setEditUserEmail] = useState("");
   const [editUserRole, setEditUserRole] = useState("User");
   const [editUserStatus, setEditUserStatus] = useState("Active");
+
+  // Sıralama state'i
+  const [sortBy, setSortBy] = useState("id"); // "id" | "name" | "email" | "role" | "status"
+  const [sortDirection, setSortDirection] = useState("asc"); // "asc" | "desc"
 
   function isValidEmail(email) {
     const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -441,15 +475,102 @@ function UsersPage({ language }) {
     return matchesSearch && matchesStatus;
   });
 
+  // Sıralama fonksiyonu
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    let valA;
+    let valB;
+
+    switch (sortBy) {
+      case "name":
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+        break;
+      case "email":
+        valA = a.email.toLowerCase();
+        valB = b.email.toLowerCase();
+        break;
+      case "role":
+        valA = a.role.toLowerCase();
+        valB = b.role.toLowerCase();
+        break;
+      case "status":
+        valA = a.status.toLowerCase();
+        valB = b.status.toLowerCase();
+        break;
+      case "id":
+      default:
+        valA = a.id;
+        valB = b.id;
+        break;
+    }
+
+    if (typeof valA === "string" && typeof valB === "string") {
+      const cmp = valA.localeCompare(valB);
+      return sortDirection === "asc" ? cmp : -cmp;
+    }
+
+    if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+    if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
   const handleDelete = (id) => {
     setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+  };
+
+  // Sıralama başlığına tıklama
+  const handleSort = (column) => {
+    setSortBy((prevSortBy) => {
+      if (prevSortBy === column) {
+        setSortDirection((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
+        return prevSortBy;
+      } else {
+        setSortDirection("asc");
+        return column;
+      }
+    });
+  };
+
+  const renderSortIndicator = (column) => {
+    if (sortBy !== column) return null;
+    return <span className="sort-indicator">{sortDirection === "asc" ? "▲" : "▼"}</span>;
+  };
+
+  // Canlı istatistikler
+  const totalCount = users.length;
+  const activeCount = users.filter((u) => u.status === "Active").length;
+  const inactiveCount = users.filter((u) => u.status === "Inactive").length;
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
   return (
     <div className="users-container">
       {/* HEADER */}
       <div className="users-header">
-        <h2>{t.title}</h2>
+        <div className="users-header-top">
+          <h2>{t.title}</h2>
+
+          {/* Canlı küçük istatistikler */}
+          <div className="users-stats">
+            <div className="users-stat-pill">
+              <span className="label">{t.statsTotal}</span>
+              <span className="value">{totalCount}</span>
+            </div>
+            <div className="users-stat-pill users-stat-active">
+              <span className="label">{t.statsActive}</span>
+              <span className="value">{activeCount}</span>
+            </div>
+            <div className="users-stat-pill users-stat-inactive">
+              <span className="label">{t.statsInactive}</span>
+              <span className="value">{inactiveCount}</span>
+            </div>
+          </div>
+        </div>
 
         <div className="users-header-bottom">
           <div className="filters">
@@ -481,26 +602,28 @@ function UsersPage({ language }) {
             </button>
           </div>
 
-          <button
-            className="add-user-btn"
-            onClick={() => {
-              setIsAdding(true);
-              setIsEditing(false);
-              setAddError("");
-              setNewUserName("");
-              setNewUserEmail("");
-            }}
-          >
-            + {t.addUserButton}
-          </button>
+          <div className="users-header-right">
+            <input
+              type="text"
+              placeholder={t.searchPlaceholder}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
 
-          <input
-            type="text"
-            placeholder={t.searchPlaceholder}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
+            <button
+              className="add-user-btn"
+              onClick={() => {
+                setIsAdding(true);
+                setIsEditing(false);
+                setAddError("");
+                setNewUserName("");
+                setNewUserEmail("");
+              }}
+            >
+              + {t.addUserButton}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -638,60 +761,87 @@ function UsersPage({ language }) {
       <table className="users-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>{t.fullNamePlaceholder}</th>
-            <th>{t.emailPlaceholder}</th>
-            <th>{t.roleColumn}</th>
-            <th>{t.statusColumn}</th>
+            <th onClick={() => handleSort("id")} className="sortable">
+              ID {renderSortIndicator("id")}
+            </th>
+            <th onClick={() => handleSort("name")} className="sortable">
+              {t.fullNamePlaceholder} {renderSortIndicator("name")}
+            </th>
+            <th onClick={() => handleSort("email")} className="sortable">
+              {t.emailPlaceholder} {renderSortIndicator("email")}
+            </th>
+            <th onClick={() => handleSort("role")} className="sortable">
+              {t.roleColumn} {renderSortIndicator("role")}
+            </th>
+            <th onClick={() => handleSort("status")} className="sortable">
+              {t.statusColumn} {renderSortIndicator("status")}
+            </th>
             <th>{t.actionsColumn}</th>
           </tr>
         </thead>
 
         <tbody>
-          {filteredUsers.map((user) => (
-            <tr key={user.id}>
-              <td>{user.id}</td>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-
-              <td>
-                <span
-                  className={`role-badge role-${user.role.toLowerCase()}`}
-                >
-                  {r[user.role] || user.role}
-                </span>
-              </td>
-
-              <td>
-                <span
-                  className={`status-badge status-${user.status.toLowerCase()} ${
-                    canToggleStatus ? "clickable" : ""
-                  }`}
-                  onClick={() => handleToggleStatus(user.id)}
-                >
-                  {s[user.status] || user.status}
-                </span>
-              </td>
-
-              <td>
-                {canEditUsers && (
-                  <button
-                    className="edit-btn"
-                    onClick={() => handleEditClick(user)}
-                  >
-                    {t.editButton}
-                  </button>
-                )}
-
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDelete(user.id)}
-                >
-                  {t.deleteButton}
-                </button>
+          {sortedUsers.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="empty-state">
+                {t.emptyState}
               </td>
             </tr>
-          ))}
+          ) : (
+            sortedUsers.map((user) => (
+              <tr key={user.id}>
+                <td>{user.id}</td>
+
+                <td>
+                  <div className="user-cell">
+                    <div className="user-avatar">
+                      {getInitials(user.name)}
+                    </div>
+                    <span className="user-name">{user.name}</span>
+                  </div>
+                </td>
+
+                <td>{user.email}</td>
+
+                <td>
+                  <span
+                    className={`role-badge role-${user.role.toLowerCase()}`}
+                  >
+                    {r[user.role] || user.role}
+                  </span>
+                </td>
+
+                <td>
+                  <span
+                    className={`status-badge status-${user.status.toLowerCase()} ${
+                      canToggleStatus ? "clickable" : ""
+                    }`}
+                    onClick={() => handleToggleStatus(user.id)}
+                  >
+                    {s[user.status] || user.status}
+                  </span>
+                </td>
+
+                <td>
+                  {canEditUsers && (
+                    <button
+                      className="edit-btn"
+                      onClick={() => handleEditClick(user)}
+                    >
+                      {t.editButton}
+                    </button>
+                  )}
+
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(user.id)}
+                  >
+                    {t.deleteButton}
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
