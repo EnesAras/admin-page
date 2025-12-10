@@ -447,60 +447,64 @@ function UsersPage({ language }) {
 
   return (
     <div className="users-container">
+      {/* HEADER */}
       <div className="users-header">
         <h2>{t.title}</h2>
 
-        <button
-          className="add-user-btn"
-          onClick={() => {
-            setIsAdding(true);
-            setIsEditing(false);
-            setAddError("");
-            setNewUserName("");
-            setNewUserEmail("");
-          }}
-        >
-          + {t.addUserButton}
-        </button>
+        <div className="users-header-bottom">
+          <div className="filters">
+            <button
+              className={`filter-btn ${
+                statusFilter === "all" ? "active" : ""
+              }`}
+              onClick={() => setStatusFilter("all")}
+            >
+              {t.filterAll}
+            </button>
 
-        <div className="filters">
-          <button
-            className={`filter-btn ${
-              statusFilter === "all" ? "active" : ""
-            }`}
-            onClick={() => setStatusFilter("all")}
-          >
-            {t.filterAll}
-          </button>
+            <button
+              className={`filter-btn ${
+                statusFilter === "Active" ? "active" : ""
+              }`}
+              onClick={() => setStatusFilter("Active")}
+            >
+              {s.Active}
+            </button>
 
-          <button
-            className={`filter-btn ${
-              statusFilter === "Active" ? "active" : ""
-            }`}
-            onClick={() => setStatusFilter("Active")}
-          >
-            {s.Active}
-          </button>
+            <button
+              className={`filter-btn ${
+                statusFilter === "Inactive" ? "active" : ""
+              }`}
+              onClick={() => setStatusFilter("Inactive")}
+            >
+              {s.Inactive}
+            </button>
+          </div>
 
           <button
-            className={`filter-btn ${
-              statusFilter === "Inactive" ? "active" : ""
-            }`}
-            onClick={() => setStatusFilter("Inactive")}
+            className="add-user-btn"
+            onClick={() => {
+              setIsAdding(true);
+              setIsEditing(false);
+              setAddError("");
+              setNewUserName("");
+              setNewUserEmail("");
+            }}
           >
-            {s.Inactive}
+            + {t.addUserButton}
           </button>
+
+          <input
+            type="text"
+            placeholder={t.searchPlaceholder}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
         </div>
-
-        <input
-          type="text"
-          placeholder={t.searchPlaceholder}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-        />
       </div>
 
+      {/* ADD USER PANEL */}
       {isAdding && (
         <div className="add-user-panel">
           <div className="add-user-header">
@@ -568,6 +572,7 @@ function UsersPage({ language }) {
         </div>
       )}
 
+      {/* EDIT USER PANEL */}
       {isEditing && canEditUsers && (
         <div className="add-user-panel">
           <div className="add-user-header">
@@ -629,6 +634,7 @@ function UsersPage({ language }) {
         </div>
       )}
 
+      {/* TABLE */}
       <table className="users-table">
         <thead>
           <tr>

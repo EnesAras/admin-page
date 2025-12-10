@@ -105,6 +105,17 @@ const TEXTS = {
     thStatusClickable: "Status (click to change)",
     thPayment: "Payment",
     empty: "No orders found for this filter.",
+    resultsSummary: "Showing {current} of {total} orders",
+    exportCsv: "Export CSV",
+    detailsTitle: "Order details",
+    detailsOrderId: "Order ID",
+    detailsCustomer: "Customer",
+    detailsEmail: "Email",
+    detailsDate: "Date",
+    detailsTotal: "Total amount",
+    detailsStatus: "Status",
+    detailsPayment: "Payment method",
+    detailsClose: "Close",
   },
   tr: {
     title: "Siparişler",
@@ -121,6 +132,17 @@ const TEXTS = {
     thStatusClickable: "Durum (değiştirmek için tıkla)",
     thPayment: "Ödeme",
     empty: "Bu filtreye uygun sipariş bulunamadı.",
+    resultsSummary: "Toplam {total} siparişten {current} tanesi görüntüleniyor",
+    exportCsv: "CSV olarak dışa aktar",
+    detailsTitle: "Sipariş detayı",
+    detailsOrderId: "Sipariş ID",
+    detailsCustomer: "Müşteri",
+    detailsEmail: "E-posta",
+    detailsDate: "Tarih",
+    detailsTotal: "Toplam tutar",
+    detailsStatus: "Durum",
+    detailsPayment: "Ödeme yöntemi",
+    detailsClose: "Kapat",
   },
   es: {
     title: "Pedidos",
@@ -137,6 +159,17 @@ const TEXTS = {
     thStatusClickable: "Estado (clic para cambiar)",
     thPayment: "Pago",
     empty: "No se encontraron pedidos para este filtro.",
+    resultsSummary: "Mostrando {current} de {total} pedidos",
+    exportCsv: "Exportar CSV",
+    detailsTitle: "Detalles del pedido",
+    detailsOrderId: "ID del pedido",
+    detailsCustomer: "Cliente",
+    detailsEmail: "Correo",
+    detailsDate: "Fecha",
+    detailsTotal: "Importe total",
+    detailsStatus: "Estado",
+    detailsPayment: "Método de pago",
+    detailsClose: "Cerrar",
   },
   de: {
     title: "Bestellungen",
@@ -153,6 +186,17 @@ const TEXTS = {
     thStatusClickable: "Status (zum Ändern klicken)",
     thPayment: "Zahlung",
     empty: "Für diesen Filter wurden keine Bestellungen gefunden.",
+    resultsSummary: "Zeige {current} von {total} Bestellungen",
+    exportCsv: "Als CSV exportieren",
+    detailsTitle: "Bestelldetails",
+    detailsOrderId: "Bestell-ID",
+    detailsCustomer: "Kunde",
+    detailsEmail: "E-Mail",
+    detailsDate: "Datum",
+    detailsTotal: "Gesamtbetrag",
+    detailsStatus: "Status",
+    detailsPayment: "Zahlungsmethode",
+    detailsClose: "Schließen",
   },
   fr: {
     title: "Commandes",
@@ -169,6 +213,17 @@ const TEXTS = {
     thStatusClickable: "Statut (cliquer pour changer)",
     thPayment: "Paiement",
     empty: "Aucune commande trouvée pour ce filtre.",
+    resultsSummary: "Affichage de {current} sur {total} commandes",
+    exportCsv: "Exporter en CSV",
+    detailsTitle: "Détails de la commande",
+    detailsOrderId: "ID de commande",
+    detailsCustomer: "Client",
+    detailsEmail: "E-mail",
+    detailsDate: "Date",
+    detailsTotal: "Montant total",
+    detailsStatus: "Statut",
+    detailsPayment: "Méthode de paiement",
+    detailsClose: "Fermer",
   },
   it: {
     title: "Ordini",
@@ -185,6 +240,17 @@ const TEXTS = {
     thStatusClickable: "Stato (clicca per cambiare)",
     thPayment: "Pagamento",
     empty: "Nessun ordine trovato per questo filtro.",
+    resultsSummary: "Visualizzazione di {current} su {total} ordini",
+    exportCsv: "Esporta CSV",
+    detailsTitle: "Dettagli ordine",
+    detailsOrderId: "ID ordine",
+    detailsCustomer: "Cliente",
+    detailsEmail: "Email",
+    detailsDate: "Data",
+    detailsTotal: "Importo totale",
+    detailsStatus: "Stato",
+    detailsPayment: "Metodo di pagamento",
+    detailsClose: "Chiudi",
   },
   ru: {
     title: "Заказы",
@@ -201,14 +267,42 @@ const TEXTS = {
     thStatusClickable: "Статус (кликните, чтобы изменить)",
     thPayment: "Оплата",
     empty: "Для этого фильтра заказы не найдены.",
+    resultsSummary: "Показано {current} из {total} заказов",
+    exportCsv: "Экспорт CSV",
+    detailsTitle: "Детали заказа",
+    detailsOrderId: "ID заказа",
+    detailsCustomer: "Клиент",
+    detailsEmail: "E-mail",
+    detailsDate: "Дата",
+    detailsTotal: "Итоговая сумма",
+    detailsStatus: "Статус",
+    detailsPayment: "Способ оплаты",
+    detailsClose: "Закрыть",
   },
 };
 
-function OrdersPage({ language }) {
-  const { settings, language: ctxLanguage } = useSettings();
+function getLocaleFromLangKey(langKey) {
+  switch (langKey) {
+    case "tr":
+      return "tr-TR";
+    case "es":
+      return "es-ES";
+    case "de":
+      return "de-DE";
+    case "fr":
+      return "fr-FR";
+    case "it":
+      return "it-IT";
+    case "ru":
+      return "ru-RU";
+    default:
+      return "en-IE";
+  }
+}
 
-  // Dil önceliği: prop > context.language > settings.language > "en"
-  const langKey = language || ctxLanguage || settings?.language || "en";
+function OrdersPage({ language }) {
+  const { settings } = useSettings();
+  const langKey = language || settings?.language || "en";
   const t = TEXTS[langKey] || TEXTS.en;
   const s = statusLabels[langKey] || statusLabels.en;
 
@@ -226,10 +320,23 @@ function OrdersPage({ language }) {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("date");
+  const [sortDirection, setSortDirection] = useState("desc");
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   useEffect(() => {
     localStorage.setItem("admin_orders", JSON.stringify(orders));
   }, [orders]);
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    return new Intl.DateTimeFormat(getLocaleFromLangKey(langKey), {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(d);
+  };
 
   const filteredOrders = orders.filter((order) => {
     const term = searchTerm.toLowerCase().trim();
@@ -244,6 +351,41 @@ function OrdersPage({ language }) {
       statusFilter === "all" || order.status === statusFilter;
 
     return matchesSearch && matchesStatus;
+  });
+
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    let valA;
+    let valB;
+
+    switch (sortBy) {
+      case "id":
+        valA = a.id;
+        valB = b.id;
+        break;
+      case "customer":
+        valA = a.customer.toLowerCase();
+        valB = b.customer.toLowerCase();
+        break;
+      case "date":
+        valA = new Date(a.date).getTime();
+        valB = new Date(b.date).getTime();
+        break;
+      case "total":
+        valA = a.total;
+        valB = b.total;
+        break;
+      default:
+        valA = 0;
+        valB = 0;
+    }
+
+    if (valA < valB) {
+      return sortDirection === "asc" ? -1 : 1;
+    }
+    if (valA > valB) {
+      return sortDirection === "asc" ? 1 : -1;
+    }
+    return 0;
   });
 
   const handleToggleStatus = (id) => {
@@ -263,12 +405,87 @@ function OrdersPage({ language }) {
     );
   };
 
+  const handleSort = (key) => {
+    setSortBy((prevKey) => {
+      if (prevKey === key) {
+        setSortDirection((prevDir) =>
+          prevDir === "asc" ? "desc" : "asc"
+        );
+        return prevKey;
+      } else {
+        setSortDirection(key === "date" ? "desc" : "asc");
+        return key;
+      }
+    });
+  };
+
+  const renderSortIndicator = (key) => {
+    if (sortBy !== key) return "⇅";
+    return sortDirection === "asc" ? "▲" : "▼";
+  };
+
+  const handleExportCsv = () => {
+    if (!filteredOrders.length) return;
+
+    const headers = [
+      "id",
+      "customer",
+      "email",
+      "date",
+      "total",
+      "status",
+      "payment",
+    ];
+    const rows = filteredOrders.map((o) => [
+      o.id,
+      o.customer,
+      o.email,
+      o.date,
+      o.total,
+      o.status,
+      o.method,
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((r) =>
+        r
+          .map((field) =>
+            typeof field === "string"
+              ? `"${field.replace(/"/g, '""')}"`
+              : field
+          )
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "orders.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const totalAmount = orders.reduce((sum, o) => sum + o.total, 0);
   const pendingCount = orders.filter((o) => o.status === "Pending").length;
   const shippedCount = orders.filter((o) => o.status === "Shipped").length;
 
+  const selectedOrder =
+    selectedOrderId != null
+      ? orders.find((o) => o.id === selectedOrderId) || null
+      : null;
+
+  const resultsText = t.resultsSummary
+    .replace("{current}", filteredOrders.length)
+    .replace("{total}", orders.length);
+
   return (
     <div className="orders-container">
+      {/* HEADER */}
       <div className="orders-header">
         <div className="orders-header-left">
           <h2>{t.title}</h2>
@@ -319,16 +536,19 @@ function OrdersPage({ language }) {
             </button>
           </div>
 
-          <input
-            type="text"
-            placeholder={t.searchPlaceholder}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="orders-search-input"
-          />
+          <div className="orders-search">
+            <input
+              type="text"
+              placeholder={t.searchPlaceholder}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="orders-search-input"
+            />
+          </div>
         </div>
       </div>
 
+      {/* SUMMARY CARDS */}
       <div className="orders-summary">
         <div className="orders-summary-card">
           <span className="summary-label">{t.summaryTotalOrders}</span>
@@ -354,47 +574,175 @@ function OrdersPage({ language }) {
         </div>
       </div>
 
-      <table className="orders-table">
-        <thead>
-          <tr>
-            <th>{t.thId}</th>
-            <th>{t.thCustomer}</th>
-            <th>{t.thEmail}</th>
-            <th>{t.thDate}</th>
-            <th>{t.thTotal}</th>
-            <th>{t.thStatusClickable}</th>
-            <th>{t.thPayment}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredOrders.length === 0 ? (
+      {/* META BAR: RESULTS + EXPORT */}
+      <div className="orders-meta-bar">
+        <span className="orders-meta-results">{resultsText}</span>
+        <button
+          type="button"
+          className="orders-export-btn"
+          onClick={handleExportCsv}
+          disabled={!filteredOrders.length}
+        >
+          {t.exportCsv}
+        </button>
+      </div>
+
+      {/* MAIN CARD + TABLE */}
+      <div className="orders-main-card">
+        <table className="orders-table">
+          <thead>
             <tr>
-              <td colSpan="7" className="orders-empty">
-                {t.empty}
-              </td>
+              <th
+                className="orders-th-sortable"
+                onClick={() => handleSort("id")}
+              >
+                <span>{t.thId}</span>
+                <span className="sort-indicator">
+                  {renderSortIndicator("id")}
+                </span>
+              </th>
+              <th
+                className="orders-th-sortable"
+                onClick={() => handleSort("customer")}
+              >
+                <span>{t.thCustomer}</span>
+                <span className="sort-indicator">
+                  {renderSortIndicator("customer")}
+                </span>
+              </th>
+              <th>{t.thEmail}</th>
+              <th
+                className="orders-th-sortable"
+                onClick={() => handleSort("date")}
+              >
+                <span>{t.thDate}</span>
+                <span className="sort-indicator">
+                  {renderSortIndicator("date")}
+                </span>
+              </th>
+              <th
+                className="orders-th-sortable"
+                onClick={() => handleSort("total")}
+              >
+                <span>{t.thTotal}</span>
+                <span className="sort-indicator">
+                  {renderSortIndicator("total")}
+                </span>
+              </th>
+              <th>{t.thStatusClickable}</th>
+              <th>{t.thPayment}</th>
             </tr>
-          ) : (
-            filteredOrders.map((order) => (
-              <tr key={order.id}>
-                <td>#{order.id}</td>
-                <td>{order.customer}</td>
-                <td className="orders-email">{order.email}</td>
-                <td>{order.date}</td>
-                <td>€{order.total.toFixed(2)}</td>
-                <td>
-                  <span
-                    className={`order-status order-status-${order.status.toLowerCase()}`}
-                    onClick={() => handleToggleStatus(order.id)}
-                  >
-                    {s[order.status] || order.status}
-                  </span>
+          </thead>
+          <tbody>
+            {sortedOrders.length === 0 ? (
+              <tr>
+                <td colSpan="7" className="orders-empty">
+                  {t.empty}
                 </td>
-                <td>{order.method}</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              sortedOrders.map((order) => (
+                <tr
+                  key={order.id}
+                  className={
+                    order.id === selectedOrderId
+                      ? "orders-row selected"
+                      : "orders-row"
+                  }
+                  onClick={() => setSelectedOrderId(order.id)}
+                >
+                  <td>#{order.id}</td>
+                  <td>{order.customer}</td>
+                  <td className="orders-email">{order.email}</td>
+                  <td>{formatDate(order.date)}</td>
+                  <td>€{order.total.toFixed(2)}</td>
+                  <td>
+                    <span
+                      className={`order-status order-status-${order.status.toLowerCase()}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleStatus(order.id);
+                      }}
+                    >
+                      {s[order.status] || order.status}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`payment-pill payment-${order.method
+                      .toLowerCase()
+                      .replace(/\s+/g, "-")}`}
+                    >
+                      {order.method}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        {/* DETAILS PANEL */}
+        {selectedOrder && (
+          <div className="order-details-panel">
+            <div className="order-details-header">
+              <h3>{t.detailsTitle}</h3>
+              <button
+                type="button"
+                className="order-details-close"
+                onClick={() => setSelectedOrderId(null)}
+              >
+                {t.detailsClose}
+              </button>
+            </div>
+            <div className="order-details-grid">
+              <div className="order-details-item">
+                <span className="details-label">{t.detailsOrderId}</span>
+                <span className="details-value">#{selectedOrder.id}</span>
+              </div>
+              <div className="order-details-item">
+                <span className="details-label">
+                  {t.detailsCustomer}
+                </span>
+                <span className="details-value">
+                  {selectedOrder.customer}
+                </span>
+              </div>
+              <div className="order-details-item">
+                <span className="details-label">{t.detailsEmail}</span>
+                <span className="details-value">
+                  {selectedOrder.email}
+                </span>
+              </div>
+              <div className="order-details-item">
+                <span className="details-label">{t.detailsDate}</span>
+                <span className="details-value">
+                  {formatDate(selectedOrder.date)}
+                </span>
+              </div>
+              <div className="order-details-item">
+                <span className="details-label">{t.detailsTotal}</span>
+                <span className="details-value">
+                  €{selectedOrder.total.toFixed(2)}
+                </span>
+              </div>
+              <div className="order-details-item">
+                <span className="details-label">{t.detailsStatus}</span>
+                <span className="details-value">
+                  {s[selectedOrder.status] || selectedOrder.status}
+                </span>
+              </div>
+              <div className="order-details-item">
+                <span className="details-label">
+                  {t.detailsPayment}
+                </span>
+                <span className="details-value">
+                  {selectedOrder.method}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

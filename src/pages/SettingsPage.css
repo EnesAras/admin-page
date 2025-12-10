@@ -1,29 +1,39 @@
-.settings-container {
-  padding: 20px;
-  min-height: 100vh;
+/* =============== LAYOUT =============== */
 
-  /* yeni eklediklerimiz */
+.settings-container {
+  padding: 24px 20px;
+  min-height: 100vh;
   max-width: 1120px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
+
+/* =============== HEADER =============== */
 
 .settings-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
 .settings-header h2 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #f9fafb;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  background: linear-gradient(120deg, #f97316, #facc15, #38bdf8);
+
+  /* Standart + WebKit birlikte kullanılmalı */
+  background-clip: text;
+  -webkit-background-clip: text;
+
+  color: transparent;
 }
 
 .settings-header p {
@@ -32,57 +42,121 @@
   color: #9ca3af;
 }
 
+/* küçük yeşil “settings saved” pil */
+
 .settings-saved-pill {
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-  background: rgba(34, 197, 94, 0.16);
-  color: #4ade80;
+  background: radial-gradient(circle at top left, rgba(22, 163, 74, 0.3), rgba(6, 78, 59, 0.95));
+  color: #bbf7d0;
   border: 1px solid rgba(34, 197, 94, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 16px 32px rgba(22, 163, 74, 0.55);
 }
+
+.settings-saved-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.85);
+}
+
+/* =============== GRID =============== */
 
 .settings-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.4fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+  grid-auto-rows: minmax(0, auto);
   gap: 16px;
 }
 
-.settings-card {
-  background: #020617;
-  border-radius: 14px;
-  border: 1px solid #1f2937;
-  padding: 16px 18px;
-  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.45);
+/* =============== CARD BASE =============== */
 
-  /* yeni eklediklerimiz */
-  transition: border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+.settings-card {
+  position: relative;
+  border-radius: 18px;
+  padding: 14px 16px 16px;
+  background: radial-gradient(circle at top left, #020617, #020617);
+  border: 1px solid #111827;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(15, 23, 42, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+/* dış glow */
+
+.settings-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background: linear-gradient(
+    135deg,
+    rgba(148, 163, 184, 0.15),
+    rgba(56, 189, 248, 0.15),
+    rgba(249, 115, 22, 0.45)
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
 .settings-card:hover {
-  border-color: #f97316;
   transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 26px 60px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(30, 64, 175, 0.7);
+  border-color: rgba(30, 64, 175, 0.6);
 }
 
-.settings-card h3 {
-  margin: 0 0 4px;
-  font-size: 16px;
+.settings-card:hover::before {
+  opacity: 1;
+}
+
+.settings-card-full {
+  grid-column: 1 / -1;
+}
+
+/* =============== CARD HEADER =============== */
+
+.settings-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.settings-card-header h3 {
+  margin: 0;
+  font-size: 15px;
   font-weight: 600;
   color: #f9fafb;
 }
 
-.settings-description {
-  margin: 0 0 12px;
-  font-size: 13px;
+.settings-card-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
   color: #9ca3af;
 }
+
+/* =============== FIELDS =============== */
 
 .settings-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 12px;
+  gap: 5px;
 }
 
 .settings-field label {
@@ -92,12 +166,17 @@
 
 .settings-field input,
 .settings-field select {
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #1f2933;
-  background-color: #020617;
+  padding: 9px 11px;
+  border-radius: 11px;
+  border: 1px solid #1f2937;
+  background: radial-gradient(circle at top left, #020617, #020617);
   color: #e5e7eb;
   font-size: 13px;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.08s ease;
 }
 
 .settings-field input::placeholder {
@@ -108,121 +187,180 @@
 .settings-field select:focus {
   outline: none;
   border-color: #f97316;
-  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.6);
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.7);
+  transform: translateY(-1px);
 }
 
-.settings-toggle-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* =============== PREFERENCES TWO COLS =============== */
+
+.settings-two-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 12px;
-  margin-bottom: 10px;
 }
 
-.settings-toggle-row label {
+/* =============== THEME CHIPS =============== */
+
+.settings-theme-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-chip {
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #9ca3af;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.08s ease;
+}
+
+.settings-chip:hover {
+  background: #111827;
+  color: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.settings-chip.active {
+  border-color: rgba(249, 115, 22, 0.95);
+  background: linear-gradient(120deg, #f97316, #facc15);
+  color: #0b1120;
+  box-shadow: 0 16px 34px rgba(249, 115, 22, 0.6);
+}
+
+/* select için hafif farklı arka plan */
+
+.settings-field select {
+  background: radial-gradient(circle at top left, #020617, #020617);
+}
+
+/* =============== NOTIFICATION TOGGLES =============== */
+
+.settings-toggle-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  cursor: default;
+  gap: 10px;
 }
 
-.settings-toggle-row span {
+/* label yapısı: input + .settings-toggle-text */
+
+.settings-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 12px;
+  transition: background-color 0.16s ease, transform 0.08s ease;
+}
+
+.settings-toggle:hover {
+  background: rgba(15, 23, 42, 0.9);
+  transform: translateY(-1px);
+}
+
+.settings-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* solda küçük yuvarlak gösterge */
+
+.settings-toggle-text {
+  position: relative;
+  padding-left: 26px;
+}
+
+.settings-toggle-text::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+  background: #020617;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+/* input checked ise bu yuvarlağı boyayalım */
+
+.settings-toggle input:checked + .settings-toggle-text::before {
+  background: linear-gradient(135deg, #f97316, #facc15);
+  border-color: transparent;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.9);
+}
+
+.settings-toggle-text span {
+  display: block;
   font-size: 13px;
   color: #e5e7eb;
+  font-weight: 500;
 }
 
-.settings-toggle-row small {
+.settings-toggle-text small {
+  display: block;
   font-size: 11px;
   color: #9ca3af;
 }
 
-.toggle-pill {
-  width: 46px;
-  height: 24px;
-  border-radius: 999px;
-  border: 1px solid #4b5563;
-  background: #020617;
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  cursor: pointer;
-  position: relative;
-  transition: background 0.12s ease, border-color 0.12s ease;
+/* checked olduğunda yazıyı da biraz vurgula */
+
+.settings-toggle input:checked + .settings-toggle-text span {
+  color: #fef3c7;
 }
 
-.toggle-pill .toggle-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  transform: translateX(0);
-  transition: transform 0.16s ease;
-}
-
-.toggle-pill.on {
-  background: #22c55e;
-  border-color: #22c55e;
-}
-
-.toggle-pill.on .toggle-thumb {
-  transform: translateX(20px);
-  background: #0b1120;
-}
-
-.toggle-pill.off {
-  background: #020617;
-  border-color: #4b5563;
-}
-
-@media (max-width: 1024px) {
-  .settings-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 720px) {
-  .settings-container {
-    padding: 16px 12px;
-  }
-
-  .settings-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-  }
-
-  .settings-card {
-    padding: 14px 14px;
-  }
-}
-
-/* LIGHT THEME OVERRIDES */
+/* =============== LIGHT THEME OVERRIDES =============== */
 
 body.theme-light .settings-header h2 {
-  color: #111827;
+  background: linear-gradient(120deg, #111827, #4b5563);
+
+  /* Standart + WebKit birlikte */
+  background-clip: text;
+  -webkit-background-clip: text;
+
+  color: transparent;
 }
+
 
 body.theme-light .settings-header p {
   color: #6b7280;
 }
 
-body.theme-light .settings-saved-pill {
-  background: rgba(34, 197, 94, 0.12);
-  color: #15803d;
-  border-color: rgba(34, 197, 94, 0.7);
-}
-
 body.theme-light .settings-card {
   background: #ffffff;
   border-color: #e5e7eb;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 18px 46px rgba(148, 163, 184, 0.5);
 }
 
-body.theme-light .settings-card h3 {
+body.theme-light .settings-card::before {
+  background: linear-gradient(
+    135deg,
+    rgba(148, 163, 184, 0.25),
+    rgba(249, 115, 22, 0.35)
+  );
+}
+
+body.theme-light .settings-card-header h3 {
   color: #111827;
 }
 
-body.theme-light .settings-description {
+body.theme-light .settings-card-header p {
   color: #6b7280;
 }
 
@@ -232,7 +370,7 @@ body.theme-light .settings-field label {
 
 body.theme-light .settings-field input,
 body.theme-light .settings-field select {
-  background-color: #ffffff;
+  background: #ffffff;
   border-color: #d1d5db;
   color: #111827;
 }
@@ -241,28 +379,49 @@ body.theme-light .settings-field input::placeholder {
   color: #9ca3af;
 }
 
-body.theme-light .settings-toggle-row span {
+body.theme-light .settings-chip {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #4b5563;
+}
+
+body.theme-light .settings-toggle:hover {
+  background: #f3f4f6;
+}
+
+body.theme-light .settings-toggle-text span {
   color: #111827;
 }
 
-body.theme-light .settings-toggle-row small {
+body.theme-light .settings-toggle-text small {
   color: #6b7280;
 }
 
-body.theme-light .toggle-pill {
-  background: #f9fafb;
+/* light theme toggle yuvarlak */
+
+body.theme-light .settings-toggle-text::before {
+  background: #ffffff;
   border-color: #d1d5db;
 }
 
-body.theme-light .toggle-pill .toggle-thumb {
-  background: #9ca3af;
+/* =============== RESPONSIVE =============== */
+
+@media (max-width: 960px) {
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-body.theme-light .toggle-pill.on {
-  background: #22c55e;
-  border-color: #22c55e;
-}
+@media (max-width: 720px) {
+  .settings-container {
+    padding: 18px 12px;
+  }
 
-body.theme-light .toggle-pill.on .toggle-thumb {
-  background: #ffffff;
+  .settings-card {
+    padding: 12px 12px 14px;
+  }
+
+  .settings-header h2 {
+    font-size: 20px;
+  }
 }

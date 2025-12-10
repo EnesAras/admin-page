@@ -106,6 +106,8 @@
 .dashboard-bottom {
   display: flex;
   margin-top: 10px;
+  gap: 16px;               
+  align-items: stretch;    
 }
 
 .recent-users {
@@ -274,3 +276,68 @@ body.theme-light .recent-table tr:hover td {
 body.theme-light .recent-email {
   color: #6b7280;
 }
+.dashboard-chart-card {
+  margin-top: 20px;
+  background: radial-gradient(circle at top left, #020617, #020617);
+  border-radius: 18px;
+  border: 1px solid #111827;
+  padding: 18px 20px 22px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.chart-header h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.chart-header p {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.chart-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.7);
+  background: rgba(8, 47, 73, 0.6);
+  color: #7dd3fc;
+  font-weight: 500;
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 260px;
+}
+.chart-tooltip {
+  background: #020617;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #e5e7eb;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.8);
+}
+
+.chart-tooltip-label {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #e5e7eb;
+}
+
+.chart-tooltip-value {
+  font-size: 11px;
+  color: #9ca3af;
+}
+

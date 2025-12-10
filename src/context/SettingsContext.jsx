@@ -58,11 +58,20 @@ export function SettingsProvider({ children }) {
     document.documentElement.setAttribute("data-theme", effectiveTheme);
   }, [settings.theme]);
 
-  // 🔧 Genel update fonksiyonu (SettingsPage için)
+  // 🔧 Genel update fonksiyonu (patch)
   const updateSettings = (patch) => {
     setSettings((prev) => ({
       ...prev,
       ...patch,
+    }));
+  };
+
+  // 🆕 SettingsPage'in beklediği tek key/value fonksiyonu
+  // updateSetting("theme", "dark") gibi çağrılıyor
+  const updateSetting = (key, value) => {
+    setSettings((prev) => ({
+      ...prev,
+      [key]: value,
     }));
   };
 
@@ -84,7 +93,9 @@ export function SettingsProvider({ children }) {
 
   const value = {
     settings,
+    // ikisi de mevcut, isteyen istediğini kullanır
     updateSettings,
+    updateSetting,
     theme: settings.theme,
     language: settings.language,
     setTheme,

@@ -7,10 +7,12 @@ const translations = {
   en: {
     settingsTitle: "Settings",
     settingsSubtitle: "Manage your profile, preferences and notifications.",
+
     profileTitle: "Profile",
     profileDesc: "Update how your name appears in the admin panel.",
     displayNameLabel: "Display name",
     displayNamePlaceholder: "Your name",
+
     prefsTitle: "Preferences",
     prefsDesc: "Choose your visual theme and interface language.",
     themeLabel: "Theme",
@@ -18,198 +20,216 @@ const translations = {
     themeOptionDark: "Dark",
     themeOptionLight: "Light",
     themeOptionSystem: "System",
+
     notifTitle: "Notifications",
     notifDesc: "Control which email updates you receive about activity.",
     mainEmailLabel: "Main email alerts",
     mainEmailSub: "Order updates, critical account messages.",
     weeklyLabel: "Weekly summary",
     weeklySub: "Get a weekly summary of users and orders.",
+
     savedPill: "Settings saved",
   },
   tr: {
     settingsTitle: "Ayarlar",
     settingsSubtitle: "Profilini, tercihlerini ve bildirimlerini yönet.",
+
     profileTitle: "Profil",
     profileDesc: "Panelde görünen adını güncelle.",
     displayNameLabel: "Görünen ad",
     displayNamePlaceholder: "Adın",
+
     prefsTitle: "Tercihler",
     prefsDesc: "Tema ve arayüz dilini seç.",
     themeLabel: "Tema",
     languageLabel: "Dil",
-    themeOptionDark: "Koyu",
+    themeOptionDark: "Karanlık",
     themeOptionLight: "Açık",
     themeOptionSystem: "Sistem",
+
     notifTitle: "Bildirimler",
-    notifDesc: "Hangi e-posta bildirimlerini alacağını kontrol et.",
-    mainEmailLabel: "Temel e-posta bildirimleri",
-    mainEmailSub: "Sipariş güncellemeleri ve kritik hesap mesajları.",
+    notifDesc: "Hangi e-posta güncellemelerini alacağını seç.",
+    mainEmailLabel: "Ana e-posta uyarıları",
+    mainEmailSub: "Sipariş güncellemeleri, kritik hesap mesajları.",
     weeklyLabel: "Haftalık özet",
     weeklySub: "Kullanıcılar ve siparişler için haftalık özet al.",
+
     savedPill: "Ayarlar kaydedildi",
-  },
-  es: {
-    settingsTitle: "Configuración",
-    settingsSubtitle: "Gestiona tu perfil, preferencias y notificaciones.",
-    profileTitle: "Perfil",
-    profileDesc: "Actualiza cómo aparece tu nombre en el panel.",
-    displayNameLabel: "Nombre visible",
-    displayNamePlaceholder: "Tu nombre",
-    prefsTitle: "Preferencias",
-    prefsDesc: "Elige el tema y el idioma de la interfaz.",
-    themeLabel: "Tema",
-    languageLabel: "Idioma",
-    themeOptionDark: "Oscuro",
-    themeOptionLight: "Claro",
-    themeOptionSystem: "Sistema",
-    notifTitle: "Notificaciones",
-    notifDesc: "Controla qué correos recibes sobre la actividad.",
-    mainEmailLabel: "Alertas principales",
-    mainEmailSub: "Actualizaciones de pedidos y mensajes críticos.",
-    weeklyLabel: "Resumen semanal",
-    weeklySub: "Recibe un resumen semanal de usuarios y pedidos.",
-    savedPill: "Configuración guardada",
   },
   de: {
     settingsTitle: "Einstellungen",
-    settingsSubtitle:
-      "Verwalte dein Profil, deine Präferenzen und Benachrichtigungen.",
+    settingsSubtitle: "Verwalte Profil, Präferenzen und Benachrichtigungen.",
+
     profileTitle: "Profil",
-    profileDesc: "Aktualisiere, wie dein Name im Admin-Panel erscheint.",
+    profileDesc: "Aktualisiere, wie dein Name im Admin-Panel angezeigt wird.",
     displayNameLabel: "Anzeigename",
     displayNamePlaceholder: "Dein Name",
+
     prefsTitle: "Präferenzen",
-    prefsDesc: "Wähle das Design und die Sprache der Oberfläche.",
+    prefsDesc: "Wähle Thema und Sprache der Oberfläche.",
     themeLabel: "Theme",
     languageLabel: "Sprache",
     themeOptionDark: "Dunkel",
     themeOptionLight: "Hell",
     themeOptionSystem: "System",
+
     notifTitle: "Benachrichtigungen",
-    notifDesc:
-      "Steuere, welche E-Mail-Benachrichtigungen du erhältst.",
-    mainEmailLabel: "Haupt-E-Mail-Benachrichtigungen",
-    mainEmailSub: "Bestellupdates und wichtige Kontomeldungen.",
+    notifDesc: "Steuere, welche E-Mails du erhältst.",
+    mainEmailLabel: "Wichtige E-Mails",
+    mainEmailSub: "Bestell-Updates, wichtige Konto-Nachrichten.",
     weeklyLabel: "Wöchentliche Zusammenfassung",
-    weeklySub:
-      "Erhalte eine wöchentliche Zusammenfassung von Nutzern und Bestellungen.",
+    weeklySub: "Wöchentlicher Überblick über Nutzer und Bestellungen.",
+
     savedPill: "Einstellungen gespeichert",
+  },
+  es: {
+    settingsTitle: "Configuración",
+    settingsSubtitle: "Administra tu perfil, preferencias y notificaciones.",
+
+    profileTitle: "Perfil",
+    profileDesc: "Actualiza cómo aparece tu nombre en el panel.",
+    displayNameLabel: "Nombre visible",
+    displayNamePlaceholder: "Tu nombre",
+
+    prefsTitle: "Preferencias",
+    prefsDesc: "Elige tema visual e idioma de la interfaz.",
+    themeLabel: "Tema",
+    languageLabel: "Idioma",
+    themeOptionDark: "Oscuro",
+    themeOptionLight: "Claro",
+    themeOptionSystem: "Sistema",
+
+    notifTitle: "Notificaciones",
+    notifDesc: "Controla qué correos electrónicos recibes.",
+    mainEmailLabel: "Alertas principales",
+    mainEmailSub: "Actualizaciones de pedidos, mensajes importantes.",
+    weeklyLabel: "Resumen semanal",
+    weeklySub: "Resumen semanal de usuarios y pedidos.",
+
+    savedPill: "Configuración guardada",
   },
   fr: {
     settingsTitle: "Paramètres",
-    settingsSubtitle:
-      "Gérez votre profil, vos préférences et vos notifications.",
+    settingsSubtitle: "Gère ton profil, tes préférences et notifications.",
+
     profileTitle: "Profil",
-    profileDesc: "Mettez à jour la façon dont votre nom apparaît dans le panel.",
+    profileDesc: "Modifie la façon dont ton nom apparaît dans le panel.",
     displayNameLabel: "Nom affiché",
-    displayNamePlaceholder: "Votre nom",
+    displayNamePlaceholder: "Ton nom",
+
     prefsTitle: "Préférences",
-    prefsDesc: "Choisissez le thème et la langue de l’interface.",
+    prefsDesc: "Choisis le thème visuel et la langue de l’interface.",
     themeLabel: "Thème",
     languageLabel: "Langue",
     themeOptionDark: "Sombre",
     themeOptionLight: "Clair",
     themeOptionSystem: "Système",
+
     notifTitle: "Notifications",
-    notifDesc:
-      "Contrôlez les e-mails que vous recevez à propos de l’activité.",
+    notifDesc: "Contrôle les emails que tu reçois.",
     mainEmailLabel: "Alertes principales",
-    mainEmailSub: "Mises à jour de commandes et messages importants.",
+    mainEmailSub: "Mises à jour de commandes, messages critiques.",
     weeklyLabel: "Résumé hebdomadaire",
-    weeklySub:
-      "Recevez un résumé hebdomadaire des utilisateurs et des commandes.",
+    weeklySub: "Résumé hebdomadaire des utilisateurs et commandes.",
+
     savedPill: "Paramètres enregistrés",
   },
   it: {
     settingsTitle: "Impostazioni",
-    settingsSubtitle:
-      "Gestisci il tuo profilo, le preferenze e le notifiche.",
+    settingsSubtitle: "Gestisci profilo, preferenze e notifiche.",
+
     profileTitle: "Profilo",
     profileDesc: "Aggiorna come appare il tuo nome nel pannello.",
     displayNameLabel: "Nome visualizzato",
     displayNamePlaceholder: "Il tuo nome",
+
     prefsTitle: "Preferenze",
-    prefsDesc: "Scegli il tema e la lingua dell’interfaccia.",
+    prefsDesc: "Scegli tema e lingua dell’interfaccia.",
     themeLabel: "Tema",
     languageLabel: "Lingua",
     themeOptionDark: "Scuro",
     themeOptionLight: "Chiaro",
     themeOptionSystem: "Sistema",
+
     notifTitle: "Notifiche",
-    notifDesc:
-      "Controlla quali e-mail ricevi sull’attività dell’account.",
-    mainEmailLabel: "Avvisi principali",
-    mainEmailSub: "Aggiornamenti ordini e messaggi critici.",
+    notifDesc: "Controlla quali email ricevi.",
+    mainEmailLabel: "Email principali",
+    mainEmailSub: "Aggiornamenti ordini, messaggi critici.",
     weeklyLabel: "Riepilogo settimanale",
-    weeklySub:
-      "Ricevi un riepilogo settimanale di utenti e ordini.",
+    weeklySub: "Riepilogo settimanale di utenti e ordini.",
+
     savedPill: "Impostazioni salvate",
   },
   ru: {
     settingsTitle: "Настройки",
-    settingsSubtitle:
-      "Управляйте профилем, предпочтениями и уведомлениями.",
+    settingsSubtitle: "Управляй профилем, предпочтениями и уведомлениями.",
+
     profileTitle: "Профиль",
-    profileDesc:
-      "Измените, как ваше имя отображается в админ-панели.",
+    profileDesc: "Измени, как твоё имя отображается в панели.",
     displayNameLabel: "Отображаемое имя",
-    displayNamePlaceholder: "Ваше имя",
+    displayNamePlaceholder: "Твоё имя",
+
     prefsTitle: "Предпочтения",
-    prefsDesc: "Выберите тему и язык интерфейса.",
+    prefsDesc: "Выбери тему и язык интерфейса.",
     themeLabel: "Тема",
     languageLabel: "Язык",
     themeOptionDark: "Тёмная",
     themeOptionLight: "Светлая",
     themeOptionSystem: "Системная",
+
     notifTitle: "Уведомления",
-    notifDesc:
-      "Управляйте e-mail-уведомлениями об активности.",
+    notifDesc: "Управляй email-уведомлениями.",
     mainEmailLabel: "Основные уведомления",
-    mainEmailSub:
-      "Обновления заказов и важные сообщения по аккаунту.",
+    mainEmailSub: "Обновления заказов, важные сообщения.",
     weeklyLabel: "Еженедельный отчёт",
-    weeklySub:
-      "Получайте еженедельный отчёт по пользователям и заказам.",
+    weeklySub: "Краткий отчёт по пользователям и заказам.",
+
     savedPill: "Настройки сохранены",
   },
 };
 
-const languageOptions = [
-  { value: "en", label: "English" },
-  { value: "tr", label: "Türkçe" },
-  { value: "es", label: "Español" },
-  { value: "de", label: "Deutsch" },
-  { value: "fr", label: "Français" },
-  { value: "it", label: "Italiano" },
-  { value: "ru", label: "Русский" },
-];
+function SettingsPage() {
+  const { settings, updateSetting } = useSettings();
+  const [displayName, setDisplayName] = useState(settings.displayName || "");
+  const [showSaved, setShowSaved] = useState(false);
 
-function SettingsPage({ language }) {
-  const { settings, updateSettings, language: ctxLanguage } = useSettings();
-  const [savedState, setSavedState] = useState("");
+  const currentLang = settings.language || "en";
+  const t = translations[currentLang] || translations.en;
 
-  const safeSettings = settings || {
-    displayName: "",
-    theme: "dark",
-    language: "en",
-    emailAlerts: true,
-    weeklySummary: false,
+  // değişiklik olunca "Settings saved" göstermek
+  const triggerSaved = () => {
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 1500);
   };
 
-  // Dil önceliği: prop > context.language > settings.language > "en"
-  const langKey = language || ctxLanguage || safeSettings.language || "en";
-  const t = translations[langKey] || translations.en;
 
+
+  const handleLanguageChange = (e) => {
+    updateSetting("language", e.target.value);
+    triggerSaved();
+  };
+
+  const handleDisplayNameBlur = () => {
+    if (displayName !== settings.displayName) {
+      updateSetting("displayName", displayName.trim());
+      triggerSaved();
+    }
+  };
+
+  const handleMainEmailChange = (e) => {
+    updateSetting("mainEmail", e.target.checked);
+    triggerSaved();
+  };
+
+  const handleWeeklyChange = (e) => {
+    updateSetting("weeklySummary", e.target.checked);
+    triggerSaved();
+  };
+
+  // context değişince inputu güncel tut
   useEffect(() => {
-    if (!settings) return;
-    setSavedState("saved");
-    const timeout = setTimeout(() => setSavedState(""), 1500);
-    return () => clearTimeout(timeout);
-  }, [settings]);
-
-  const handleChange = (field, value) => {
-    updateSettings({ [field]: value });
-  };
+    setDisplayName(settings.displayName || "");
+  }, [settings.displayName]);
 
   return (
     <div className="settings-container">
@@ -218,29 +238,32 @@ function SettingsPage({ language }) {
           <h2>{t.settingsTitle}</h2>
           <p>{t.settingsSubtitle}</p>
         </div>
-        {savedState && (
-          <span className="settings-saved-pill">
+
+        {showSaved && (
+          <div className="settings-saved-pill">
             {t.savedPill}
-          </span>
+          </div>
         )}
       </div>
 
       <div className="settings-grid">
         {/* PROFILE */}
         <section className="settings-card">
-          <h3>{t.profileTitle}</h3>
-          <p className="settings-description">
-            {t.profileDesc}
-          </p>
+          <div className="settings-card-header">
+            <div>
+              <h3>{t.profileTitle}</h3>
+              <p>{t.profileDesc}</p>
+            </div>
+          </div>
 
           <div className="settings-field">
-            <label>{t.displayNameLabel}</label>
+            <label htmlFor="displayName">{t.displayNameLabel}</label>
             <input
+              id="displayName"
               type="text"
-              value={safeSettings.displayName}
-              onChange={(e) =>
-                handleChange("displayName", e.target.value)
-              }
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              onBlur={handleDisplayNameBlur}
               placeholder={t.displayNamePlaceholder}
             />
           </div>
@@ -248,84 +271,111 @@ function SettingsPage({ language }) {
 
         {/* PREFERENCES */}
         <section className="settings-card">
-          <h3>{t.prefsTitle}</h3>
-          <p className="settings-description">
-            {t.prefsDesc}
-          </p>
-
-          <div className="settings-field">
-            <label>{t.themeLabel}</label>
-            <select
-              value={safeSettings.theme}
-              onChange={(e) =>
-                handleChange("theme", e.target.value)
-              }
-            >
-              <option value="dark">{t.themeOptionDark}</option>
-              <option value="light">{t.themeOptionLight}</option>
-              <option value="system">{t.themeOptionSystem}</option>
-            </select>
+          <div className="settings-card-header">
+            <div>
+              <h3>{t.prefsTitle}</h3>
+              <p>{t.prefsDesc}</p>
+            </div>
           </div>
 
-          <div className="settings-field">
-            <label>{t.languageLabel}</label>
-            <select
-              value={safeSettings.language}
-              onChange={(e) =>
-                handleChange("language", e.target.value)
-              }
-            >
-              {languageOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+          <div className="settings-two-cols">
+            <div className="settings-field">
+              <label>{t.themeLabel}</label>
+              <div className="settings-theme-options">
+                <button
+                  type="button"
+                  className={
+                    "settings-chip" +
+                    (settings.theme === "dark" ? " active" : "")
+                  }
+                  onClick={() => {
+                    updateSetting("theme", "dark");
+                    triggerSaved();
+                  }}
+                >
+                  {t.themeOptionDark}
+                </button>
+                <button
+                  type="button"
+                  className={
+                    "settings-chip" +
+                    (settings.theme === "light" ? " active" : "")
+                  }
+                  onClick={() => {
+                    updateSetting("theme", "light");
+                    triggerSaved();
+                  }}
+                >
+                  {t.themeOptionLight}
+                </button>
+                <button
+                  type="button"
+                  className={
+                    "settings-chip" +
+                    (settings.theme === "system" ? " active" : "")
+                  }
+                  onClick={() => {
+                    updateSetting("theme", "system");
+                    triggerSaved();
+                  }}
+                >
+                  {t.themeOptionSystem}
+                </button>
+              </div>
+            </div>
+
+            <div className="settings-field">
+              <label htmlFor="language">{t.languageLabel}</label>
+              <select
+                id="language"
+                value={currentLang}
+                onChange={handleLanguageChange}
+              >
+                <option value="en">English</option>
+                <option value="tr">Türkçe</option>
+                <option value="de">Deutsch</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+                <option value="it">Italiano</option>
+                <option value="ru">Русский</option>
+              </select>
+            </div>
           </div>
         </section>
 
         {/* NOTIFICATIONS */}
-        <section className="settings-card">
-          <h3>{t.notifTitle}</h3>
-          <p className="settings-description">
-            {t.notifDesc}
-          </p>
-
-          <div className="settings-toggle-row">
-            <label>
-              <span>{t.mainEmailLabel}</span>
-              <small>{t.mainEmailSub}</small>
-            </label>
-            <button
-              className={`toggle-pill ${
-                safeSettings.emailAlerts ? "on" : "off"
-              }`}
-              onClick={() =>
-                handleChange("emailAlerts", !safeSettings.emailAlerts)
-              }
-            >
-              <span className="toggle-thumb" />
-            </button>
+        <section className="settings-card settings-card-full">
+          <div className="settings-card-header">
+            <div>
+              <h3>{t.notifTitle}</h3>
+              <p>{t.notifDesc}</p>
+            </div>
           </div>
 
-          <div className="settings-toggle-row">
-            <label>
-              <span>{t.weeklyLabel}</span>
-              <small>{t.weeklySub}</small>
+          <div className="settings-toggle-list">
+            <label className="settings-toggle">
+              <input
+                type="checkbox"
+                checked={settings.mainEmail ?? true}
+                onChange={handleMainEmailChange}
+              />
+              <div className="settings-toggle-text">
+                <span>{t.mainEmailLabel}</span>
+                <small>{t.mainEmailSub}</small>
+              </div>
             </label>
-            <button
-              className={`toggle-pill ${
-                safeSettings.weeklySummary ? "on" : "off"
-              }`}
-              onClick={() =>
-                handleChange(
-                  "weeklySummary",
-                  !safeSettings.weeklySummary
-                )
-              }
-            >
-              <span className="toggle-thumb" />
-            </button>
+
+            <label className="settings-toggle">
+              <input
+                type="checkbox"
+                checked={settings.weeklySummary ?? false}
+                onChange={handleWeeklyChange}
+              />
+              <div className="settings-toggle-text">
+                <span>{t.weeklyLabel}</span>
+                <small>{t.weeklySub}</small>
+              </div>
+            </label>
           </div>
         </section>
       </div>
