@@ -1,5 +1,6 @@
 // src/context/SettingsContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
+import translations from "../i18n/translations"; 
 
 const defaultSettings = {
   displayName: "Admin User",
@@ -91,9 +92,17 @@ export function SettingsProvider({ children }) {
     updateSettings({ language });
   };
 
+  // 🌐 GLOBAL TRANSLATION FONKSİYONU
+  const t = (key) => {
+    const langCode = settings.language || "en";
+    const langPack = translations[langCode] || translations.en;
+
+    // Önce seçili dil, yoksa en, o da yoksa key'i olduğu gibi döndür
+    return langPack[key] || translations.en[key] || key;
+  };
+
   const value = {
     settings,
-    // ikisi de mevcut, isteyen istediğini kullanır
     updateSettings,
     updateSetting,
     theme: settings.theme,
@@ -101,6 +110,7 @@ export function SettingsProvider({ children }) {
     setTheme,
     toggleTheme,
     setLanguage,
+    t, // 💥 her yerden kullanacağız
   };
 
   return (

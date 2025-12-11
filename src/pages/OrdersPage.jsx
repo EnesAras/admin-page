@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import "./OrdersPage.css";
 import { useSettings } from "../context/SettingsContext";
+import translations from "../i18n/translations";
 
 const initialOrders = [
   {
@@ -44,243 +45,6 @@ const initialOrders = [
 
 const STATUS_FLOW = ["Pending", "Processing", "Shipped", "Cancelled"];
 
-const statusLabels = {
-  en: {
-    Pending: "Pending",
-    Processing: "Processing",
-    Shipped: "Shipped",
-    Cancelled: "Cancelled",
-  },
-  tr: {
-    Pending: "Beklemede",
-    Processing: "İşleniyor",
-    Shipped: "Gönderildi",
-    Cancelled: "İptal edildi",
-  },
-  es: {
-    Pending: "Pendiente",
-    Processing: "En proceso",
-    Shipped: "Enviado",
-    Cancelled: "Cancelado",
-  },
-  de: {
-    Pending: "Ausstehend",
-    Processing: "In Bearbeitung",
-    Shipped: "Versendet",
-    Cancelled: "Storniert",
-  },
-  fr: {
-    Pending: "En attente",
-    Processing: "En cours",
-    Shipped: "Expédiée",
-    Cancelled: "Annulée",
-  },
-  it: {
-    Pending: "In attesa",
-    Processing: "In elaborazione",
-    Shipped: "Spedito",
-    Cancelled: "Annullato",
-  },
-  ru: {
-    Pending: "В ожидании",
-    Processing: "В обработке",
-    Shipped: "Отправлен",
-    Cancelled: "Отменён",
-  },
-};
-
-const TEXTS = {
-  en: {
-    title: "Orders",
-    subtitle: "Track and manage recent orders.",
-    filterAll: "All",
-    searchPlaceholder: "Search by name, email, ID...",
-    summaryTotalOrders: "Total Orders",
-    summaryTotalRevenue: "Total Revenue",
-    thId: "ID",
-    thCustomer: "Customer",
-    thEmail: "Email",
-    thDate: "Date",
-    thTotal: "Total",
-    thStatusClickable: "Status (click to change)",
-    thPayment: "Payment",
-    empty: "No orders found for this filter.",
-    resultsSummary: "Showing {current} of {total} orders",
-    exportCsv: "Export CSV",
-    detailsTitle: "Order details",
-    detailsOrderId: "Order ID",
-    detailsCustomer: "Customer",
-    detailsEmail: "Email",
-    detailsDate: "Date",
-    detailsTotal: "Total amount",
-    detailsStatus: "Status",
-    detailsPayment: "Payment method",
-    detailsClose: "Close",
-  },
-  tr: {
-    title: "Siparişler",
-    subtitle: "Son siparişleri takip et ve yönet.",
-    filterAll: "Hepsi",
-    searchPlaceholder: "İsim, e-posta veya ID ile ara...",
-    summaryTotalOrders: "Toplam Sipariş",
-    summaryTotalRevenue: "Toplam Gelir",
-    thId: "ID",
-    thCustomer: "Müşteri",
-    thEmail: "E-posta",
-    thDate: "Tarih",
-    thTotal: "Tutar",
-    thStatusClickable: "Durum (değiştirmek için tıkla)",
-    thPayment: "Ödeme",
-    empty: "Bu filtreye uygun sipariş bulunamadı.",
-    resultsSummary: "Toplam {total} siparişten {current} tanesi görüntüleniyor",
-    exportCsv: "CSV olarak dışa aktar",
-    detailsTitle: "Sipariş detayı",
-    detailsOrderId: "Sipariş ID",
-    detailsCustomer: "Müşteri",
-    detailsEmail: "E-posta",
-    detailsDate: "Tarih",
-    detailsTotal: "Toplam tutar",
-    detailsStatus: "Durum",
-    detailsPayment: "Ödeme yöntemi",
-    detailsClose: "Kapat",
-  },
-  es: {
-    title: "Pedidos",
-    subtitle: "Controla y gestiona los pedidos recientes.",
-    filterAll: "Todos",
-    searchPlaceholder: "Buscar por nombre, correo, ID...",
-    summaryTotalOrders: "Pedidos totales",
-    summaryTotalRevenue: "Ingresos totales",
-    thId: "ID",
-    thCustomer: "Cliente",
-    thEmail: "Correo",
-    thDate: "Fecha",
-    thTotal: "Total",
-    thStatusClickable: "Estado (clic para cambiar)",
-    thPayment: "Pago",
-    empty: "No se encontraron pedidos para este filtro.",
-    resultsSummary: "Mostrando {current} de {total} pedidos",
-    exportCsv: "Exportar CSV",
-    detailsTitle: "Detalles del pedido",
-    detailsOrderId: "ID del pedido",
-    detailsCustomer: "Cliente",
-    detailsEmail: "Correo",
-    detailsDate: "Fecha",
-    detailsTotal: "Importe total",
-    detailsStatus: "Estado",
-    detailsPayment: "Método de pago",
-    detailsClose: "Cerrar",
-  },
-  de: {
-    title: "Bestellungen",
-    subtitle: "Verfolge und verwalte aktuelle Bestellungen.",
-    filterAll: "Alle",
-    searchPlaceholder: "Nach Name, E-Mail oder ID suchen...",
-    summaryTotalOrders: "Gesamtbestellungen",
-    summaryTotalRevenue: "Gesamtumsatz",
-    thId: "ID",
-    thCustomer: "Kunde",
-    thEmail: "E-Mail",
-    thDate: "Datum",
-    thTotal: "Summe",
-    thStatusClickable: "Status (zum Ändern klicken)",
-    thPayment: "Zahlung",
-    empty: "Für diesen Filter wurden keine Bestellungen gefunden.",
-    resultsSummary: "Zeige {current} von {total} Bestellungen",
-    exportCsv: "Als CSV exportieren",
-    detailsTitle: "Bestelldetails",
-    detailsOrderId: "Bestell-ID",
-    detailsCustomer: "Kunde",
-    detailsEmail: "E-Mail",
-    detailsDate: "Datum",
-    detailsTotal: "Gesamtbetrag",
-    detailsStatus: "Status",
-    detailsPayment: "Zahlungsmethode",
-    detailsClose: "Schließen",
-  },
-  fr: {
-    title: "Commandes",
-    subtitle: "Suivez et gérez les commandes récentes.",
-    filterAll: "Toutes",
-    searchPlaceholder: "Rechercher par nom, e-mail, ID...",
-    summaryTotalOrders: "Commandes totales",
-    summaryTotalRevenue: "Revenu total",
-    thId: "ID",
-    thCustomer: "Client",
-    thEmail: "E-mail",
-    thDate: "Date",
-    thTotal: "Total",
-    thStatusClickable: "Statut (cliquer pour changer)",
-    thPayment: "Paiement",
-    empty: "Aucune commande trouvée pour ce filtre.",
-    resultsSummary: "Affichage de {current} sur {total} commandes",
-    exportCsv: "Exporter en CSV",
-    detailsTitle: "Détails de la commande",
-    detailsOrderId: "ID de commande",
-    detailsCustomer: "Client",
-    detailsEmail: "E-mail",
-    detailsDate: "Date",
-    detailsTotal: "Montant total",
-    detailsStatus: "Statut",
-    detailsPayment: "Méthode de paiement",
-    detailsClose: "Fermer",
-  },
-  it: {
-    title: "Ordini",
-    subtitle: "Monitora e gestisci gli ordini recenti.",
-    filterAll: "Tutti",
-    searchPlaceholder: "Cerca per nome, email, ID...",
-    summaryTotalOrders: "Ordini totali",
-    summaryTotalRevenue: "Entrate totali",
-    thId: "ID",
-    thCustomer: "Cliente",
-    thEmail: "Email",
-    thDate: "Data",
-    thTotal: "Totale",
-    thStatusClickable: "Stato (clicca per cambiare)",
-    thPayment: "Pagamento",
-    empty: "Nessun ordine trovato per questo filtro.",
-    resultsSummary: "Visualizzazione di {current} su {total} ordini",
-    exportCsv: "Esporta CSV",
-    detailsTitle: "Dettagli ordine",
-    detailsOrderId: "ID ordine",
-    detailsCustomer: "Cliente",
-    detailsEmail: "Email",
-    detailsDate: "Data",
-    detailsTotal: "Importo totale",
-    detailsStatus: "Stato",
-    detailsPayment: "Metodo di pagamento",
-    detailsClose: "Chiudi",
-  },
-  ru: {
-    title: "Заказы",
-    subtitle: "Отслеживайте и управляйте последними заказами.",
-    filterAll: "Все",
-    searchPlaceholder: "Поиск по имени, e-mail или ID...",
-    summaryTotalOrders: "Всего заказов",
-    summaryTotalRevenue: "Общая выручка",
-    thId: "ID",
-    thCustomer: "Клиент",
-    thEmail: "E-mail",
-    thDate: "Дата",
-    thTotal: "Сумма",
-    thStatusClickable: "Статус (кликните, чтобы изменить)",
-    thPayment: "Оплата",
-    empty: "Для этого фильтра заказы не найдены.",
-    resultsSummary: "Показано {current} из {total} заказов",
-    exportCsv: "Экспорт CSV",
-    detailsTitle: "Детали заказа",
-    detailsOrderId: "ID заказа",
-    detailsCustomer: "Клиент",
-    detailsEmail: "E-mail",
-    detailsDate: "Дата",
-    detailsTotal: "Итоговая сумма",
-    detailsStatus: "Статус",
-    detailsPayment: "Способ оплаты",
-    detailsClose: "Закрыть",
-  },
-};
-
 function getLocaleFromLangKey(langKey) {
   switch (langKey) {
     case "tr":
@@ -301,10 +65,34 @@ function getLocaleFromLangKey(langKey) {
 }
 
 function OrdersPage({ language }) {
-  const { settings } = useSettings();
-  const langKey = language || settings?.language || "en";
-  const t = TEXTS[langKey] || TEXTS.en;
-  const s = statusLabels[langKey] || statusLabels.en;
+  const { settings, language: ctxLanguage } = useSettings();
+
+  const langKey = language || ctxLanguage || settings?.language || "en";
+  const dict = translations[langKey] || translations.en;
+
+  const t = (key, fallback) => {
+    if (dict && dict[key] !== undefined) return dict[key];
+    if (translations.en && translations.en[key] !== undefined) {
+      return translations.en[key];
+    }
+    if (fallback !== undefined) return fallback;
+    return key;
+  };
+
+  const statusLabel = (status) => {
+    switch (status) {
+      case "Pending":
+        return t("orderStatusPending", "Pending");
+      case "Processing":
+        return t("orderStatusProcessing", "Processing");
+      case "Shipped":
+        return t("orderStatusShipped", "Shipped");
+      case "Cancelled":
+        return t("orderStatusCancelled", "Cancelled");
+      default:
+        return status;
+    }
+  };
 
   const [orders, setOrders] = useState(() => {
     const stored = localStorage.getItem("admin_orders");
@@ -479,17 +267,22 @@ function OrdersPage({ language }) {
       ? orders.find((o) => o.id === selectedOrderId) || null
       : null;
 
-  const resultsText = t.resultsSummary
-    .replace("{current}", filteredOrders.length)
-    .replace("{total}", orders.length);
+  const resultsTemplate = t(
+    "orders.resultsSummary",
+    "Showing {current} of {total} orders"
+  );
+
+  const resultsText = resultsTemplate
+    .replace("{current}", String(filteredOrders.length))
+    .replace("{total}", String(orders.length));
 
   return (
     <div className="orders-container">
       {/* HEADER */}
       <div className="orders-header">
         <div className="orders-header-left">
-          <h2>{t.title}</h2>
-          <p>{t.subtitle}</p>
+          <h2>{t("orders.title", "Orders")}</h2>
+          <p>{t("orders.subtitle", "Track and manage recent orders.")}</p>
         </div>
 
         <div className="orders-header-right">
@@ -500,7 +293,7 @@ function OrdersPage({ language }) {
               }`}
               onClick={() => setStatusFilter("all")}
             >
-              {t.filterAll}
+              {t("orders.filterAll", "All")}
             </button>
             <button
               className={`filter-btn ${
@@ -508,7 +301,7 @@ function OrdersPage({ language }) {
               }`}
               onClick={() => setStatusFilter("Pending")}
             >
-              {s.Pending}
+              {statusLabel("Pending")}
             </button>
             <button
               className={`filter-btn ${
@@ -516,7 +309,7 @@ function OrdersPage({ language }) {
               }`}
               onClick={() => setStatusFilter("Processing")}
             >
-              {s.Processing}
+              {statusLabel("Processing")}
             </button>
             <button
               className={`filter-btn ${
@@ -524,7 +317,7 @@ function OrdersPage({ language }) {
               }`}
               onClick={() => setStatusFilter("Shipped")}
             >
-              {s.Shipped}
+              {statusLabel("Shipped")}
             </button>
             <button
               className={`filter-btn ${
@@ -532,14 +325,17 @@ function OrdersPage({ language }) {
               }`}
               onClick={() => setStatusFilter("Cancelled")}
             >
-              {s.Cancelled}
+              {statusLabel("Cancelled")}
             </button>
           </div>
 
           <div className="orders-search">
             <input
               type="text"
-              placeholder={t.searchPlaceholder}
+              placeholder={t(
+                "orders.searchPlaceholder",
+                "Search by name, email, ID..."
+              )}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="orders-search-input"
@@ -551,23 +347,31 @@ function OrdersPage({ language }) {
       {/* SUMMARY CARDS */}
       <div className="orders-summary">
         <div className="orders-summary-card">
-          <span className="summary-label">{t.summaryTotalOrders}</span>
+          <span className="summary-label">
+            {t("orders.summaryTotalOrders", "Total Orders")}
+          </span>
           <span className="summary-value">{orders.length}</span>
         </div>
         <div className="orders-summary-card">
-          <span className="summary-label">{s.Pending}</span>
+          <span className="summary-label">
+            {statusLabel("Pending")}
+          </span>
           <span className="summary-value summary-pending">
             {pendingCount}
           </span>
         </div>
         <div className="orders-summary-card">
-          <span className="summary-label">{s.Shipped}</span>
+          <span className="summary-label">
+            {statusLabel("Shipped")}
+          </span>
           <span className="summary-value summary-shipped">
             {shippedCount}
           </span>
         </div>
         <div className="orders-summary-card">
-          <span className="summary-label">{t.summaryTotalRevenue}</span>
+          <span className="summary-label">
+            {t("orders.summaryTotalRevenue", "Total Revenue")}
+          </span>
           <span className="summary-value summary-revenue">
             €{totalAmount.toFixed(2)}
           </span>
@@ -583,7 +387,7 @@ function OrdersPage({ language }) {
           onClick={handleExportCsv}
           disabled={!filteredOrders.length}
         >
-          {t.exportCsv}
+          {t("orders.exportCsv", "Export CSV")}
         </button>
       </div>
 
@@ -596,7 +400,7 @@ function OrdersPage({ language }) {
                 className="orders-th-sortable"
                 onClick={() => handleSort("id")}
               >
-                <span>{t.thId}</span>
+                <span>{t("orders.thId", "ID")}</span>
                 <span className="sort-indicator">
                   {renderSortIndicator("id")}
                 </span>
@@ -605,17 +409,17 @@ function OrdersPage({ language }) {
                 className="orders-th-sortable"
                 onClick={() => handleSort("customer")}
               >
-                <span>{t.thCustomer}</span>
+                <span>{t("orders.thCustomer", "Customer")}</span>
                 <span className="sort-indicator">
                   {renderSortIndicator("customer")}
                 </span>
               </th>
-              <th>{t.thEmail}</th>
+              <th>{t("orders.thEmail", "Email")}</th>
               <th
                 className="orders-th-sortable"
                 onClick={() => handleSort("date")}
               >
-                <span>{t.thDate}</span>
+                <span>{t("orders.thDate", "Date")}</span>
                 <span className="sort-indicator">
                   {renderSortIndicator("date")}
                 </span>
@@ -624,20 +428,28 @@ function OrdersPage({ language }) {
                 className="orders-th-sortable"
                 onClick={() => handleSort("total")}
               >
-                <span>{t.thTotal}</span>
+                <span>{t("orders.thTotal", "Total")}</span>
                 <span className="sort-indicator">
                   {renderSortIndicator("total")}
                 </span>
               </th>
-              <th>{t.thStatusClickable}</th>
-              <th>{t.thPayment}</th>
+              <th>
+                {t(
+                  "orders.thStatusClickable",
+                  "Status (click to change)"
+                )}
+              </th>
+              <th>{t("orders.thPayment", "Payment")}</th>
             </tr>
           </thead>
           <tbody>
             {sortedOrders.length === 0 ? (
               <tr>
                 <td colSpan="7" className="orders-empty">
-                  {t.empty}
+                  {t(
+                    "orders.empty",
+                    "No orders found for this filter."
+                  )}
                 </td>
               </tr>
             ) : (
@@ -664,13 +476,14 @@ function OrdersPage({ language }) {
                         handleToggleStatus(order.id);
                       }}
                     >
-                      {s[order.status] || order.status}
+                      {statusLabel(order.status)}
                     </span>
                   </td>
                   <td>
-                    <span className={`payment-pill payment-${order.method
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}`}
+                    <span
+                      className={`payment-pill payment-${order.method
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")}`}
                     >
                       {order.method}
                     </span>
@@ -685,55 +498,67 @@ function OrdersPage({ language }) {
         {selectedOrder && (
           <div className="order-details-panel">
             <div className="order-details-header">
-              <h3>{t.detailsTitle}</h3>
+              <h3>{t("orders.detailsTitle", "Order details")}</h3>
               <button
                 type="button"
                 className="order-details-close"
                 onClick={() => setSelectedOrderId(null)}
               >
-                {t.detailsClose}
+                {t("orders.detailsClose", "Close")}
               </button>
             </div>
             <div className="order-details-grid">
               <div className="order-details-item">
-                <span className="details-label">{t.detailsOrderId}</span>
-                <span className="details-value">#{selectedOrder.id}</span>
+                <span className="details-label">
+                  {t("orders.detailsOrderId", "Order ID")}
+                </span>
+                <span className="details-value">
+                  #{selectedOrder.id}
+                </span>
               </div>
               <div className="order-details-item">
                 <span className="details-label">
-                  {t.detailsCustomer}
+                  {t("orders.detailsCustomer", "Customer")}
                 </span>
                 <span className="details-value">
                   {selectedOrder.customer}
                 </span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t.detailsEmail}</span>
+                <span className="details-label">
+                  {t("orders.detailsEmail", "Email")}
+                </span>
                 <span className="details-value">
                   {selectedOrder.email}
                 </span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t.detailsDate}</span>
+                <span className="details-label">
+                  {t("orders.detailsDate", "Date")}
+                </span>
                 <span className="details-value">
                   {formatDate(selectedOrder.date)}
                 </span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t.detailsTotal}</span>
+                <span className="details-label">
+                  {t("orders.detailsTotal", "Total amount")}
+                </span>
                 <span className="details-value">
                   €{selectedOrder.total.toFixed(2)}
                 </span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t.detailsStatus}</span>
+                <span className="details-label">
+                  {t("orders.detailsStatus", "Status")}
+                </span>
                 <span className="details-value">
-                  {s[selectedOrder.status] || selectedOrder.status}
+                  {statusLabel(selectedOrder.status)}
                 </span>
               </div>
               <div className="order-details-item">
                 <span className="details-label">
-                  {t.detailsPayment}
+                  {t("orders.detailsPayment", "Payment method")}
                 </span>
                 <span className="details-value">
                   {selectedOrder.method}

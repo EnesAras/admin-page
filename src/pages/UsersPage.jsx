@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import "./UsersPage.css";
 import { useSettings } from "../context/SettingsContext";
+import translations from "../i18n/translations";
 
 const usersData = [
   {
@@ -27,248 +28,36 @@ const usersData = [
   },
 ];
 
-// Çok dilli textler
-const userTexts = {
-  en: {
-    title: "Users",
-    filterAll: "All",
-    searchPlaceholder: "Search user...",
-    newUserTitle: "New User",
-    newUserSubtitle: "Fill in the details and save the user.",
-    editUserTitle: "Edit User",
-    editUserSubtitle: "Update the user information and save changes.",
-    fullNamePlaceholder: "Full name",
-    emailPlaceholder: "Email",
-    emailAddressPlaceholder: "Email address",
-    addUserButton: "Add User",
-    cancelButton: "Cancel",
-    saveChangesButton: "Save Changes",
-    editButton: "Edit",
-    deleteButton: "Delete",
-    nameRequired: "Name and email are required.",
-    nameLettersOnly: "Name can only contain letters and spaces.",
-    emailInvalid: "Please enter a valid email address.",
-    emailExists: "This email is already registered.",
-    emailUsed: "This email is already registered for another user.",
-    roleColumn: "Role",
-    statusColumn: "Status",
-    actionsColumn: "Actions",
-    // yeni
-    emptyState: "No users found for this filter.",
-    statsTotal: "Total",
-    statsActive: "Active",
-    statsInactive: "Inactive",
-  },
-  tr: {
-    title: "Kullanıcılar",
-    filterAll: "Hepsi",
-    searchPlaceholder: "Kullanıcı ara...",
-    newUserTitle: "Yeni Kullanıcı",
-    newUserSubtitle: "Bilgileri doldur ve kaydet.",
-    editUserTitle: "Kullanıcıyı Düzenle",
-    editUserSubtitle: "Kullanıcı bilgilerini güncelle ve kaydet.",
-    fullNamePlaceholder: "Ad Soyad",
-    emailPlaceholder: "E-posta",
-    emailAddressPlaceholder: "E-posta adresi",
-    addUserButton: "Kullanıcı Ekle",
-    cancelButton: "İptal",
-    saveChangesButton: "Değişiklikleri Kaydet",
-    editButton: "Düzenle",
-    deleteButton: "Sil",
-    nameRequired: "İsim ve e-posta zorunludur.",
-    nameLettersOnly: "İsim sadece harf ve boşluk içerebilir.",
-    emailInvalid: "Lütfen geçerli bir e-posta adresi gir.",
-    emailExists: "Bu e-posta zaten kayıtlı.",
-    emailUsed: "Bu e-posta başka bir kullanıcıda kayıtlı.",
-    roleColumn: "Rol",
-    statusColumn: "Durum",
-    actionsColumn: "İşlemler",
-    // yeni
-    emptyState: "Bu filtreyle eşleşen kullanıcı bulunamadı.",
-    statsTotal: "Toplam",
-    statsActive: "Aktif",
-    statsInactive: "Pasif",
-  },
-  es: {
-    title: "Usuarios",
-    filterAll: "Todos",
-    searchPlaceholder: "Buscar usuario...",
-    newUserTitle: "Nuevo usuario",
-    newUserSubtitle: "Rellena los datos y guarda el usuario.",
-    editUserTitle: "Editar usuario",
-    editUserSubtitle: "Actualiza la información del usuario y guarda.",
-    fullNamePlaceholder: "Nombre completo",
-    emailPlaceholder: "Correo",
-    emailAddressPlaceholder: "Correo electrónico",
-    addUserButton: "Añadir usuario",
-    cancelButton: "Cancelar",
-    saveChangesButton: "Guardar cambios",
-    editButton: "Editar",
-    deleteButton: "Eliminar",
-    nameRequired: "Nombre y correo son obligatorios.",
-    nameLettersOnly: "El nombre solo puede contener letras y espacios.",
-    emailInvalid: "Introduce un correo válido.",
-    emailExists: "Este correo ya está registrado.",
-    emailUsed: "Este correo ya está registrado en otro usuario.",
-    roleColumn: "Rol",
-    statusColumn: "Estado",
-    actionsColumn: "Acciones",
-    emptyState: "No se encontraron usuarios para este filtro.",
-    statsTotal: "Total",
-    statsActive: "Activos",
-    statsInactive: "Inactivos",
-  },
-  de: {
-    title: "Benutzer",
-    filterAll: "Alle",
-    searchPlaceholder: "Benutzer suchen...",
-    newUserTitle: "Neuer Benutzer",
-    newUserSubtitle: "Daten ausfüllen und Benutzer speichern.",
-    editUserTitle: "Benutzer bearbeiten",
-    editUserSubtitle: "Benutzerdaten aktualisieren und speichern.",
-    fullNamePlaceholder: "Vollständiger Name",
-    emailPlaceholder: "E-Mail",
-    emailAddressPlaceholder: "E-Mail-Adresse",
-    addUserButton: "Benutzer hinzufügen",
-    cancelButton: "Abbrechen",
-    saveChangesButton: "Änderungen speichern",
-    editButton: "Bearbeiten",
-    deleteButton: "Löschen",
-    nameRequired: "Name und E-Mail sind erforderlich.",
-    nameLettersOnly: "Name darf nur Buchstaben und Leerzeichen enthalten.",
-    emailInvalid: "Bitte eine gültige E-Mail-Adresse eingeben.",
-    emailExists: "Diese E-Mail ist bereits registriert.",
-    emailUsed:
-      "Diese E-Mail wird bereits von einem anderen Benutzer verwendet.",
-    roleColumn: "Rolle",
-    statusColumn: "Status",
-    actionsColumn: "Aktionen",
-    emptyState: "Keine Benutzer für diesen Filter gefunden.",
-    statsTotal: "Gesamt",
-    statsActive: "Aktiv",
-    statsInactive: "Inaktiv",
-  },
-  fr: {
-    title: "Utilisateurs",
-    filterAll: "Tous",
-    searchPlaceholder: "Rechercher un utilisateur...",
-    newUserTitle: "Nouvel utilisateur",
-    newUserSubtitle: "Renseigne les informations et enregistre.",
-    editUserTitle: "Modifier l'utilisateur",
-    editUserSubtitle:
-      "Mets à jour les informations de l'utilisateur et enregistre.",
-    fullNamePlaceholder: "Nom complet",
-    emailPlaceholder: "E-mail",
-    emailAddressPlaceholder: "Adresse e-mail",
-    addUserButton: "Ajouter un utilisateur",
-    cancelButton: "Annuler",
-    saveChangesButton: "Enregistrer les modifications",
-    editButton: "Modifier",
-    deleteButton: "Supprimer",
-    nameRequired: "Le nom et l'e-mail sont obligatoires.",
-    nameLettersOnly: "Le nom ne peut contenir que des lettres et des espaces.",
-    emailInvalid: "Merci d'entrer une adresse e-mail valide.",
-    emailExists: "Cet e-mail est déjà enregistré.",
-    emailUsed: "Cet e-mail est déjà utilisé par un autre utilisateur.",
-    roleColumn: "Rôle",
-    statusColumn: "Statut",
-    actionsColumn: "Actions",
-    emptyState: "Aucun utilisateur trouvé pour ce filtre.",
-    statsTotal: "Total",
-    statsActive: "Actifs",
-    statsInactive: "Inactifs",
-  },
-  it: {
-    title: "Utenti",
-    filterAll: "Tutti",
-    searchPlaceholder: "Cerca utente...",
-    newUserTitle: "Nuovo utente",
-    newUserSubtitle: "Compila i dati e salva l'utente.",
-    editUserTitle: "Modifica utente",
-    editUserSubtitle:
-      "Aggiorna le informazioni dell'utente e salva le modifiche.",
-    fullNamePlaceholder: "Nome completo",
-    emailPlaceholder: "Email",
-    emailAddressPlaceholder: "Indirizzo email",
-    addUserButton: "Aggiungi utente",
-    cancelButton: "Annulla",
-    saveChangesButton: "Salva modifiche",
-    editButton: "Modifica",
-    deleteButton: "Elimina",
-    nameRequired: "Nome ed email sono obbligatori.",
-    nameLettersOnly: "Il nome può contenere solo lettere e spazi.",
-    emailInvalid: "Inserisci un indirizzo email valido.",
-    emailExists: "Questa email è già registrata.",
-    emailUsed: "Questa email è già registrata per un altro utente.",
-    roleColumn: "Ruolo",
-    statusColumn: "Stato",
-    actionsColumn: "Azioni",
-    emptyState: "Nessun utente trovato per questo filtro.",
-    statsTotal: "Totali",
-    statsActive: "Attivi",
-    statsInactive: "Non attivi",
-  },
-  ru: {
-    title: "Пользователи",
-    filterAll: "Все",
-    searchPlaceholder: "Поиск пользователя...",
-    newUserTitle: "Новый пользователь",
-    newUserSubtitle: "Заполните данные и сохраните пользователя.",
-    editUserTitle: "Редактировать пользователя",
-    editUserSubtitle:
-      "Обновите информацию о пользователе и сохраните изменения.",
-    fullNamePlaceholder: "Полное имя",
-    emailPlaceholder: "E-mail",
-    emailAddressPlaceholder: "Адрес e-mail",
-    addUserButton: "Добавить пользователя",
-    cancelButton: "Отмена",
-    saveChangesButton: "Сохранить изменения",
-    editButton: "Редактировать",
-    deleteButton: "Удалить",
-    nameRequired: "Имя и e-mail обязательны.",
-    nameLettersOnly: "Имя может содержать только буквы и пробелы.",
-    emailInvalid: "Пожалуйста, введите корректный адрес e-mail.",
-    emailExists: "Этот e-mail уже зарегистрирован.",
-    emailUsed: "Этот e-mail уже используется другим пользователем.",
-    roleColumn: "Роль",
-    statusColumn: "Статус",
-    actionsColumn: "Действия",
-    emptyState: "Пользователи для этого фильтра не найдены.",
-    statsTotal: "Всего",
-    statsActive: "Активные",
-    statsInactive: "Неактивные",
-  },
-};
-
-const statusLabels = {
-  en: { Active: "Active", Inactive: "Inactive", Pending: "Pending" },
-  tr: { Active: "Aktif", Inactive: "Pasif", Pending: "Beklemede" },
-  es: { Active: "Activo", Inactive: "Inactivo", Pending: "Pendiente" },
-  de: { Active: "Aktiv", Inactive: "Inaktiv", Pending: "Ausstehend" },
-  fr: { Active: "Actif", Inactive: "Inactif", Pending: "En attente" },
-  it: { Active: "Attivo", Inactive: "Inattivo", Pending: "In sospeso" },
-  ru: { Active: "Активен", Inactive: "Неактивен", Pending: "В ожидании" },
-};
-
-const roleLabels = {
-  en: { Admin: "Admin", User: "User", Moderator: "Moderator" },
-  tr: { Admin: "Yönetici", User: "Kullanıcı", Moderator: "Moderatör" },
-  es: { Admin: "Administrador", User: "Usuario", Moderator: "Moderador" },
-  de: { Admin: "Administrator", User: "Benutzer", Moderator: "Moderator" },
-  fr: { Admin: "Admin", User: "Utilisateur", Moderator: "Modérateur" },
-  it: { Admin: "Admin", User: "Utente", Moderator: "Moderatore" },
-  ru: { Admin: "Админ", User: "Пользователь", Moderator: "Модератор" },
-};
-
 function UsersPage({ language }) {
   const { settings, language: ctxLanguage } = useSettings();
 
-  // Dil öncelik sırası: prop > context.language > settings.language > "en"
+  // Dil önceliği: prop > context.language > settings.language > "en"
   const lang = language || ctxLanguage || settings?.language || "en";
 
-  const t = userTexts[lang] || userTexts.en;
-  const s = statusLabels[lang] || statusLabels.en;
-  const r = roleLabels[lang] || roleLabels.en;
+  const dict = translations[lang] || translations.en;
+
+  const t = (key, fallback) => {
+    if (dict && dict[key] !== undefined) return dict[key];
+    if (translations.en && translations.en[key] !== undefined)
+      return translations.en[key];
+    if (fallback !== undefined) return fallback;
+    return key;
+  };
+
+  const roleLabel = (role) => {
+    if (!role) return "";
+    let key = "roleUser";
+    if (role === "Admin") key = "roleAdmin";
+    else if (role === "Moderator") key = "roleModerator";
+    return t(key, role);
+  };
+
+  const statusLabel = (status) => {
+    if (!status) return "";
+    let key = "statusActive";
+    if (status === "Inactive") key = "statusInactive";
+    return t(key, status);
+  };
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -343,17 +132,29 @@ function UsersPage({ language }) {
     setAddError("");
 
     if (!newUserName.trim() || !newUserEmail.trim()) {
-      setAddError(t.nameRequired);
+      setAddError(
+        t("users.error.nameRequired", "Name and email are required.")
+      );
       return;
     }
 
     if (!isValidName(newUserName)) {
-      setAddError(t.nameLettersOnly);
+      setAddError(
+        t(
+          "users.error.nameLettersOnly",
+          "Name can only contain letters and spaces."
+        )
+      );
       return;
     }
 
     if (!isValidEmail(newUserEmail)) {
-      setAddError(t.emailInvalid);
+      setAddError(
+        t(
+          "users.error.emailInvalid",
+          "Please enter a valid email address."
+        )
+      );
       return;
     }
 
@@ -361,7 +162,12 @@ function UsersPage({ language }) {
       (u) => u.email.toLowerCase() === newUserEmail.trim().toLowerCase()
     );
     if (emailExists) {
-      setAddError(t.emailExists);
+      setAddError(
+        t(
+          "users.error.emailExists",
+          "This email is already registered."
+        )
+      );
       return;
     }
 
@@ -387,17 +193,29 @@ function UsersPage({ language }) {
 
   const handleUpdateUser = () => {
     if (!editUserName.trim() || !editUserEmail.trim()) {
-      alert(t.nameRequired);
+      alert(
+        t("users.error.nameRequired", "Name and email are required.")
+      );
       return;
     }
 
     if (!isValidName(editUserName)) {
-      alert(t.nameLettersOnly);
+      alert(
+        t(
+          "users.error.nameLettersOnly",
+          "Name can only contain letters and spaces."
+        )
+      );
       return;
     }
 
     if (!isValidEmail(editUserEmail)) {
-      alert(t.emailInvalid);
+      alert(
+        t(
+          "users.error.emailInvalid",
+          "Please enter a valid email address."
+        )
+      );
       return;
     }
 
@@ -408,7 +226,12 @@ function UsersPage({ language }) {
     );
 
     if (emailTaken) {
-      alert(t.emailUsed);
+      alert(
+        t(
+          "users.error.emailUsed",
+          "This email is already registered for another user."
+        )
+      );
       return;
     }
 
@@ -475,7 +298,6 @@ function UsersPage({ language }) {
     return matchesSearch && matchesStatus;
   });
 
-  // Sıralama fonksiyonu
   const sortedUsers = [...filteredUsers].sort((a, b) => {
     let valA;
     let valB;
@@ -518,7 +340,6 @@ function UsersPage({ language }) {
     setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
   };
 
-  // Sıralama başlığına tıklama
   const handleSort = (column) => {
     setSortBy((prevSortBy) => {
       if (prevSortBy === column) {
@@ -533,7 +354,11 @@ function UsersPage({ language }) {
 
   const renderSortIndicator = (column) => {
     if (sortBy !== column) return null;
-    return <span className="sort-indicator">{sortDirection === "asc" ? "▲" : "▼"}</span>;
+    return (
+      <span className="sort-indicator">
+        {sortDirection === "asc" ? "▲" : "▼"}
+      </span>
+    );
   };
 
   // Canlı istatistikler
@@ -553,20 +378,26 @@ function UsersPage({ language }) {
       {/* HEADER */}
       <div className="users-header">
         <div className="users-header-top">
-          <h2>{t.title}</h2>
+          <h2>{t("users.title", "Users")}</h2>
 
           {/* Canlı küçük istatistikler */}
           <div className="users-stats">
             <div className="users-stat-pill">
-              <span className="label">{t.statsTotal}</span>
+              <span className="label">
+                {t("users.stats.total", "Total")}
+              </span>
               <span className="value">{totalCount}</span>
             </div>
             <div className="users-stat-pill users-stat-active">
-              <span className="label">{t.statsActive}</span>
+              <span className="label">
+                {t("users.stats.active", "Active")}
+              </span>
               <span className="value">{activeCount}</span>
             </div>
             <div className="users-stat-pill users-stat-inactive">
-              <span className="label">{t.statsInactive}</span>
+              <span className="label">
+                {t("users.stats.inactive", "Inactive")}
+              </span>
               <span className="value">{inactiveCount}</span>
             </div>
           </div>
@@ -580,7 +411,7 @@ function UsersPage({ language }) {
               }`}
               onClick={() => setStatusFilter("all")}
             >
-              {t.filterAll}
+              {t("users.filter.all", "All")}
             </button>
 
             <button
@@ -589,7 +420,7 @@ function UsersPage({ language }) {
               }`}
               onClick={() => setStatusFilter("Active")}
             >
-              {s.Active}
+              {statusLabel("Active")}
             </button>
 
             <button
@@ -598,14 +429,17 @@ function UsersPage({ language }) {
               }`}
               onClick={() => setStatusFilter("Inactive")}
             >
-              {s.Inactive}
+              {statusLabel("Inactive")}
             </button>
           </div>
 
           <div className="users-header-right">
             <input
               type="text"
-              placeholder={t.searchPlaceholder}
+              placeholder={t(
+                "users.searchPlaceholder",
+                "Search user..."
+              )}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -621,7 +455,7 @@ function UsersPage({ language }) {
                 setNewUserEmail("");
               }}
             >
-              + {t.addUserButton}
+              + {t("users.addUser", "Add user")}
             </button>
           </div>
         </div>
@@ -631,21 +465,34 @@ function UsersPage({ language }) {
       {isAdding && (
         <div className="add-user-panel">
           <div className="add-user-header">
-            <h3>{t.newUserTitle}</h3>
-            <span className="add-user-subtitle">{t.newUserSubtitle}</span>
+            <h3>
+              {t("users.newUserTitle", "New user")}
+            </h3>
+            <span className="add-user-subtitle">
+              {t(
+                "users.newUserSubtitle",
+                "Fill in the details and save the user."
+              )}
+            </span>
           </div>
 
           <div className="add-user-grid">
             <input
               type="text"
-              placeholder={t.fullNamePlaceholder}
+              placeholder={t(
+                "users.fullNamePlaceholder",
+                "Full name"
+              )}
               value={newUserName}
               onChange={(e) => setNewUserName(e.target.value)}
               className={isNewNameInvalid ? "input-error" : ""}
             />
             <input
               type="email"
-              placeholder={t.emailPlaceholder}
+              placeholder={t(
+                "users.emailPlaceholder",
+                "Email"
+              )}
               value={newUserEmail}
               onChange={(e) => setNewUserEmail(e.target.value)}
               className={
@@ -658,17 +505,23 @@ function UsersPage({ language }) {
               value={newUserRole}
               onChange={(e) => setNewUserRole(e.target.value)}
             >
-              <option value="User">{r.User}</option>
-              <option value="Admin">{r.Admin}</option>
-              <option value="Moderator">{r.Moderator}</option>
+              <option value="User">{roleLabel("User")}</option>
+              <option value="Admin">{roleLabel("Admin")}</option>
+              <option value="Moderator">
+                {roleLabel("Moderator")}
+              </option>
             </select>
 
             <select
               value={newUserStatus}
               onChange={(e) => setNewUserStatus(e.target.value)}
             >
-              <option value="Active">{s.Active}</option>
-              <option value="Inactive">{s.Inactive}</option>
+              <option value="Active">
+                {statusLabel("Active")}
+              </option>
+              <option value="Inactive">
+                {statusLabel("Inactive")}
+              </option>
             </select>
           </div>
 
@@ -680,7 +533,7 @@ function UsersPage({ language }) {
               onClick={handleAddUser}
               disabled={isAddFormInvalid}
             >
-              {t.addUserButton}
+              {t("users.addUser", "Add user")}
             </button>
             <button
               className="btn-ghost"
@@ -689,7 +542,7 @@ function UsersPage({ language }) {
                 setAddError("");
               }}
             >
-              {t.cancelButton}
+              {t("common.cancel", "Cancel")}
             </button>
           </div>
         </div>
@@ -699,21 +552,34 @@ function UsersPage({ language }) {
       {isEditing && canEditUsers && (
         <div className="add-user-panel">
           <div className="add-user-header">
-            <h3>{t.editUserTitle}</h3>
-            <span className="add-user-subtitle">{t.editUserSubtitle}</span>
+            <h3>
+              {t("users.editUserTitle", "Edit user")}
+            </h3>
+            <span className="add-user-subtitle">
+              {t(
+                "users.editUserSubtitle",
+                "Update the user information and save changes."
+              )}
+            </span>
           </div>
 
           <div className="add-user-grid">
             <input
               type="text"
-              placeholder={t.fullNamePlaceholder}
+              placeholder={t(
+                "users.fullNamePlaceholder",
+                "Full name"
+              )}
               value={editUserName}
               onChange={(e) => setEditUserName(e.target.value)}
             />
 
             <input
               type="email"
-              placeholder={t.emailAddressPlaceholder}
+              placeholder={t(
+                "users.emailAddressPlaceholder",
+                "Email address"
+              )}
               value={editUserEmail}
               onChange={(e) => setEditUserEmail(e.target.value)}
             />
@@ -722,23 +588,29 @@ function UsersPage({ language }) {
               value={editUserRole}
               onChange={(e) => setEditUserRole(e.target.value)}
             >
-              <option value="User">{r.User}</option>
-              <option value="Admin">{r.Admin}</option>
-              <option value="Moderator">{r.Moderator}</option>
+              <option value="User">{roleLabel("User")}</option>
+              <option value="Admin">{roleLabel("Admin")}</option>
+              <option value="Moderator">
+                {roleLabel("Moderator")}
+              </option>
             </select>
 
             <select
               value={editUserStatus}
               onChange={(e) => setEditUserStatus(e.target.value)}
             >
-              <option value="Active">{s.Active}</option>
-              <option value="Inactive">{s.Inactive}</option>
+              <option value="Active">
+                {statusLabel("Active")}
+              </option>
+              <option value="Inactive">
+                {statusLabel("Inactive")}
+              </option>
             </select>
           </div>
 
           <div className="add-user-actions">
             <button className="btn-primary" onClick={handleUpdateUser}>
-              {t.saveChangesButton}
+              {t("common.save", "Save changes")}
             </button>
             <button
               className="btn-ghost"
@@ -751,7 +623,7 @@ function UsersPage({ language }) {
                 setEditUserStatus("Active");
               }}
             >
-              {t.cancelButton}
+              {t("common.cancel", "Cancel")}
             </button>
           </div>
         </div>
@@ -765,18 +637,19 @@ function UsersPage({ language }) {
               ID {renderSortIndicator("id")}
             </th>
             <th onClick={() => handleSort("name")} className="sortable">
-              {t.fullNamePlaceholder} {renderSortIndicator("name")}
+              {t("users.name", "Name")} {renderSortIndicator("name")}
             </th>
             <th onClick={() => handleSort("email")} className="sortable">
-              {t.emailPlaceholder} {renderSortIndicator("email")}
+              {t("users.email", "Email")} {renderSortIndicator("email")}
             </th>
             <th onClick={() => handleSort("role")} className="sortable">
-              {t.roleColumn} {renderSortIndicator("role")}
+              {t("users.role", "Role")} {renderSortIndicator("role")}
             </th>
             <th onClick={() => handleSort("status")} className="sortable">
-              {t.statusColumn} {renderSortIndicator("status")}
+              {t("common.status", "Status")}{" "}
+              {renderSortIndicator("status")}
             </th>
-            <th>{t.actionsColumn}</th>
+            <th>{t("common.actions", "Actions")}</th>
           </tr>
         </thead>
 
@@ -784,7 +657,10 @@ function UsersPage({ language }) {
           {sortedUsers.length === 0 ? (
             <tr>
               <td colSpan={6} className="empty-state">
-                {t.emptyState}
+                {t(
+                  "users.emptyState",
+                  "No users found for this filter."
+                )}
               </td>
             </tr>
           ) : (
@@ -807,7 +683,7 @@ function UsersPage({ language }) {
                   <span
                     className={`role-badge role-${user.role.toLowerCase()}`}
                   >
-                    {r[user.role] || user.role}
+                    {roleLabel(user.role)}
                   </span>
                 </td>
 
@@ -818,7 +694,7 @@ function UsersPage({ language }) {
                     }`}
                     onClick={() => handleToggleStatus(user.id)}
                   >
-                    {s[user.status] || user.status}
+                    {statusLabel(user.status)}
                   </span>
                 </td>
 
@@ -828,7 +704,7 @@ function UsersPage({ language }) {
                       className="edit-btn"
                       onClick={() => handleEditClick(user)}
                     >
-                      {t.editButton}
+                      {t("common.edit", "Edit")}
                     </button>
                   )}
 
@@ -836,7 +712,7 @@ function UsersPage({ language }) {
                     className="delete-btn"
                     onClick={() => handleDelete(user.id)}
                   >
-                    {t.deleteButton}
+                    {t("common.delete", "Delete")}
                   </button>
                 </td>
               </tr>

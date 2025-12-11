@@ -196,13 +196,10 @@ function SettingsPage() {
   const currentLang = settings.language || "en";
   const t = translations[currentLang] || translations.en;
 
-  // değişiklik olunca "Settings saved" göstermek
   const triggerSaved = () => {
     setShowSaved(true);
     setTimeout(() => setShowSaved(false), 1500);
   };
-
-
 
   const handleLanguageChange = (e) => {
     updateSetting("language", e.target.value);
@@ -226,7 +223,6 @@ function SettingsPage() {
     triggerSaved();
   };
 
-  // context değişince inputu güncel tut
   useEffect(() => {
     setDisplayName(settings.displayName || "");
   }, [settings.displayName]);
@@ -247,7 +243,6 @@ function SettingsPage() {
       </div>
 
       <div className="settings-grid">
-        {/* PROFILE */}
         <section className="settings-card">
           <div className="settings-card-header">
             <div>
@@ -269,7 +264,6 @@ function SettingsPage() {
           </div>
         </section>
 
-        {/* PREFERENCES */}
         <section className="settings-card">
           <div className="settings-card-header">
             <div>
@@ -343,7 +337,6 @@ function SettingsPage() {
           </div>
         </section>
 
-        {/* NOTIFICATIONS */}
         <section className="settings-card settings-card-full">
           <div className="settings-card-header">
             <div>

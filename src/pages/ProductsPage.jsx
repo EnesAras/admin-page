@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import "./ProductsPage.css";
 import { useSettings } from "../context/SettingsContext";
+import translations from "../i18n/translations";
 
 const initialProducts = [
   {
@@ -51,265 +52,23 @@ const initialProducts = [
   },
 ];
 
-const productTexts = {
-  en: {
-    title: "Products",
-    subtitle: "Manage your anime, manga and gaming items.",
-    addProduct: "Add Product",
-    editProduct: "Edit Product",
-    nameLabel: "Name",
-    categoryLabel: "Category",
-    fandomLabel: "Fandom",
-    priceLabel: "Price (€)",
-    stockLabel: "Stock",
-    statusLabel: "Status",
-    searchPlaceholder: "Search by name, fandom, category...",
-    filterAll: "All",
-    filterCategoryAll: "All categories",
-    filterStatusAll: "All statuses",
-    statusActive: "Active",
-    statusHidden: "Hidden",
-    statusOutOfStock: "Out of stock",
-    saveButton: "Save",
-    cancelButton: "Cancel",
-    editButton: "Edit",
-    deleteButton: "Delete",
-    empty: "No products found for this filter.",
-    errorNameRequired: "Name is required.",
-    errorPriceInvalid: "Enter a valid price.",
-    errorStockInvalid: "Stock must be 0 or higher.",
-    // NEW texts
-    summaryTotalProducts: "Total products",
-    summaryActiveProducts: "Active",
-    summaryLowStock: "Low stock (≤5)",
-    summaryOutOfStock: "Out of stock",
-    summaryInventoryValue: "Inventory value",
-    resultsSummary: "Showing {current} of {total} products",
-  },
-  tr: {
-    title: "Ürünler",
-    subtitle: "Anime, manga ve gaming ürünlerini yönet.",
-    addProduct: "Ürün Ekle",
-    editProduct: "Ürünü Düzenle",
-    nameLabel: "İsim",
-    categoryLabel: "Kategori",
-    fandomLabel: "Evren",
-    priceLabel: "Fiyat (€)",
-    stockLabel: "Stok",
-    statusLabel: "Durum",
-    searchPlaceholder: "İsim, evren veya kategori ile ara...",
-    filterAll: "Hepsi",
-    filterCategoryAll: "Tüm kategoriler",
-    filterStatusAll: "Tüm durumlar",
-    statusActive: "Aktif",
-    statusHidden: "Gizli",
-    statusOutOfStock: "Stokta yok",
-    saveButton: "Kaydet",
-    cancelButton: "İptal",
-    editButton: "Düzenle",
-    deleteButton: "Sil",
-    empty: "Bu filtreye uygun ürün bulunamadı.",
-    errorNameRequired: "İsim zorunludur.",
-    errorPriceInvalid: "Geçerli bir fiyat gir.",
-    errorStockInvalid: "Stok 0 veya daha büyük olmalı.",
-    summaryTotalProducts: "Toplam ürün",
-    summaryActiveProducts: "Aktif",
-    summaryLowStock: "Düşük stok (≤5)",
-    summaryOutOfStock: "Stokta yok",
-    summaryInventoryValue: "Stok değeri",
-    resultsSummary:
-      "Toplam {total} üründen {current} tanesi görüntüleniyor",
-  },
-  es: {
-    title: "Productos",
-    subtitle: "Gestiona tus productos de anime, manga y gaming.",
-    addProduct: "Añadir producto",
-    editProduct: "Editar producto",
-    nameLabel: "Nombre",
-    categoryLabel: "Categoría",
-    fandomLabel: "Universo",
-    priceLabel: "Precio (€)",
-    stockLabel: "Stock",
-    statusLabel: "Estado",
-    searchPlaceholder: "Buscar por nombre, universo, categoría...",
-    filterAll: "Todos",
-    filterCategoryAll: "Todas las categorías",
-    filterStatusAll: "Todos los estados",
-    statusActive: "Activo",
-    statusHidden: "Oculto",
-    statusOutOfStock: "Sin stock",
-    saveButton: "Guardar",
-    cancelButton: "Cancelar",
-    editButton: "Editar",
-    deleteButton: "Eliminar",
-    empty: "No se encontraron productos para este filtro.",
-    errorNameRequired: "El nombre es obligatorio.",
-    errorPriceInvalid: "Introduce un precio válido.",
-    errorStockInvalid: "El stock debe ser 0 o mayor.",
-    summaryTotalProducts: "Productos totales",
-    summaryActiveProducts: "Activos",
-    summaryLowStock: "Bajo stock (≤5)",
-    summaryOutOfStock: "Sin stock",
-    summaryInventoryValue: "Valor del inventario",
-    resultsSummary: "Mostrando {current} de {total} productos",
-  },
-  de: {
-    title: "Produkte",
-    subtitle: "Verwalte deine Anime-, Manga- und Gaming-Artikel.",
-    addProduct: "Produkt hinzufügen",
-    editProduct: "Produkt bearbeiten",
-    nameLabel: "Name",
-    categoryLabel: "Kategorie",
-    fandomLabel: "Universum",
-    priceLabel: "Preis (€)",
-    stockLabel: "Bestand",
-    statusLabel: "Status",
-    searchPlaceholder:
-      "Nach Name, Universum oder Kategorie suchen...",
-    filterAll: "Alle",
-    filterCategoryAll: "Alle Kategorien",
-    filterStatusAll: "Alle Status",
-    statusActive: "Aktiv",
-    statusHidden: "Versteckt",
-    statusOutOfStock: "Nicht auf Lager",
-    saveButton: "Speichern",
-    cancelButton: "Abbrechen",
-    editButton: "Bearbeiten",
-    deleteButton: "Löschen",
-    empty: "Für diesen Filter wurden keine Produkte gefunden.",
-    errorNameRequired: "Name ist erforderlich.",
-    errorPriceInvalid: "Gib einen gültigen Preis ein.",
-    errorStockInvalid:
-      "Bestand muss 0 oder größer sein.",
-    summaryTotalProducts: "Gesamtprodukte",
-    summaryActiveProducts: "Aktiv",
-    summaryLowStock: "Niedriger Bestand (≤5)",
-    summaryOutOfStock: "Nicht auf Lager",
-    summaryInventoryValue: "Lagerwert",
-    resultsSummary:
-      "Zeige {current} von {total} Produkten",
-  },
-  fr: {
-    title: "Produits",
-    subtitle:
-      "Gérez vos articles d’anime, de manga et de gaming.",
-    addProduct: "Ajouter un produit",
-    editProduct: "Modifier le produit",
-    nameLabel: "Nom",
-    categoryLabel: "Catégorie",
-    fandomLabel: "Univers",
-    priceLabel: "Prix (€)",
-    stockLabel: "Stock",
-    statusLabel: "Statut",
-    searchPlaceholder:
-      "Rechercher par nom, univers, catégorie...",
-    filterAll: "Tous",
-    filterCategoryAll: "Toutes les catégories",
-    filterStatusAll: "Tous les statuts",
-    statusActive: "Actif",
-    statusHidden: "Masqué",
-    statusOutOfStock: "Rupture de stock",
-    saveButton: "Enregistrer",
-    cancelButton: "Annuler",
-    editButton: "Modifier",
-    deleteButton: "Supprimer",
-    empty: "Aucun produit trouvé pour ce filtre.",
-    errorNameRequired: "Le nom est obligatoire.",
-    errorPriceInvalid: "Saisissez un prix valide.",
-    errorStockInvalid:
-      "Le stock doit être supérieur ou égal à 0.",
-    summaryTotalProducts: "Produits totaux",
-    summaryActiveProducts: "Actifs",
-    summaryLowStock: "Stock faible (≤5)",
-    summaryOutOfStock: "Rupture de stock",
-    summaryInventoryValue: "Valeur du stock",
-    resultsSummary:
-      "Affichage de {current} sur {total} produits",
-  },
-  it: {
-    title: "Prodotti",
-    subtitle:
-      "Gestisci i tuoi articoli anime, manga e gaming.",
-    addProduct: "Aggiungi prodotto",
-    editProduct: "Modifica prodotto",
-    nameLabel: "Nome",
-    categoryLabel: "Categoria",
-    fandomLabel: "Universo",
-    priceLabel: "Prezzo (€)",
-    stockLabel: "Stock",
-    statusLabel: "Stato",
-    searchPlaceholder:
-      "Cerca per nome, universo, categoria...",
-    filterAll: "Tutti",
-    filterCategoryAll: "Tutte le categorie",
-    filterStatusAll: "Tutti gli stati",
-    statusActive: "Attivo",
-    statusHidden: "Nascosto",
-    statusOutOfStock: "Esaurito",
-    saveButton: "Salva",
-    cancelButton: "Annulla",
-    editButton: "Modifica",
-    deleteButton: "Elimina",
-    empty: "Nessun prodotto trovato per questo filtro.",
-    errorNameRequired: "Il nome è obbligatorio.",
-    errorPriceInvalid: "Inserisci un prezzo valido.",
-    errorStockInvalid:
-      "Lo stock deve essere 0 o maggiore.",
-    summaryTotalProducts: "Prodotti totali",
-    summaryActiveProducts: "Attivi",
-    summaryLowStock: "Scorte basse (≤5)",
-    summaryOutOfStock: "Esauriti",
-    summaryInventoryValue: "Valore dell'inventario",
-    resultsSummary:
-      "Visualizzazione di {current} su {total} prodotti",
-  },
-  ru: {
-    title: "Товары",
-    subtitle:
-      "Управляйте товарами по аниме, манге и играм.",
-    addProduct: "Добавить товар",
-    editProduct: "Редактировать товар",
-    nameLabel: "Название",
-    categoryLabel: "Категория",
-    fandomLabel: "Вселенная",
-    priceLabel: "Цена (€)",
-    stockLabel: "Остаток",
-    statusLabel: "Статус",
-    searchPlaceholder:
-      "Поиск по названию, вселенной, категории...",
-    filterAll: "Все",
-    filterCategoryAll: "Все категории",
-    filterStatusAll: "Все статусы",
-    statusActive: "Активен",
-    statusHidden: "Скрыт",
-    statusOutOfStock: "Нет в наличии",
-    saveButton: "Сохранить",
-    cancelButton: "Отмена",
-    editButton: "Изменить",
-    deleteButton: "Удалить",
-    empty: "Для этого фильтра товары не найдены.",
-    errorNameRequired: "Название обязательно.",
-    errorPriceInvalid: "Введите корректную цену.",
-    errorStockInvalid:
-      "Остаток должен быть 0 или больше.",
-    summaryTotalProducts: "Всего товаров",
-    summaryActiveProducts: "Активные",
-    summaryLowStock: "Малый остаток (≤5)",
-    summaryOutOfStock: "Нет в наличии",
-    summaryInventoryValue: "Стоимость склада",
-    resultsSummary:
-      "Показано {current} из {total} товаров",
-  },
-};
-
 const statusOptions = ["Active", "Hidden", "OutOfStock"];
 
 function ProductsPage({ language }) {
   const { settings, language: ctxLanguage } = useSettings();
 
   // Dil önceliği: prop > context.language > settings.language > "en"
-  const currentLang = language || ctxLanguage || settings?.language || "en";
-  const t = productTexts[currentLang] || productTexts.en;
+  const lang = language || ctxLanguage || settings?.language || "en";
+  const dict = translations[lang] || translations.en;
+
+  const t = (key, fallback) => {
+    if (dict && dict[key] !== undefined) return dict[key];
+    if (translations.en && translations.en[key] !== undefined) {
+      return translations.en[key];
+    }
+    if (fallback !== undefined) return fallback;
+    return key;
+  };
 
   const [products, setProducts] = useState(() => {
     const stored = localStorage.getItem("admin_products");
@@ -351,35 +110,18 @@ function ProductsPage({ language }) {
 
   // === METRICS ===
   const totalProducts = products.length;
-  const activeProducts = products.filter(
-    (p) => p.status === "Active"
-  ).length;
+  const activeProducts = products.filter((p) => p.status === "Active").length;
   const lowStockCount = products.filter(
     (p) => p.stock > 0 && p.stock <= 5
   ).length;
-  const outOfStockCount = products.filter(
-    (p) => p.stock === 0
-  ).length;
+  const outOfStockCount = products.filter((p) => p.stock === 0).length;
   const inventoryValue = products.reduce(
     (sum, p) => sum + p.price * p.stock,
     0
   );
 
-  const resultsText = t.resultsSummary
-    .replace("{current}", String(
-      products.length ? filteredProductsLength(products, {
-        searchTerm,
-        statusFilter,
-        categoryFilter,
-      }) : 0
-    ))
-    .replace("{total}", String(totalProducts));
-
   // helper sadece sonuç metni için
-  function filteredProductsLength(
-    list,
-    { searchTerm, statusFilter, categoryFilter }
-  ) {
+  function filteredProductsLength(list, { searchTerm, statusFilter, categoryFilter }) {
     const term = searchTerm.toLowerCase().trim();
     return list.filter((product) => {
       const matchesSearch =
@@ -389,16 +131,29 @@ function ProductsPage({ language }) {
         product.category.toLowerCase().includes(term);
 
       const matchesStatus =
-        statusFilter === "all" ||
-        product.status === statusFilter;
+        statusFilter === "all" || product.status === statusFilter;
 
       const matchesCategory =
-        categoryFilter === "all" ||
-        product.category === categoryFilter;
+        categoryFilter === "all" || product.category === categoryFilter;
 
       return matchesSearch && matchesStatus && matchesCategory;
     }).length;
   }
+
+  const currentCount = filteredProductsLength(products, {
+    searchTerm,
+    statusFilter,
+    categoryFilter,
+  });
+
+  const resultsTemplate = t(
+    "products.resultsSummary",
+    "Showing {current} of {total} products"
+  );
+
+  const resultsText = resultsTemplate
+    .replace("{current}", String(currentCount))
+    .replace("{total}", String(totalProducts));
 
   // === FILTERED + SORTED LIST ===
   const filteredProducts = products.filter((product) => {
@@ -411,12 +166,10 @@ function ProductsPage({ language }) {
       product.category.toLowerCase().includes(term);
 
     const matchesStatus =
-      statusFilter === "all" ||
-      product.status === statusFilter;
+      statusFilter === "all" || product.status === statusFilter;
 
     const matchesCategory =
-      categoryFilter === "all" ||
-      product.category === categoryFilter;
+      categoryFilter === "all" || product.category === categoryFilter;
 
     return matchesSearch && matchesStatus && matchesCategory;
   });
@@ -463,9 +216,7 @@ function ProductsPage({ language }) {
   const handleSort = (key) => {
     setSortBy((prevKey) => {
       if (prevKey === key) {
-        setSortDirection((prevDir) =>
-          prevDir === "asc" ? "desc" : "asc"
-        );
+        setSortDirection((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
         return prevKey;
       } else {
         setSortDirection(key === "name" ? "asc" : "desc");
@@ -511,19 +262,19 @@ function ProductsPage({ language }) {
 
   const handleSave = () => {
     if (!formName.trim()) {
-      setError(t.errorNameRequired);
+      setError(t("products.error.nameRequired", "Name is required."));
       return;
     }
 
     const priceValue = Number(formPrice);
     if (!Number.isFinite(priceValue) || priceValue < 0) {
-      setError(t.errorPriceInvalid);
+      setError(t("products.error.priceInvalid", "Enter a valid price."));
       return;
     }
 
     const stockValue = Number(formStock);
     if (!Number.isInteger(stockValue) || stockValue < 0) {
-      setError(t.errorStockInvalid);
+      setError(t("products.error.stockInvalid", "Stock must be 0 or higher."));
       return;
     }
 
@@ -551,9 +302,7 @@ function ProductsPage({ language }) {
       setSelectedId(nextId);
     } else {
       setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editingId ? { ...p, ...payload } : p
-        )
+        prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p))
       );
       setSelectedId(editingId);
     }
@@ -568,35 +317,36 @@ function ProductsPage({ language }) {
     }
   };
 
-  
+  const statusLabel = (status) => {
+    if (status === "Hidden")
+      return t("products.status.hidden", "Hidden");
+    if (status === "OutOfStock")
+      return t("products.status.outOfStock", "Out of stock");
+    return t("products.status.active", "Active");
+  };
 
   return (
     <div className="products-container">
       {/* HEADER */}
       <div className="products-header">
         <div className="products-header-left">
-          <h2>{t.title}</h2>
-          <p>{t.subtitle}</p>
+          <h2>{t("products.title", "Products")}</h2>
+          <p>{t("products.subtitle", "Manage your anime, manga and gaming items.")}</p>
         </div>
 
         <div className="products-header-right">
-          <button
-            className="add-product-btn"
-            onClick={openAddPanel}
-          >
-            + {t.addProduct}
+          <button className="add-product-btn" onClick={openAddPanel}>
+            + {t("products.addProduct", "Add Product")}
           </button>
 
           <div className="products-filters">
             <select
               value={categoryFilter}
-              onChange={(e) =>
-                setCategoryFilter(e.target.value)
-              }
+              onChange={(e) => setCategoryFilter(e.target.value)}
               className="products-select"
             >
               <option value="all">
-                {t.filterCategoryAll}
+                {t("products.filterCategoryAll", "All categories")}
               </option>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -607,22 +357,20 @@ function ProductsPage({ language }) {
 
             <select
               value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value)
-              }
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="products-select"
             >
               <option value="all">
-                {t.filterStatusAll}
+                {t("products.filterStatusAll", "All statuses")}
               </option>
               <option value="Active">
-                {t.statusActive}
+                {t("products.status.active", "Active")}
               </option>
               <option value="Hidden">
-                {t.statusHidden}
+                {t("products.status.hidden", "Hidden")}
               </option>
               <option value="OutOfStock">
-                {t.statusOutOfStock}
+                {t("products.status.outOfStock", "Out of stock")}
               </option>
             </select>
           </div>
@@ -630,11 +378,12 @@ function ProductsPage({ language }) {
           <div className="products-search">
             <input
               type="text"
-              placeholder={t.searchPlaceholder}
+              placeholder={t(
+                "products.searchPlaceholder",
+                "Search by name, fandom, category..."
+              )}
               value={searchTerm}
-              onChange={(e) =>
-                setSearchTerm(e.target.value)
-              }
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="products-search-input"
             />
           </div>
@@ -645,15 +394,13 @@ function ProductsPage({ language }) {
       <div className="products-summary">
         <div className="products-summary-card">
           <span className="summary-label">
-            {t.summaryTotalProducts}
+            {t("products.summary.totalProducts", "Total products")}
           </span>
-          <span className="summary-value">
-            {totalProducts}
-          </span>
+          <span className="summary-value">{totalProducts}</span>
         </div>
         <div className="products-summary-card">
           <span className="summary-label">
-            {t.summaryActiveProducts}
+            {t("products.summary.activeProducts", "Active")}
           </span>
           <span className="summary-value summary-active">
             {activeProducts}
@@ -661,7 +408,7 @@ function ProductsPage({ language }) {
         </div>
         <div className="products-summary-card">
           <span className="summary-label">
-            {t.summaryLowStock}
+            {t("products.summary.lowStock", "Low stock (≤5)")}
           </span>
           <span className="summary-value summary-low">
             {lowStockCount}
@@ -669,7 +416,7 @@ function ProductsPage({ language }) {
         </div>
         <div className="products-summary-card">
           <span className="summary-label">
-            {t.summaryOutOfStock}
+            {t("products.summary.outOfStock", "Out of stock")}
           </span>
           <span className="summary-value summary-out">
             {outOfStockCount}
@@ -677,7 +424,7 @@ function ProductsPage({ language }) {
         </div>
         <div className="products-summary-card products-summary-wide">
           <span className="summary-label">
-            {t.summaryInventoryValue}
+            {t("products.summary.inventoryValue", "Inventory value")}
           </span>
           <span className="summary-value summary-inventory">
             €{inventoryValue.toFixed(2)}
@@ -687,17 +434,11 @@ function ProductsPage({ language }) {
 
       {/* META BAR */}
       <div className="products-meta-bar">
-        <span className="products-meta-results">
-          {resultsText}
-        </span>
+        <span className="products-meta-results">{resultsText}</span>
       </div>
 
       {/* MAIN CARD: TABLE + PANEL */}
-      <div
-        className={`products-main-card ${
-          isPanelOpen ? "with-panel" : ""
-        }`}
-      >
+      <div className={`products-main-card ${isPanelOpen ? "with-panel" : ""}`}>
         <div className="products-table-col">
           <table className="users-table products-table">
             <thead>
@@ -715,7 +456,7 @@ function ProductsPage({ language }) {
                   className="products-th-sortable"
                   onClick={() => handleSort("name")}
                 >
-                  <span>{t.nameLabel}</span>
+                  <span>{t("products.nameLabel", "Name")}</span>
                   <span className="sort-indicator">
                     {renderSortIndicator("name")}
                   </span>
@@ -724,17 +465,17 @@ function ProductsPage({ language }) {
                   className="products-th-sortable"
                   onClick={() => handleSort("category")}
                 >
-                  <span>{t.categoryLabel}</span>
+                  <span>{t("products.categoryLabel", "Category")}</span>
                   <span className="sort-indicator">
                     {renderSortIndicator("category")}
                   </span>
                 </th>
-                <th>{t.fandomLabel}</th>
+                <th>{t("products.fandomLabel", "Fandom")}</th>
                 <th
                   className="products-th-sortable"
                   onClick={() => handleSort("price")}
                 >
-                  <span>{t.priceLabel}</span>
+                  <span>{t("products.priceLabel", "Price (€)")}</span>
                   <span className="sort-indicator">
                     {renderSortIndicator("price")}
                   </span>
@@ -743,45 +484,32 @@ function ProductsPage({ language }) {
                   className="products-th-sortable"
                   onClick={() => handleSort("stock")}
                 >
-                  <span>{t.stockLabel}</span>
+                  <span>{t("products.stockLabel", "Stock")}</span>
                   <span className="sort-indicator">
                     {renderSortIndicator("stock")}
                   </span>
                 </th>
-                <th>{t.statusLabel}</th>
+                <th>{t("products.statusLabel", "Status")}</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {sortedProducts.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="8"
-                    className="products-empty"
-                  >
-                    {t.empty}
+                  <td colSpan="8" className="products-empty">
+                    {t(
+                      "products.empty",
+                      "No products found for this filter."
+                    )}
                   </td>
                 </tr>
               ) : (
                 sortedProducts.map((product) => {
-                  let statusClass =
-                    "product-status-active";
+                  let statusClass = "product-status-active";
                   if (product.status === "Hidden") {
-                    statusClass =
-                      "product-status-hidden";
-                  } else if (
-                    product.status === "OutOfStock"
-                  ) {
+                    statusClass = "product-status-hidden";
+                  } else if (product.status === "OutOfStock") {
                     statusClass = "product-status-out";
-                  }
-
-                  let statusLabel = t.statusActive;
-                  if (product.status === "Hidden") {
-                    statusLabel = t.statusHidden;
-                  } else if (
-                    product.status === "OutOfStock"
-                  ) {
-                    statusLabel = t.statusOutOfStock;
                   }
 
                   const stockClass =
@@ -795,29 +523,19 @@ function ProductsPage({ language }) {
                     <tr
                       key={product.id}
                       className={`products-row ${
-                        selectedId === product.id
-                          ? "selected"
-                          : ""
+                        selectedId === product.id ? "selected" : ""
                       }`}
-                      onClick={() =>
-                        setSelectedId(product.id)
-                      }
+                      onClick={() => setSelectedId(product.id)}
                     >
                       <td>#{product.id}</td>
                       <td>{product.name}</td>
                       <td>{product.category}</td>
                       <td>{product.fandom}</td>
+                      <td>€{product.price.toFixed(2)}</td>
+                      <td className={stockClass}>{product.stock}</td>
                       <td>
-                        €{product.price.toFixed(2)}
-                      </td>
-                      <td className={stockClass}>
-                        {product.stock}
-                      </td>
-                      <td>
-                        <span
-                          className={`product-status ${statusClass}`}
-                        >
-                          {statusLabel}
+                        <span className={`product-status ${statusClass}`}>
+                          {statusLabel(product.status)}
                         </span>
                       </td>
                       <td>
@@ -829,7 +547,7 @@ function ProductsPage({ language }) {
                               openEditPanel(product);
                             }}
                           >
-                            {t.editButton}
+                            {t("products.editButton", "Edit")}
                           </button>
                           <button
                             className="products-delete-btn"
@@ -838,7 +556,7 @@ function ProductsPage({ language }) {
                               handleDelete(product.id);
                             }}
                           >
-                            {t.deleteButton}
+                            {t("products.deleteButton", "Delete")}
                           </button>
                         </div>
                       </td>
@@ -855,8 +573,8 @@ function ProductsPage({ language }) {
             <div className="products-panel-header">
               <h3>
                 {editingId == null
-                  ? t.addProduct
-                  : t.editProduct}
+                  ? t("products.addProduct", "Add Product")
+                  : t("products.editProduct", "Edit Product")}
               </h3>
               <button
                 type="button"
@@ -869,100 +587,76 @@ function ProductsPage({ language }) {
 
             <div className="products-panel-grid">
               <div className="products-field">
-                <label>{t.nameLabel}</label>
+                <label>{t("products.nameLabel", "Name")}</label>
                 <input
                   type="text"
                   value={formName}
-                  onChange={(e) =>
-                    setFormName(e.target.value)
-                  }
+                  onChange={(e) => setFormName(e.target.value)}
                 />
               </div>
 
               <div className="products-field">
-                <label>{t.categoryLabel}</label>
+                <label>{t("products.categoryLabel", "Category")}</label>
                 <input
                   type="text"
                   value={formCategory}
-                  onChange={(e) =>
-                    setFormCategory(e.target.value)
-                  }
+                  onChange={(e) => setFormCategory(e.target.value)}
                   placeholder="Figure, Manga, Poster..."
                 />
               </div>
 
               <div className="products-field">
-                <label>{t.fandomLabel}</label>
+                <label>{t("products.fandomLabel", "Fandom")}</label>
                 <input
                   type="text"
                   value={formFandom}
-                  onChange={(e) =>
-                    setFormFandom(e.target.value)
-                  }
+                  onChange={(e) => setFormFandom(e.target.value)}
                   placeholder="Naruto, One Piece..."
                 />
               </div>
 
               <div className="products-field">
-                <label>{t.priceLabel}</label>
+                <label>{t("products.priceLabel", "Price (€)")}</label>
                 <input
                   type="number"
                   step="0.01"
                   value={formPrice}
-                  onChange={(e) =>
-                    setFormPrice(e.target.value)
-                  }
+                  onChange={(e) => setFormPrice(e.target.value)}
                 />
               </div>
 
               <div className="products-field">
-                <label>{t.stockLabel}</label>
+                <label>{t("products.stockLabel", "Stock")}</label>
                 <input
                   type="number"
                   value={formStock}
-                  onChange={(e) =>
-                    setFormStock(e.target.value)
-                  }
+                  onChange={(e) => setFormStock(e.target.value)}
                 />
               </div>
 
               <div className="products-field">
-                <label>{t.statusLabel}</label>
+                <label>{t("products.statusLabel", "Status")}</label>
                 <select
                   value={formStatus}
-                  onChange={(e) =>
-                    setFormStatus(e.target.value)
-                  }
+                  onChange={(e) => setFormStatus(e.target.value)}
                 >
                   {statusOptions.map((st) => (
                     <option key={st} value={st}>
-                      {st === "Active"
-                        ? t.statusActive
-                        : st === "Hidden"
-                        ? t.statusHidden
-                        : t.statusOutOfStock}
+                      {statusLabel(st)}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {error && (
-              <p className="products-error">{error}</p>
-            )}
+            {error && <p className="products-error">{error}</p>}
 
             <div className="products-panel-actions">
-              <button
-                className="btn-primary"
-                onClick={handleSave}
-              >
-                {t.saveButton}
+              <button className="btn-primary" onClick={handleSave}>
+                {t("products.saveButton", "Save")}
               </button>
-              <button
-                className="btn-ghost"
-                onClick={closePanel}
-              >
-                {t.cancelButton}
+              <button className="btn-ghost" onClick={closePanel}>
+                {t("products.cancelButton", "Cancel")}
               </button>
             </div>
           </div>
