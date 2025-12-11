@@ -197,9 +197,17 @@
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.9);
   padding: 10px;
   display: grid;
-  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.1fr);
   gap: 12px;
 }
+
+.orders-main-card.has-details {
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.1fr);
+}
+
+.orders-main-card.no-details {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 
 /* =============== TABLE =============== */
 
@@ -215,6 +223,14 @@
   text-align: left;
   border-bottom: 1px solid #111827;
 }
+/* STATUS ve PAYMENT sütunlarını ortala */
+.orders-table th:nth-child(6),
+.orders-table td:nth-child(6),
+.orders-table th:nth-child(7),
+.orders-table td:nth-child(7) {
+  text-align: center;
+}
+
 
 .orders-table thead th {
   font-size: 11px;
@@ -331,7 +347,6 @@
   white-space: nowrap;
 }
 
-/* credit-card, paypal, bank-transfer */
 .payment-credit-card {
   border-color: rgba(59, 130, 246, 0.7);
   background: rgba(30, 64, 175, 0.45);

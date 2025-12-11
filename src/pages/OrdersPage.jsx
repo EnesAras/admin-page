@@ -392,7 +392,11 @@ function OrdersPage({ language }) {
       </div>
 
       {/* MAIN CARD + TABLE */}
-      <div className="orders-main-card">
+      <div
+        className={`orders-main-card ${
+          selectedOrder ? "has-details" : "no-details"
+        }`}
+      >
         <table className="orders-table">
           <thead>
             <tr>
