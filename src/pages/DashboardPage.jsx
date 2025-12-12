@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./DashboardPage.css";
 import { useSettings } from "../context/SettingsContext";
 import {
@@ -79,6 +79,7 @@ function DashboardPage() {
   const { t, language } = useSettings();
   const locale = language || "en";
 
+  // USERS: Aynen eskisi gibi localStorage + fallback
   const [users] = useState(() => {
     const stored = localStorage.getItem("admin_users");
     if (stored) {
@@ -92,6 +93,56 @@ function DashboardPage() {
     return fallbackUsers;
   });
 
+  // ORDERS: Başlangıçta fallback, sonra backend'ten override ediyoruz
+  const [orders, setOrders] = useState(() => {
+    const stored = localStorage.getItem("admin_orders");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return fallbackOrders;
+  });
+
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState(null);
+
+  // ==== BACKEND'TEN ORDERS ÇEK ====
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        setOrdersLoading(true);
+        setOrdersError(null);
+
+        const res = await fetch("http://localhost:5000/api/orders");
+        if (!res.ok) {
+          throw new Error("Failed to fetch orders");
+        }
+
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setOrders(data);
+        }
+      } catch (err) {
+        console.error(err);
+        setOrdersError(
+          t("dashboardOrdersFetchError") ||
+            "Unable to load latest orders. Showing local data."
+        );
+      } finally {
+        setOrdersLoading(false);
+      }
+    }
+
+    fetchOrders();
+  }, [t]);
+
+  // ==== USER METRICS ====
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.status === "Active").length;
   const inactiveUsers = totalUsers - activeUsers;
@@ -115,20 +166,7 @@ function DashboardPage() {
     })
     .slice(0, 5);
 
-  const [orders] = useState(() => {
-    const stored = localStorage.getItem("admin_orders");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      } catch {
-      }
-    }
-    return fallbackOrders;
-  });
-
+  // ==== ORDER METRICS ====
   const totalOrders = orders.length;
   const pendingOrders = orders.filter((o) => o.status === "Pending").length;
   const shippedOrders = orders.filter((o) => o.status === "Shipped").length;
@@ -142,6 +180,7 @@ function DashboardPage() {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 3);
 
+  // ==== LINE CHART: MONTHLY REVENUE ====
   const monthlyRevenueMap = new Map();
 
   orders.forEach((order) => {
@@ -169,6 +208,7 @@ function DashboardPage() {
     (a, b) => a.sortKey - b.sortKey
   );
 
+  // ==== PIE CHART: STATUS DISTRIBUTION ====
   const statusChartData = [
     {
       key: "Pending",
@@ -194,6 +234,17 @@ function DashboardPage() {
       <h2 className="dashboard-title">{t("dashboardTitle")}</h2>
       <p className="dashboard-subtitle">{t("dashboardSubtitle")}</p>
 
+      {/* ORDERS FETCH DURUMU */}
+      {ordersLoading && (
+        <div className="dashboard-loading">
+          {t("dashboardLoading") || "Loading latest orders from server..."}
+        </div>
+      )}
+      {ordersError && !ordersLoading && (
+        <div className="dashboard-error">{ordersError}</div>
+      )}
+
+      {/* USER CARDS */}
       <div className="dashboard-grid">
         <div className="dashboard-card">
           <p className="card-label">{t("cardTotalUsers")}</p>
@@ -222,6 +273,7 @@ function DashboardPage() {
         </div>
       </div>
 
+      {/* ORDER CARDS */}
       <div className="dashboard-grid">
         <div className="dashboard-card">
           <p className="card-label">{t("totalOrders")}</p>
@@ -231,11 +283,13 @@ function DashboardPage() {
         <div className="dashboard-card">
           <p className="card-label">{t("pendingOrders")}</p>
           <p className="card-number text-amber">{pendingOrders}</p>
+          <p className="card-foot subtle">{t("cardFootPendingOrders")}</p>
         </div>
 
         <div className="dashboard-card">
           <p className="card-label">{t("shippedOrders")}</p>
           <p className="card-number text-green">{shippedOrders}</p>
+          <p className="card-foot subtle">{t("cardFootShippedOrders")}</p>
         </div>
 
         <div className="dashboard-card">
@@ -243,9 +297,11 @@ function DashboardPage() {
           <p className="card-number text-green">
             €{totalRevenue.toFixed(2)}
           </p>
+          <p className="card-foot subtle">{t("cardFootTotalRevenue")}</p>
         </div>
       </div>
 
+      {/* REVENUE LINE CHART */}
       <section className="dashboard-chart-card">
         <div className="chart-header">
           <div>
@@ -282,6 +338,7 @@ function DashboardPage() {
         </div>
       </section>
 
+      {/* ORDER STATUS PIE CHART */}
       <section className="dashboard-chart-card">
         <div className="chart-header">
           <div>
@@ -336,6 +393,7 @@ function DashboardPage() {
         </div>
       </section>
 
+      {/* RECENT USERS & ORDERS */}
       <div className="dashboard-bottom">
         <div className="recent-users">
           <div className="recent-header">

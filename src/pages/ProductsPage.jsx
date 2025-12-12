@@ -1,669 +1,650 @@
-// src/pages/ProductsPage.jsx
-import { useState, useEffect } from "react";
-import "./ProductsPage.css";
-import { useSettings } from "../context/SettingsContext";
-import translations from "../i18n/translations";
+  // src/pages/ProductsPage.jsx
+  import { useState, useEffect, useMemo } from "react";
+  import "./ProductsPage.css";
+  import { useSettings } from "../context/SettingsContext";
+  import translations from "../i18n/translations";
 
-const initialProducts = [
-  {
-    id: 1,
-    name: "Naruto Shippuden - Pain PVC Figure 25cm",
-    category: "Figure",
-    fandom: "Naruto",
-    price: 49.9,
-    stock: 12,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Attack on Titan Vol. 1 Manga",
-    category: "Manga",
-    fandom: "Attack on Titan",
-    price: 9.99,
-    stock: 34,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Akatsuki Desk Mat XL",
-    category: "Desk Mat",
-    fandom: "Naruto",
-    price: 29.9,
-    stock: 5,
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Demon Slayer Tanjiro Poster A2",
-    category: "Poster",
-    fandom: "Demon Slayer",
-    price: 12.5,
-    stock: 0,
-    status: "OutOfStock",
-  },
-  {
-    id: 5,
-    name: "RGB Gaming Keyboard - Sakura Edition",
-    category: "Keyboard",
-    fandom: "Gaming",
-    price: 89,
-    stock: 7,
-    status: "Hidden",
-  },
-];
 
-const statusOptions = ["Active", "Hidden", "OutOfStock"];
+  const statusOptions = ["Active", "Hidden", "OutOfStock"];
 
-function ProductsPage({ language }) {
-  const { settings, language: ctxLanguage } = useSettings();
+  function ProductsPage({ language }) {
+    const { settings, language: ctxLanguage } = useSettings();
 
-  // Dil önceliği: prop > context.language > settings.language > "en"
-  const lang = language || ctxLanguage || settings?.language || "en";
-  const dict = translations[lang] || translations.en;
+    const lang = language || ctxLanguage || settings?.language || "en";
+    const dict = translations[lang] || translations.en;
 
-  const t = (key, fallback) => {
-    if (dict && dict[key] !== undefined) return dict[key];
-    if (translations.en && translations.en[key] !== undefined) {
-      return translations.en[key];
-    }
-    if (fallback !== undefined) return fallback;
-    return key;
-  };
-
-  const [products, setProducts] = useState(() => {
-    const stored = localStorage.getItem("admin_products");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? parsed : initialProducts;
-      } catch {
-        return initialProducts;
-      }
-    }
-    return initialProducts;
-  });
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("name");
-  const [sortDirection, setSortDirection] = useState("asc");
-  const [selectedId, setSelectedId] = useState(null);
-
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [formName, setFormName] = useState("");
-  const [formCategory, setFormCategory] = useState("");
-  const [formFandom, setFormFandom] = useState("");
-  const [formPrice, setFormPrice] = useState("");
-  const [formStock, setFormStock] = useState("");
-  const [formStatus, setFormStatus] = useState("Active");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    localStorage.setItem("admin_products", JSON.stringify(products));
-  }, [products]);
-
-  const categories = Array.from(
-    new Set(products.map((p) => p.category).filter(Boolean))
-  );
-
-  // === METRICS ===
-  const totalProducts = products.length;
-  const activeProducts = products.filter((p) => p.status === "Active").length;
-  const lowStockCount = products.filter(
-    (p) => p.stock > 0 && p.stock <= 5
-  ).length;
-  const outOfStockCount = products.filter((p) => p.stock === 0).length;
-  const inventoryValue = products.reduce(
-    (sum, p) => sum + p.price * p.stock,
-    0
-  );
-
-  // helper sadece sonuç metni için
-  function filteredProductsLength(list, { searchTerm, statusFilter, categoryFilter }) {
-    const term = searchTerm.toLowerCase().trim();
-    return list.filter((product) => {
-      const matchesSearch =
-        term === "" ||
-        product.name.toLowerCase().includes(term) ||
-        product.fandom.toLowerCase().includes(term) ||
-        product.category.toLowerCase().includes(term);
-
-      const matchesStatus =
-        statusFilter === "all" || product.status === statusFilter;
-
-      const matchesCategory =
-        categoryFilter === "all" || product.category === categoryFilter;
-
-      return matchesSearch && matchesStatus && matchesCategory;
-    }).length;
-  }
-
-  const currentCount = filteredProductsLength(products, {
-    searchTerm,
-    statusFilter,
-    categoryFilter,
-  });
-
-  const resultsTemplate = t(
-    "products.resultsSummary",
-    "Showing {current} of {total} products"
-  );
-
-  const resultsText = resultsTemplate
-    .replace("{current}", String(currentCount))
-    .replace("{total}", String(totalProducts));
-
-  // === FILTERED + SORTED LIST ===
-  const filteredProducts = products.filter((product) => {
-    const term = searchTerm.toLowerCase().trim();
-
-    const matchesSearch =
-      term === "" ||
-      product.name.toLowerCase().includes(term) ||
-      product.fandom.toLowerCase().includes(term) ||
-      product.category.toLowerCase().includes(term);
-
-    const matchesStatus =
-      statusFilter === "all" || product.status === statusFilter;
-
-    const matchesCategory =
-      categoryFilter === "all" || product.category === categoryFilter;
-
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    let valA;
-    let valB;
-
-    switch (sortBy) {
-      case "id":
-        valA = a.id;
-        valB = b.id;
-        break;
-      case "name":
-        valA = a.name.toLowerCase();
-        valB = b.name.toLowerCase();
-        break;
-      case "category":
-        valA = a.category.toLowerCase();
-        valB = b.category.toLowerCase();
-        break;
-      case "price":
-        valA = a.price;
-        valB = b.price;
-        break;
-      case "stock":
-        valA = a.stock;
-        valB = b.stock;
-        break;
-      default:
-        valA = 0;
-        valB = 0;
-    }
-
-    if (valA < valB) {
-      return sortDirection === "asc" ? -1 : 1;
-    }
-    if (valA > valB) {
-      return sortDirection === "asc" ? 1 : -1;
-    }
-    return 0;
-  });
-
-  const handleSort = (key) => {
-    setSortBy((prevKey) => {
-      if (prevKey === key) {
-        setSortDirection((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
-        return prevKey;
-      } else {
-        setSortDirection(key === "name" ? "asc" : "desc");
-        return key;
-      }
-    });
-  };
-
-  const renderSortIndicator = (key) => {
-    if (sortBy !== key) return "⇅";
-    return sortDirection === "asc" ? "▲" : "▼";
-  };
-
-  const openAddPanel = () => {
-    setIsPanelOpen(true);
-    setEditingId(null);
-    setFormName("");
-    setFormCategory("");
-    setFormFandom("");
-    setFormPrice("");
-    setFormStock("");
-    setFormStatus("Active");
-    setError("");
-  };
-
-  const openEditPanel = (product) => {
-    setIsPanelOpen(true);
-    setEditingId(product.id);
-    setFormName(product.name);
-    setFormCategory(product.category);
-    setFormFandom(product.fandom);
-    setFormPrice(String(product.price));
-    setFormStock(String(product.stock));
-    setFormStatus(product.status);
-    setError("");
-  };
-
-  const closePanel = () => {
-    setIsPanelOpen(false);
-    setEditingId(null);
-    setError("");
-  };
-
-  const handleSave = () => {
-    if (!formName.trim()) {
-      setError(t("products.error.nameRequired", "Name is required."));
-      return;
-    }
-
-    const priceValue = Number(formPrice);
-    if (!Number.isFinite(priceValue) || priceValue < 0) {
-      setError(t("products.error.priceInvalid", "Enter a valid price."));
-      return;
-    }
-
-    const stockValue = Number(formStock);
-    if (!Number.isInteger(stockValue) || stockValue < 0) {
-      setError(t("products.error.stockInvalid", "Stock must be 0 or higher."));
-      return;
-    }
-
-    const payload = {
-      name: formName.trim(),
-      category: formCategory.trim() || "Other",
-      fandom: formFandom.trim() || "General",
-      price: priceValue,
-      stock: stockValue,
-      status: formStatus,
+    const t = (key, fallback) => {
+      if (dict && dict[key] !== undefined) return dict[key];
+      if (translations.en && translations.en[key] !== undefined) return translations.en[key];
+      if (fallback !== undefined) return fallback;
+      return key;
     };
 
-    if (editingId == null) {
-      const nextId =
-        products.length > 0
-          ? Math.max(...products.map((p) => p.id)) + 1
-          : 1;
+    // ========== STATE ==========
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState(null);
 
-      const newProduct = {
-        id: nextId,
-        ...payload,
-      };
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [categoryFilter, setCategoryFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("name");
+    const [sortDirection, setSortDirection] = useState("asc");
+    const [selectedId, setSelectedId] = useState(null);
 
-      setProducts((prev) => [...prev, newProduct]);
-      setSelectedId(nextId);
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+
+    // Form state (her zaman string başlar)
+    const [formName, setFormName] = useState("");
+    const [formCategory, setFormCategory] = useState("");
+    const [formFandom, setFormFandom] = useState("");
+    const [formPrice, setFormPrice] = useState("");
+    const [formStock, setFormStock] = useState("");
+    const [formStatus, setFormStatus] = useState("Active");
+    const [formError, setFormError] = useState("");
+
+
+    // ========== BACKEND'TEN VERİ ÇEK ==========
+    useEffect(() => {
+      async function fetchProducts() {
+        try {
+          setLoading(true);
+          setFetchError(null);
+
+          const res = await fetch("http://localhost:5000/api/products");
+          if (!res.ok) throw new Error("Failed to fetch products");
+
+          const data = await res.json();
+          setProducts(Array.isArray(data) ? data : []);
+        } catch (err) {
+          console.error(err);
+          setFetchError("FETCH_PRODUCTS_FAILED");
+
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      fetchProducts();
+    }, [lang]);
+
+    // categories (safe)
+    const categories = useMemo(() => {
+      return Array.from(new Set(products.map((p) => p?.category).filter(Boolean)));
+    }, [products]);
+
+    // === METRICS (safe) ===
+    const totalProducts = products.length;
+
+    const activeProducts = useMemo(
+      () => products.filter((p) => (p?.status ?? "Active") === "Active").length,
+      [products]
+    );
+
+    // ✅ LOW STOCK: (<5) -> 1..4
+    const lowStockCount = useMemo(
+      () =>
+        products.filter((p) => {
+          const stock = Number(p?.stock ?? 0);
+          return stock > 0 && stock < 5;
+        }).length,
+      [products]
+    );
+
+    const outOfStockCount = useMemo(
+      () => products.filter((p) => Number(p?.stock ?? 0) === 0).length,
+      [products]
+    );
+
+    const inventoryValue = useMemo(
+      () =>
+        products.reduce((sum, p) => {
+          const price = Number(p?.price ?? 0);
+          const stock = Number(p?.stock ?? 0);
+          return sum + price * stock;
+        }, 0),
+      [products]
+    );
+
+    // helper sadece sonuç metni için (safe)
+    function filteredProductsLength(list, { searchTerm, statusFilter, categoryFilter }) {
+      const term = String(searchTerm ?? "").toLowerCase().trim();
+
+      return list.filter((product) => {
+        const name = String(product?.name ?? "").toLowerCase();
+        const fandom = String(product?.fandom ?? "").toLowerCase();
+        const category = String(product?.category ?? "").toLowerCase();
+
+        const matchesSearch =
+          term === "" || name.includes(term) || fandom.includes(term) || category.includes(term);
+
+        const status = String(product?.status ?? "Active");
+        const matchesStatus = statusFilter === "all" || status === statusFilter;
+
+        const cat = String(product?.category ?? "");
+        const matchesCategory = categoryFilter === "all" || cat === categoryFilter;
+
+        return matchesSearch && matchesStatus && matchesCategory;
+      }).length;
+    }
+
+    const currentCount = filteredProductsLength(products, {
+      searchTerm,
+      statusFilter,
+      categoryFilter,
+    });
+
+    const resultsTemplate = t("products.resultsSummary", "Showing {current} of {total} products");
+    const resultsText = resultsTemplate
+      .replace("{current}", String(currentCount))
+      .replace("{total}", String(totalProducts));
+
+    // === FILTERED + SORTED LIST (safe) ===
+    const filteredProducts = useMemo(() => {
+      const term = String(searchTerm ?? "").toLowerCase().trim();
+
+      return products.filter((product) => {
+        const name = String(product?.name ?? "").toLowerCase();
+        const fandom = String(product?.fandom ?? "").toLowerCase();
+        const category = String(product?.category ?? "").toLowerCase();
+
+        const matchesSearch =
+          term === "" || name.includes(term) || fandom.includes(term) || category.includes(term);
+
+        const status = String(product?.status ?? "Active");
+        const matchesStatus = statusFilter === "all" || status === statusFilter;
+
+        const cat = String(product?.category ?? "");
+        const matchesCategory = categoryFilter === "all" || cat === categoryFilter;
+
+        return matchesSearch && matchesStatus && matchesCategory;
+      });
+    }, [products, searchTerm, statusFilter, categoryFilter]);
+
+    const sortedProducts = useMemo(() => {
+      return [...filteredProducts].sort((a, b) => {
+        let valA;
+        let valB;
+
+        switch (sortBy) {
+          case "id":
+            valA = Number(a?.id ?? 0);
+            valB = Number(b?.id ?? 0);
+            break;
+          case "name":
+            valA = String(a?.name ?? "").toLowerCase();
+            valB = String(b?.name ?? "").toLowerCase();
+            break;
+          case "category":
+            valA = String(a?.category ?? "").toLowerCase();
+            valB = String(b?.category ?? "").toLowerCase();
+            break;
+          case "price":
+            valA = Number(a?.price ?? 0);
+            valB = Number(b?.price ?? 0);
+            break;
+          case "stock":
+            valA = Number(a?.stock ?? 0);
+            valB = Number(b?.stock ?? 0);
+            break;
+          default:
+            valA = 0;
+            valB = 0;
+        }
+
+        if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+        if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+    }, [filteredProducts, sortBy, sortDirection]);
+
+    const handleSort = (key) => {
+      setSortBy((prevKey) => {
+        if (prevKey === key) {
+          setSortDirection((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
+          return prevKey;
+        }
+        setSortDirection(key === "name" ? "asc" : "desc");
+        return key;
+      });
+    };
+
+    const renderSortIndicator = (key) => {
+      if (sortBy !== key) return "⇅";
+      return sortDirection === "asc" ? "▲" : "▼";
+    };
+
+    const openAddPanel = () => {
+      setIsPanelOpen(true);
+      setEditingId(null);
+
+      setFormName("");
+      setFormCategory("");
+      setFormFandom("");
+      setFormPrice("");
+      setFormStock("");
+      setFormStatus("Active");
+      setFormError("");
+    };
+
+    // ✅ crash-proof edit open
+    const openEditPanel = (product) => {
+      setIsPanelOpen(true);
+      setEditingId(product?.id ?? null);
+
+      setFormName(String(product?.name ?? ""));
+      setFormCategory(String(product?.category ?? ""));
+      setFormFandom(String(product?.fandom ?? ""));
+      setFormPrice(String(product?.price ?? ""));
+      setFormStock(String(product?.stock ?? ""));
+      setFormStatus(product?.status ?? "Active");
+
+      setFormError("");
+    };
+
+    const closePanel = () => {
+      setIsPanelOpen(false);
+      setEditingId(null);
+      setFormError("");
+    };
+
+// ✅ save -> backend (POST / PUT)
+const handleSave = async () => {
+  setFormError("");
+
+  const safeName = String(formName ?? "").trim();
+  if (!safeName) {
+    setFormError(t("products.error.nameRequired", "Name is required."));
+    return;
+  }
+
+  const priceValue = Number(formPrice);
+  if (!Number.isFinite(priceValue) || priceValue < 0) {
+    setFormError(t("products.error.priceInvalid", "Enter a valid price."));
+    return;
+  }
+
+  const stockValue = Number(formStock);
+  if (!Number.isInteger(stockValue) || stockValue < 0) {
+    setFormError(t("products.error.stockInvalid", "Stock must be 0 or higher."));
+    return;
+  }
+
+  const payload = {
+    name: safeName,
+    category: String(formCategory ?? "").trim() || "Other",
+    fandom: String(formFandom ?? "").trim() || "General",
+    price: priceValue,
+    stock: stockValue,
+    status: String(formStatus ?? "Active"),
+  };
+
+  try {
+    const isEdit = editingId != null;
+
+    const url = isEdit
+      ? `http://localhost:5000/api/products/${Number(editingId)}`
+      : "http://localhost:5000/api/products";
+
+    const res = await fetch(url, {
+      method: isEdit ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      // backend: { error: "NameRequired" | "PriceInvalid" | ... }
+      setFormError(data?.error || t("products.error.generic", "Something went wrong."));
+      return;
+    }
+
+    if (isEdit) {
+      setProducts((prev) => prev.map((p) => (Number(p?.id) === Number(editingId) ? data : p)));
+      setSelectedId(Number(editingId));
     } else {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editingId ? { ...p, ...payload } : p))
-      );
-      setSelectedId(editingId);
+      setProducts((prev) => [data, ...prev]); // yeni ürün en üste
+      setSelectedId(Number(data?.id));
     }
 
     closePanel();
-  };
+  } catch (err) {
+    console.error(err);
+    setFormError(t("products.error.generic", "Something went wrong. Please try again."));
+  }
+};
 
-  const handleDelete = (id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    if (selectedId === id) {
-      setSelectedId(null);
+
+const handleDelete = async (id) => {
+  const safeId = Number(id);
+  if (!Number.isFinite(safeId)) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/products/${safeId}`, {
+      method: "DELETE",
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      console.error("Delete failed:", data);
+      return;
     }
-  };
 
-  const statusLabel = (status) => {
-    if (status === "Hidden")
-      return t("products.status.hidden", "Hidden");
-    if (status === "OutOfStock")
-      return t("products.status.outOfStock", "Out of stock");
-    return t("products.status.active", "Active");
-  };
+    setProducts((prev) => prev.filter((p) => Number(p?.id) !== safeId));
+    if (Number(selectedId) === safeId) setSelectedId(null);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-  return (
-    <div className="products-container">
-      {/* HEADER */}
-      <div className="products-header">
-        <div className="products-header-left">
-          <h2>{t("products.title", "Products")}</h2>
-          <p>{t("products.subtitle", "Manage your anime, manga and gaming items.")}</p>
-        </div>
 
-        <div className="products-header-right">
-          <button className="add-product-btn" onClick={openAddPanel}>
-            + {t("products.addProduct", "Add Product")}
-          </button>
+    const statusLabel = (status) => {
+      if (status === "Hidden") return t("products.status.hidden", "Hidden");
+      if (status === "OutOfStock") return t("products.status.outOfStock", "Out of stock");
+      return t("products.status.active", "Active");
+    };
 
-          <div className="products-filters">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="products-select"
-            >
-              <option value="all">
-                {t("products.filterCategoryAll", "All categories")}
-              </option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="products-select"
-            >
-              <option value="all">
-                {t("products.filterStatusAll", "All statuses")}
-              </option>
-              <option value="Active">
-                {t("products.status.active", "Active")}
-              </option>
-              <option value="Hidden">
-                {t("products.status.hidden", "Hidden")}
-              </option>
-              <option value="OutOfStock">
-                {t("products.status.outOfStock", "Out of stock")}
-              </option>
-            </select>
+    return (
+      <div className="products-container">
+        {/* HEADER */}
+        <div className="products-header">
+          <div className="products-header-left">
+            <h2>{t("products.title", "Products")}</h2>
+            <p>{t("products.subtitle", "Manage your anime, manga and gaming items.")}</p>
           </div>
 
-          <div className="products-search">
-            <input
-              type="text"
-              placeholder={t(
-                "products.searchPlaceholder",
-                "Search by name, fandom, category..."
-              )}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="products-search-input"
-            />
-          </div>
-        </div>
-      </div>
+          <div className="products-header-right">
+            <button className="add-product-btn" onClick={openAddPanel}>
+              + {t("products.addProduct", "Add Product")}
+            </button>
 
-      {/* SUMMARY CARDS */}
-      <div className="products-summary">
-        <div className="products-summary-card">
-          <span className="summary-label">
-            {t("products.summary.totalProducts", "Total products")}
-          </span>
-          <span className="summary-value">{totalProducts}</span>
-        </div>
-        <div className="products-summary-card">
-          <span className="summary-label">
-            {t("products.summary.activeProducts", "Active")}
-          </span>
-          <span className="summary-value summary-active">
-            {activeProducts}
-          </span>
-        </div>
-        <div className="products-summary-card">
-          <span className="summary-label">
-            {t("products.summary.lowStock", "Low stock (≤5)")}
-          </span>
-          <span className="summary-value summary-low">
-            {lowStockCount}
-          </span>
-        </div>
-        <div className="products-summary-card">
-          <span className="summary-label">
-            {t("products.summary.outOfStock", "Out of stock")}
-          </span>
-          <span className="summary-value summary-out">
-            {outOfStockCount}
-          </span>
-        </div>
-        <div className="products-summary-card products-summary-wide">
-          <span className="summary-label">
-            {t("products.summary.inventoryValue", "Inventory value")}
-          </span>
-          <span className="summary-value summary-inventory">
-            €{inventoryValue.toFixed(2)}
-          </span>
-        </div>
-      </div>
-
-      {/* META BAR */}
-      <div className="products-meta-bar">
-        <span className="products-meta-results">{resultsText}</span>
-      </div>
-
-      {/* MAIN CARD: TABLE + PANEL */}
-      <div className={`products-main-card ${isPanelOpen ? "with-panel" : ""}`}>
-        <div className="products-table-col">
-          <table className="users-table products-table">
-            <thead>
-              <tr>
-                <th
-                  className="products-th-sortable"
-                  onClick={() => handleSort("id")}
-                >
-                  <span>ID</span>
-                  <span className="sort-indicator">
-                    {renderSortIndicator("id")}
-                  </span>
-                </th>
-                <th
-                  className="products-th-sortable"
-                  onClick={() => handleSort("name")}
-                >
-                  <span>{t("products.nameLabel", "Name")}</span>
-                  <span className="sort-indicator">
-                    {renderSortIndicator("name")}
-                  </span>
-                </th>
-                <th
-                  className="products-th-sortable"
-                  onClick={() => handleSort("category")}
-                >
-                  <span>{t("products.categoryLabel", "Category")}</span>
-                  <span className="sort-indicator">
-                    {renderSortIndicator("category")}
-                  </span>
-                </th>
-                <th>{t("products.fandomLabel", "Fandom")}</th>
-                <th
-                  className="products-th-sortable"
-                  onClick={() => handleSort("price")}
-                >
-                  <span>{t("products.priceLabel", "Price (€)")}</span>
-                  <span className="sort-indicator">
-                    {renderSortIndicator("price")}
-                  </span>
-                </th>
-                <th
-                  className="products-th-sortable"
-                  onClick={() => handleSort("stock")}
-                >
-                  <span>{t("products.stockLabel", "Stock")}</span>
-                  <span className="sort-indicator">
-                    {renderSortIndicator("stock")}
-                  </span>
-                </th>
-                <th>{t("products.statusLabel", "Status")}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedProducts.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="products-empty">
-                    {t(
-                      "products.empty",
-                      "No products found for this filter."
-                    )}
-                  </td>
-                </tr>
-              ) : (
-                sortedProducts.map((product) => {
-                  let statusClass = "product-status-active";
-                  if (product.status === "Hidden") {
-                    statusClass = "product-status-hidden";
-                  } else if (product.status === "OutOfStock") {
-                    statusClass = "product-status-out";
-                  }
-
-                  const stockClass =
-                    product.stock === 0
-                      ? "stock-zero"
-                      : product.stock <= 5
-                      ? "stock-low"
-                      : "stock-ok";
-
-                  return (
-                    <tr
-                      key={product.id}
-                      className={`products-row ${
-                        selectedId === product.id ? "selected" : ""
-                      }`}
-                      onClick={() => setSelectedId(product.id)}
-                    >
-                      <td>#{product.id}</td>
-                      <td>{product.name}</td>
-                      <td>{product.category}</td>
-                      <td>{product.fandom}</td>
-                      <td>€{product.price.toFixed(2)}</td>
-                      <td className={stockClass}>{product.stock}</td>
-                      <td>
-                        <span className={`product-status ${statusClass}`}>
-                          {statusLabel(product.status)}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="products-row-actions">
-                          <button
-                            className="products-edit-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditPanel(product);
-                            }}
-                          >
-                            {t("products.editButton", "Edit")}
-                          </button>
-                          <button
-                            className="products-delete-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(product.id);
-                            }}
-                          >
-                            {t("products.deleteButton", "Delete")}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {isPanelOpen && (
-          <div className="products-panel">
-            <div className="products-panel-header">
-              <h3>
-                {editingId == null
-                  ? t("products.addProduct", "Add Product")
-                  : t("products.editProduct", "Edit Product")}
-              </h3>
-              <button
-                type="button"
-                className="products-panel-close"
-                onClick={closePanel}
+            <div className="products-filters">
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="products-select"
               >
-                ✕
-              </button>
+                <option value="all">{t("products.filterCategoryAll", "All categories")}</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="products-select"
+              >
+                <option value="all">{t("products.filterStatusAll", "All statuses")}</option>
+                <option value="Active">{t("products.status.active", "Active")}</option>
+                <option value="Hidden">{t("products.status.hidden", "Hidden")}</option>
+                <option value="OutOfStock">{t("products.status.outOfStock", "Out of stock")}</option>
+              </select>
             </div>
 
-            <div className="products-panel-grid">
-              <div className="products-field">
-                <label>{t("products.nameLabel", "Name")}</label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                />
-              </div>
-
-              <div className="products-field">
-                <label>{t("products.categoryLabel", "Category")}</label>
-                <input
-                  type="text"
-                  value={formCategory}
-                  onChange={(e) => setFormCategory(e.target.value)}
-                  placeholder="Figure, Manga, Poster..."
-                />
-              </div>
-
-              <div className="products-field">
-                <label>{t("products.fandomLabel", "Fandom")}</label>
-                <input
-                  type="text"
-                  value={formFandom}
-                  onChange={(e) => setFormFandom(e.target.value)}
-                  placeholder="Naruto, One Piece..."
-                />
-              </div>
-
-              <div className="products-field">
-                <label>{t("products.priceLabel", "Price (€)")}</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formPrice}
-                  onChange={(e) => setFormPrice(e.target.value)}
-                />
-              </div>
-
-              <div className="products-field">
-                <label>{t("products.stockLabel", "Stock")}</label>
-                <input
-                  type="number"
-                  value={formStock}
-                  onChange={(e) => setFormStock(e.target.value)}
-                />
-              </div>
-
-              <div className="products-field">
-                <label>{t("products.statusLabel", "Status")}</label>
-                <select
-                  value={formStatus}
-                  onChange={(e) => setFormStatus(e.target.value)}
-                >
-                  {statusOptions.map((st) => (
-                    <option key={st} value={st}>
-                      {statusLabel(st)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {error && <p className="products-error">{error}</p>}
-
-            <div className="products-panel-actions">
-              <button className="btn-primary" onClick={handleSave}>
-                {t("products.saveButton", "Save")}
-              </button>
-              <button className="btn-ghost" onClick={closePanel}>
-                {t("products.cancelButton", "Cancel")}
-              </button>
+            <div className="products-search">
+              <input
+                type="text"
+                placeholder={t("products.searchPlaceholder", "Search by name, fandom, category...")}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="products-search-input"
+              />
             </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        </div>
 
-export default ProductsPage;
+        {/* SUMMARY CARDS */}
+        <div className="products-summary">
+          <div className="products-summary-card">
+            <span className="summary-label">
+              {t("products.summary.totalProducts", "Total products")}
+            </span>
+            <span className="summary-value">{totalProducts}</span>
+          </div>
+
+          <div className="products-summary-card">
+            <span className="summary-label">
+              {t("products.summary.activeProducts", "Active")}
+            </span>
+            <span className="summary-value summary-active">{activeProducts}</span>
+          </div>
+
+          <div className="products-summary-card">
+            <span className="summary-label">
+              {t("products.summary.lowStock", "Low stock (<5)")}
+            </span>
+            <span className="summary-value summary-low">{lowStockCount}</span>
+          </div>
+
+          <div className="products-summary-card">
+            <span className="summary-label">
+              {t("products.summary.outOfStock", "Out of stock")}
+            </span>
+            <span className="summary-value summary-out">{outOfStockCount}</span>
+          </div>
+
+          <div className="products-summary-card products-summary-wide">
+            <span className="summary-label">
+              {t("products.summary.inventoryValue", "Inventory value")}
+            </span>
+            <span className="summary-value summary-inventory">
+              €{inventoryValue.toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        {/* LOADING & ERROR */}
+        {loading && (
+          <div className="products-loading">{t("products.loading", "Loading products...")}</div>
+        )}
+  {fetchError && !loading && (
+    <div className="products-error-fetch">
+      {fetchError === "FETCH_PRODUCTS_FAILED"
+        ? t("products.fetchError", "There was a problem loading products. Please try again.")
+        : fetchError}
+    </div>
+  )}
+
+        {/* META BAR */}
+        <div className="products-meta-bar">
+          <span className="products-meta-results">{resultsText}</span>
+        </div>
+
+        {/* MAIN CARD: TABLE + PANEL */}
+        <div className={`products-main-card ${isPanelOpen ? "with-panel" : ""}`}>
+          <div className="products-table-col">
+            <table className="users-table products-table">
+              <thead>
+                <tr>
+                  <th className="products-th-sortable" onClick={() => handleSort("id")}>
+                    <span>ID</span>
+                    <span className="sort-indicator">{renderSortIndicator("id")}</span>
+                  </th>
+                  <th className="products-th-sortable" onClick={() => handleSort("name")}>
+                    <span>{t("products.nameLabel", "Name")}</span>
+                    <span className="sort-indicator">{renderSortIndicator("name")}</span>
+                  </th>
+                  <th className="products-th-sortable" onClick={() => handleSort("category")}>
+                    <span>{t("products.categoryLabel", "Category")}</span>
+                    <span className="sort-indicator">{renderSortIndicator("category")}</span>
+                  </th>
+                  <th>{t("products.fandomLabel", "Fandom")}</th>
+                  <th className="products-th-sortable" onClick={() => handleSort("price")}>
+                    <span>{t("products.priceLabel", "Price (€)")}</span>
+                    <span className="sort-indicator">{renderSortIndicator("price")}</span>
+                  </th>
+                  <th className="products-th-sortable" onClick={() => handleSort("stock")}>
+                    <span>{t("products.stockLabel", "Stock")}</span>
+                    <span className="sort-indicator">{renderSortIndicator("stock")}</span>
+                  </th>
+                  <th>{t("products.statusLabel", "Status")}</th>
+                  <th></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {sortedProducts.length === 0 && !loading ? (
+                  <tr>
+                    <td colSpan="8" className="products-empty">
+                      {t("products.empty", "No products found for this filter.")}
+                    </td>
+                  </tr>
+                ) : (
+                  sortedProducts.map((product) => {
+                    const status = product?.status ?? "Active";
+
+                    let statusClass = "product-status-active";
+                    if (status === "Hidden") statusClass = "product-status-hidden";
+                    else if (status === "OutOfStock") statusClass = "product-status-out";
+
+                    const stockNum = Number(product?.stock ?? 0);
+
+                    // ✅ LOW STOCK CLASS: (<5)
+                    const stockClass =
+                      stockNum === 0 ? "stock-zero" : stockNum < 5 ? "stock-low" : "stock-ok";
+
+                    return (
+                      <tr
+                        key={product?.id}
+                        className={`products-row ${selectedId === product?.id ? "selected" : ""}`}
+                        onClick={() => setSelectedId(product?.id)}
+                      >
+                        <td>#{product?.id ?? "-"}</td>
+                        <td>{product?.name ?? "-"}</td>
+                        <td>{product?.category ?? "-"}</td>
+                        <td>{product?.fandom ?? "-"}</td>
+                        <td>€{Number(product?.price ?? 0).toFixed(2)}</td>
+                        <td className={stockClass}>{stockNum}</td>
+                        <td>
+                          <span className={`product-status ${statusClass}`}>{statusLabel(status)}</span>
+                        </td>
+                        <td>
+                          <div className="products-row-actions">
+                            <button
+                              className="products-edit-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditPanel(product);
+                              }}
+                            >
+                              {t("products.editButton", "Edit")}
+                            </button>
+                            <button
+                              className="products-delete-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(product?.id);
+                              }}
+                            >
+                              {t("products.deleteButton", "Delete")}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {isPanelOpen && (
+            <div className="products-panel">
+              <div className="products-panel-header">
+                <h3>
+                  {editingId == null
+                    ? t("products.addProduct", "Add Product")
+                    : t("products.editProduct", "Edit Product")}
+                </h3>
+
+                <button type="button" className="products-panel-close" onClick={closePanel}>
+                  ✕
+                </button>
+              </div>
+
+              <div className="products-panel-grid">
+                <div className="products-field">
+                  <label>{t("products.nameLabel", "Name")}</label>
+                  <input
+                    type="text"
+                    value={formName ?? ""}
+                    onChange={(e) => setFormName(e.target.value)}
+                  />
+                </div>
+
+                <div className="products-field">
+                  <label>{t("products.categoryLabel", "Category")}</label>
+                  <input
+                    type="text"
+                    value={formCategory ?? ""}
+                    onChange={(e) => setFormCategory(e.target.value)}
+                    placeholder="Figure, Manga, Poster..."
+                  />
+                </div>
+
+                <div className="products-field">
+                  <label>{t("products.fandomLabel", "Fandom")}</label>
+                  <input
+                    type="text"
+                    value={formFandom ?? ""}
+                    onChange={(e) => setFormFandom(e.target.value)}
+                    placeholder="Naruto, One Piece..."
+                  />
+                </div>
+
+                <div className="products-field">
+                  <label>{t("products.priceLabel", "Price (€)")}</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formPrice ?? ""}
+                    onChange={(e) => setFormPrice(e.target.value)}
+                  />
+                </div>
+
+                <div className="products-field">
+                  <label>{t("products.stockLabel", "Stock")}</label>
+                  <input
+                    type="number"
+                    value={formStock ?? ""}
+                    onChange={(e) => setFormStock(e.target.value)}
+                  />
+                </div>
+
+                <div className="products-field">
+                  <label>{t("products.statusLabel", "Status")}</label>
+                  <select value={formStatus} onChange={(e) => setFormStatus(e.target.value)}>
+                    {statusOptions.map((st) => (
+                      <option key={st} value={st}>
+                        {statusLabel(st)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {formError && <p className="products-error">{formError}</p>}
+
+              <div className="products-panel-actions">
+                <button className="btn-primary" onClick={handleSave}>
+                  {t("products.saveButton", "Save")}
+                </button>
+                <button className="btn-ghost" onClick={closePanel}>
+                  {t("products.cancelButton", "Cancel")}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  export default ProductsPage;
+

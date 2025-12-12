@@ -44,13 +44,27 @@ function UsersPage({ language }) {
     return key;
   };
 
-  const roleLabel = (role) => {
-    if (!role) return "";
-    let key = "roleUser";
-    if (role === "Admin") key = "roleAdmin";
-    else if (role === "Moderator") key = "roleModerator";
-    return t(key, role);
-  };
+ const roleLabel = (role) => {
+  if (!role) return "";
+
+  const r = role.toLowerCase();
+
+  if (r === "admin") {
+    return t("roleAdmin", "Admin");
+  }
+  if (r === "owner") {
+    return t("roleOwner", "Owner");
+  }
+  if (r === "manager") {
+    return t("roleManager", "Manager");
+  }
+  if (r === "moderator") {
+    return t("roleModerator", "Moderator");
+  }
+
+  return t("roleUser", "User");
+};
+
 
   const statusLabel = (status) => {
     if (!status) return "";
@@ -62,21 +76,43 @@ function UsersPage({ language }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const [users, setUsers] = useState(() => {
-    const stored = localStorage.getItem("admin_users");
-    if (stored) {
+  // BACKEND USERS + loading/error
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+
+  // İlk açılışta backend'ten çek, hata olursa usersData'ya düş
+  useEffect(() => {
+    async function fetchUsers() {
       try {
-        return JSON.parse(stored);
-      } catch {
-        return usersData;
+        setLoading(true);
+        setFetchError("");
+        const res = await fetch("http://localhost:5000/api/users");
+        if (!res.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setUsers(data);
+        } else {
+          setUsers(usersData);
+        }
+      } catch (err) {
+        console.error(err);
+        setFetchError(
+          t(
+            "users.fetchError",
+            "There was a problem loading users. Showing local data."
+          )
+        );
+        setUsers(usersData);
+      } finally {
+        setLoading(false);
       }
     }
-    return usersData;
-  });
 
-  useEffect(() => {
-    localStorage.setItem("admin_users", JSON.stringify(users));
-  }, [users]);
+    fetchUsers();
+  }, [lang]); // dil değişince tekrar çekmek istersen böyle kalsın
 
   const CURRENT_USER_ROLE = "Admin";
   const canEditUsers = CURRENT_USER_ROLE === "Admin";
@@ -86,7 +122,7 @@ function UsersPage({ language }) {
   const [isAdding, setIsAdding] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState("User");
+  const [newUserRole, setNewUserRole] = useState("user");
   const [newUserStatus, setNewUserStatus] = useState("Active");
   const [addError, setAddError] = useState("");
 
@@ -94,7 +130,7 @@ function UsersPage({ language }) {
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserName, setEditUserName] = useState("");
   const [editUserEmail, setEditUserEmail] = useState("");
-  const [editUserRole, setEditUserRole] = useState("User");
+  const [editUserRole, setEditUserRole] = useState("user");
   const [editUserStatus, setEditUserStatus] = useState("Active");
 
   // Sıralama state'i
@@ -128,7 +164,8 @@ function UsersPage({ language }) {
     isNewEmailInvalid ||
     isNewEmailDuplicate;
 
-  const handleAddUser = () => {
+  // ========== ADD USER (backend + state) ==========
+  const handleAddUser = async () => {
     setAddError("");
 
     if (!newUserName.trim() || !newUserEmail.trim()) {
@@ -171,27 +208,47 @@ function UsersPage({ language }) {
       return;
     }
 
-    const nextId =
-      users.length > 0 ? Math.max(...users.map((u) => u.id)) + 1 : 1;
-
-    const newUser = {
-      id: nextId,
+    const payload = {
       name: newUserName.trim(),
       email: newUserEmail.trim(),
       role: newUserRole,
       status: newUserStatus,
+      // country'yi istemiyorsan backend default "Unknown" kullanıyor zaten
     };
 
-    setUsers((prevUsers) => [...prevUsers, newUser]);
+    try {
+      const res = await fetch("http://localhost:5000/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    setNewUserName("");
-    setNewUserEmail("");
-    setNewUserRole("User");
-    setNewUserStatus("Active");
-    setIsAdding(false);
+      if (!res.ok) {
+        throw new Error("Failed to create user");
+      }
+
+      const created = await res.json();
+
+      setUsers((prevUsers) => [...prevUsers, created]);
+
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserRole("User");
+      setNewUserStatus("Active");
+      setIsAdding(false);
+    } catch (err) {
+      console.error(err);
+      setAddError(
+        t(
+          "users.saveError",
+          "There was a problem saving this user. Please try again."
+        )
+      );
+    }
   };
 
-  const handleUpdateUser = () => {
+  // ========== UPDATE USER (backend + state) ==========
+  const handleUpdateUser = async () => {
     if (!editUserName.trim() || !editUserEmail.trim()) {
       alert(
         t("users.error.nameRequired", "Name and email are required.")
@@ -235,26 +292,50 @@ function UsersPage({ language }) {
       return;
     }
 
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === editingUserId
-          ? {
-              ...user,
-              name: editUserName.trim(),
-              email: editUserEmail.trim(),
-              role: editUserRole,
-              status: editUserStatus,
-            }
-          : user
-      )
-    );
+    const payload = {
+      name: editUserName.trim(),
+      email: editUserEmail.trim(),
+      role: editUserRole,
+      status: editUserStatus,
+    };
 
-    setIsEditing(false);
-    setEditingUserId(null);
-    setEditUserName("");
-    setEditUserEmail("");
-    setEditUserRole("User");
-    setEditUserStatus("Active");
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/users/${editingUserId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to update user");
+      }
+
+      const updated = await res.json();
+
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === updated.id ? updated : user
+        )
+      );
+
+      setIsEditing(false);
+      setEditingUserId(null);
+      setEditUserName("");
+      setEditUserEmail("");
+      setEditUserRole("User");
+      setEditUserStatus("Active");
+    } catch (err) {
+      console.error(err);
+      alert(
+        t(
+          "users.saveError",
+          "There was a problem saving this user. Please try again."
+        )
+      );
+    }
   };
 
   const handleEditClick = (user) => {
@@ -270,19 +351,69 @@ function UsersPage({ language }) {
     setEditUserStatus(user.status);
   };
 
-  const handleToggleStatus = (id) => {
+  // ========== TOGGLE STATUS (backend + state) ==========
+  const handleToggleStatus = async (id) => {
     if (!canToggleStatus) return;
 
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === id
-          ? {
-              ...user,
-              status: user.status === "Active" ? "Inactive" : "Active",
-            }
-          : user
-      )
-    );
+    const user = users.find((u) => u.id === id);
+    if (!user) return;
+
+    const newStatus = user.status === "Active" ? "Inactive" : "Active";
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/users/${id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to toggle status");
+      }
+
+      const updated = await res.json();
+
+      setUsers((prevUsers) =>
+        prevUsers.map((u) => (u.id === id ? updated : u))
+      );
+    } catch (err) {
+      console.error(err);
+      alert(
+        t(
+          "users.toggleError",
+          "There was a problem updating the status."
+        )
+      );
+    }
+  };
+
+  // ========== DELETE (backend + state) ==========
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/users/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to delete user");
+      }
+
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert(
+        t(
+          "users.deleteError",
+          "There was a problem deleting this user."
+        )
+      );
+    }
   };
 
   const filteredUsers = users.filter((user) => {
@@ -335,10 +466,6 @@ function UsersPage({ language }) {
     if (valA > valB) return sortDirection === "asc" ? 1 : -1;
     return 0;
   });
-
-  const handleDelete = (id) => {
-    setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
-  };
 
   const handleSort = (column) => {
     setSortBy((prevSortBy) => {
@@ -461,6 +588,16 @@ function UsersPage({ language }) {
         </div>
       </div>
 
+      {/* LOADING / ERROR */}
+      {loading && (
+        <div className="users-loading">
+          {t("users.loading", "Loading users...")}
+        </div>
+      )}
+      {fetchError && !loading && (
+        <div className="users-error-fetch">{fetchError}</div>
+      )}
+
       {/* ADD USER PANEL */}
       {isAdding && (
         <div className="add-user-panel">
@@ -501,16 +638,16 @@ function UsersPage({ language }) {
               required
             />
 
-            <select
-              value={newUserRole}
-              onChange={(e) => setNewUserRole(e.target.value)}
-            >
-              <option value="User">{roleLabel("User")}</option>
-              <option value="Admin">{roleLabel("Admin")}</option>
-              <option value="Moderator">
-                {roleLabel("Moderator")}
-              </option>
-            </select>
+           <select
+  value={newUserRole}
+  onChange={(e) => setNewUserRole(e.target.value)}
+>
+  <option value="user">{roleLabel("user")}</option>
+  <option value="admin">{roleLabel("admin")}</option>
+  <option value="manager">{roleLabel("manager")}</option>
+  <option value="owner">{roleLabel("owner")}</option>
+</select>
+
 
             <select
               value={newUserStatus}
@@ -584,16 +721,15 @@ function UsersPage({ language }) {
               onChange={(e) => setEditUserEmail(e.target.value)}
             />
 
-            <select
-              value={editUserRole}
-              onChange={(e) => setEditUserRole(e.target.value)}
-            >
-              <option value="User">{roleLabel("User")}</option>
-              <option value="Admin">{roleLabel("Admin")}</option>
-              <option value="Moderator">
-                {roleLabel("Moderator")}
-              </option>
-            </select>
+<select
+  value={editUserRole}
+  onChange={(e) => setEditUserRole(e.target.value)}
+>
+  <option value="user">{roleLabel("user")}</option>
+  <option value="admin">{roleLabel("admin")}</option>
+  <option value="manager">{roleLabel("manager")}</option>
+  <option value="owner">{roleLabel("owner")}</option>
+</select>
 
             <select
               value={editUserStatus}
@@ -654,7 +790,7 @@ function UsersPage({ language }) {
         </thead>
 
         <tbody>
-          {sortedUsers.length === 0 ? (
+          {sortedUsers.length === 0 && !loading ? (
             <tr>
               <td colSpan={6} className="empty-state">
                 {t(
