@@ -19,29 +19,40 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const login = async (email, password) => {
-    try {
-      const data = await apiFetch("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify({
-          email: String(email || "").trim().toLowerCase(),
-          password: String(password || "").trim(),
-        }),
-      });
+ const login = async (email, password) => {
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: String(email || "").trim().toLowerCase(),
+        password: String(password || "").trim(),
+      }),
+    });
 
-      setIsAuthenticated(true);
-      setCurrentUser(data.user || null);
+    const data = await res.json();
 
-      localStorage.setItem("admin_isAuthenticated", "true");
-      localStorage.setItem("admin_currentUser", JSON.stringify(data.user || null));
-
-      return data.user;
-    } catch (err) {
-      if (err?.message === "UserNotFound") throw new Error("UserNotFound");
-      if (err?.message === "WrongPassword") throw new Error("WrongPassword");
-      throw new Error("LoginFailed");
+    if (!res.ok) {
+      throw new Error(data?.message || "Login failed");
     }
-  };
+
+    setIsAuthenticated(true);
+    setCurrentUser(data.user);
+
+    localStorage.setItem("admin_isAuthenticated", "true");
+    localStorage.setItem("admin_currentUser", JSON.stringify(data.user));
+
+    return data.user;
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    throw err;
+  }
+};
+
+
+ 
 
   const logout = () => {
     setIsAuthenticated(false);

@@ -112,7 +112,7 @@ function UsersPage({ language }) {
     }
 
     fetchUsers();
-  }, [lang]); // dil değişince tekrar çekmek istersen böyle kalsın
+  }, [lang , t]); // dil değişince tekrar çekmek istersen böyle kalsın
 
   const CURRENT_USER_ROLE = "Admin";
   const canEditUsers = CURRENT_USER_ROLE === "Admin";
