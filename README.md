@@ -68,3 +68,16 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+### Local dev ports
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5000
+- CRA proxy: root package.json has "proxy": "http://localhost:5000"
+
+### API calling rule
+Frontend should call relative URLs like /api/auth/login (proxy handles localhost:5000 in dev).
+### Run both apps
+- Terminal 1: npm start
+- Terminal 2: cd server && npm start
+
