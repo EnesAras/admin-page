@@ -1,6 +1,9 @@
-// server/index.js
+// server/index.js (CommonJS)
 const express = require("express");
 const cors = require("cors");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -8,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Fake kullanıcılar (şimdilik hafızada)
+// ===== FAKE USERS (in-memory) =====
 const users = [
   {
     id: 1,
@@ -16,6 +19,7 @@ const users = [
     password: "123456",
     name: "Admin User",
     role: "admin",
+    status: "Active",
   },
   {
     id: 2,
@@ -23,105 +27,200 @@ const users = [
     password: "enes123",
     name: "Enes Aras",
     role: "owner",
+    status: "Active",
   },
 ];
 
-// ✅ products artık memory'de değişebilsin diye let
+// ===== PRODUCTS (from file) =====
 let products = require("./data/products");
 
-// ===== PRODUCTS CRUD =====
+// ===== ORDERS (in-memory) =====
+let orders = [
+  {
+    id: 101,
+    customer: "Alex Turner",
+    email: "alex.turner@example.com",
+    date: "2025-12-01",
+    total: 125.5,
+    status: "Pending",
+    method: "Credit Card",
+  },
+  {
+    id: 102,
+    customer: "Maria Lopez",
+    email: "maria.lopez@example.com",
+    date: "2025-12-03",
+    total: 89.99,
+    status: "Shipped",
+    method: "PayPal",
+  },
+  {
+    id: 103,
+    customer: "David Kim",
+    email: "david.kim@example.com",
+    date: "2025-12-05",
+    total: 42.0,
+    status: "Cancelled",
+    method: "Bank Transfer",
+  },
+];
 
-// GET all
+// ===== HEALTH =====
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, message: "API running" });
+});
+
+// ===== AUTH (single source of truth) =====
+app.post("/api/auth/login", (req, res) => {
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const password = String(req.body?.password || "").trim();
+
+  const user = users.find((u) => String(u.email).toLowerCase() === email);
+
+  if (!user) return res.status(404).json({ error: "UserNotFound" });
+  if (user.password !== password)
+    return res.status(401).json({ error: "WrongPassword" });
+
+  // password göndermiyoruz
+  return res.json({
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+    },
+  });
+});
+
+// ===== USERS CRUD =====
+app.get("/api/users", (req, res) => {
+  const safe = users.map(({ password, ...rest }) => rest);
+  res.json(safe);
+});
+
+app.post("/api/users", (req, res) => {
+  const { name, email, role = "user", status = "Active" } = req.body || {};
+  if (!name || !email) {
+    return res.status(400).json({ error: "NameEmailRequired" });
+  }
+
+  const exists = users.some(
+    (u) => String(u.email).toLowerCase() === String(email).toLowerCase()
+  );
+  if (exists) return res.status(409).json({ error: "EmailExists" });
+
+  const newUser = {
+    id: Date.now(),
+    name,
+    email,
+    role,
+    status,
+    password: "", // şimdilik boş
+  };
+
+  users.push(newUser);
+  const { password: _, ...safe } = newUser;
+  res.status(201).json(safe);
+});
+
+app.put("/api/users/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const idx = users.findIndex((u) => u.id === id);
+  if (idx === -1) return res.status(404).json({ error: "UserNotFound" });
+
+  const { email } = req.body || {};
+  if (email) {
+    const taken = users.some(
+      (u) =>
+        u.id !== id &&
+        String(u.email).toLowerCase() === String(email).toLowerCase()
+    );
+    if (taken) return res.status(409).json({ error: "EmailExists" });
+  }
+
+  users[idx] = { ...users[idx], ...req.body };
+  const { password, ...safe } = users[idx];
+  res.json(safe);
+});
+
+app.delete("/api/users/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const idx = users.findIndex((u) => u.id === id);
+  if (idx === -1) return res.status(404).json({ error: "UserNotFound" });
+
+  users.splice(idx, 1);
+  res.json({ ok: true });
+});
+
+// ===== PRODUCTS CRUD =====
 app.get("/api/products", (req, res) => {
   res.json(products);
 });
 
-// POST create
 app.post("/api/products", (req, res) => {
-  const body = req.body || {};
-
-  const name = String(body.name ?? "").trim();
-  if (!name) return res.status(400).json({ error: "NameRequired" });
-
-  const price = Number(body.price ?? 0);
-  if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: "PriceInvalid" });
-
-  const stock = Number(body.stock ?? 0);
-  if (!Number.isInteger(stock) || stock < 0) return res.status(400).json({ error: "StockInvalid" });
-
-  const category = String(body.category ?? "Other").trim() || "Other";
-  const fandom = String(body.fandom ?? "General").trim() || "General";
-  const status = String(body.status ?? "Active");
-
-  const nextId = products.length ? Math.max(...products.map((p) => Number(p?.id ?? 0))) + 1 : 1;
-
-  const newProduct = { id: nextId, name, category, fandom, price, stock, status };
-
-  products = [newProduct, ...products];
-  return res.status(201).json(newProduct);
+  const newProduct = { id: Date.now(), ...req.body };
+  products.unshift(newProduct);
+  res.status(201).json(newProduct);
 });
 
-// PUT update
 app.put("/api/products/:id", (req, res) => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return res.status(400).json({ error: "BadId" });
+  const idx = products.findIndex((p) => Number(p.id) === id);
+  if (idx === -1) return res.status(404).json({ error: "ProductNotFound" });
 
-  const idx = products.findIndex((p) => Number(p?.id) === id);
-  if (idx === -1) return res.status(404).json({ error: "NotFound" });
-
-  const body = req.body || {};
-
-  const name = String(body.name ?? "").trim();
-  if (!name) return res.status(400).json({ error: "NameRequired" });
-
-  const price = Number(body.price ?? 0);
-  if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: "PriceInvalid" });
-
-  const stock = Number(body.stock ?? 0);
-  if (!Number.isInteger(stock) || stock < 0) return res.status(400).json({ error: "StockInvalid" });
-
-  const category = String(body.category ?? "Other").trim() || "Other";
-  const fandom = String(body.fandom ?? "General").trim() || "General";
-  const status = String(body.status ?? "Active");
-
-  const updated = { ...products[idx], name, category, fandom, price, stock, status };
-  products = products.map((p) => (Number(p?.id) === id ? updated : p));
-
-  return res.json(updated);
+  products[idx] = { ...products[idx], ...req.body, id: products[idx].id };
+  res.json(products[idx]);
 });
 
-// DELETE
 app.delete("/api/products/:id", (req, res) => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return res.status(400).json({ error: "BadId" });
-
-  const exists = products.some((p) => Number(p?.id) === id);
-  if (!exists) return res.status(404).json({ error: "NotFound" });
-
-  products = products.filter((p) => Number(p?.id) !== id);
-  return res.json({ ok: true });
+  products = products.filter((p) => Number(p.id) !== id);
+  res.json({ ok: true });
 });
 
-// Basit health check
-app.get("/api/health", (req, res) => {
-  res.json({ ok: true, message: "API is up" });
+// ===== ORDERS CRUD =====
+app.get("/api/orders", (req, res) => {
+  res.json(orders);
 });
 
-// LOGIN endpoint
-app.post("/api/login", (req, res) => {
-  const { email, password } = req.body || {};
+app.post("/api/orders", (req, res) => {
+  const newOrder = { id: Date.now(), ...req.body };
+  orders.unshift(newOrder);
+  res.status(201).json(newOrder);
+});
 
-  const user = users.find((u) => u.email === email);
-  if (!user) return res.status(404).json({ error: "UserNotFound" });
+app.put("/api/orders/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const idx = orders.findIndex((o) => Number(o.id) === id);
+  if (idx === -1) return res.status(404).json({ error: "OrderNotFound" });
 
-  if (user.password !== password) return res.status(401).json({ error: "WrongPassword" });
+  orders[idx] = { ...orders[idx], ...req.body, id: orders[idx].id };
+  res.json(orders[idx]);
+});
 
-  return res.json({
-    ok: true,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+app.delete("/api/orders/:id", (req, res) => {
+  const id = Number(req.params.id);
+  orders = orders.filter((o) => Number(o.id) !== id);
+  res.json({ ok: true });
+});
+
+// ===== DASHBOARD =====
+app.get("/api/dashboard", (req, res) => {
+  const totalRevenue = orders.reduce(
+    (sum, o) => sum + (Number(o.total) || 0),
+    0
+  );
+
+  res.json({
+    usersCount: users.length,
+    ordersCount: orders.length,
+    productsCount: products.length,
+    totalRevenue,
+    recentOrders: orders.slice(0, 5),
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`API listening on port ${PORT}`);
+  console.log(`API running on http://localhost:${PORT}`);
 });

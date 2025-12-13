@@ -22,6 +22,7 @@ import { useAuth } from "./context/AuthContext";
 import { useState, useEffect, useRef } from "react"; 
 
 
+
 function App() {
   const menuRef = useRef(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -100,13 +101,13 @@ useEffect(() => {
     }
   };
 
-  // Private route
-  const PrivateRoute = ({ children }) => {
-    if (!isAuthenticated) {
-      return <Navigate to="/login" replace />;
-    }
-    return children;
-  };
+const PrivateRoute = ({ children }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+  return children;
+};
+
 
   const isLoginPage = location.pathname === "/login";
 
@@ -230,7 +231,10 @@ useEffect(() => {
         <main className="content">
           <Routes>
             {/* Public: Login */}
-            <Route path="/login" element={<LoginPage />} />
+<Route
+  path="/login"
+  element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
+/>
 
             {/* Protected routes */}
             <Route

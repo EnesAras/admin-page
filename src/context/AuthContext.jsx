@@ -1,62 +1,72 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { apiFetch } from "../lib/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Sayfa her açıldığında / yenilendiğinde false'tan başlasın
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem("admin_isAuthenticated") === "true";
+  });
 
-  // Backend'e istek atan login
+  const [currentUser, setCurrentUser] = useState(() => {
+    const stored = localStorage.getItem("admin_currentUser");
+    if (!stored) return null;
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
+  });
+
   const login = async (email, password) => {
-    const res = await fetch("http://localhost:5000/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const data = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          email: String(email || "").trim().toLowerCase(),
+          password: String(password || "").trim(),
+        }),
+      });
 
-    if (res.status === 404) {
-      throw new Error("UserNotFound");
-    }
+      setIsAuthenticated(true);
+      setCurrentUser(data.user || null);
 
-    if (res.status === 401) {
-      throw new Error("WrongPassword");
-    }
+      localStorage.setItem("admin_isAuthenticated", "true");
+      localStorage.setItem("admin_currentUser", JSON.stringify(data.user || null));
 
-    if (!res.ok) {
+      return data.user;
+    } catch (err) {
+      if (err?.message === "UserNotFound") throw new Error("UserNotFound");
+      if (err?.message === "WrongPassword") throw new Error("WrongPassword");
       throw new Error("LoginFailed");
     }
-
-    const data = await res.json();
-
-    setIsAuthenticated(true);
-    setCurrentUser(data.user); // { id, email, name, role }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
+    localStorage.removeItem("admin_isAuthenticated");
+    localStorage.removeItem("admin_currentUser");
   };
 
-  const value = {
-    isAuthenticated,
-    currentUser,
-    login,
-    logout,
-  };
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (currentUser) {
+      localStorage.setItem("admin_currentUser", JSON.stringify(currentUser));
+    }
+  }, [isAuthenticated, currentUser]);
 
-  return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  const value = useMemo(
+    () => ({ isAuthenticated, currentUser, login, logout }),
+    [isAuthenticated, currentUser]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used inside an AuthProvider");
-  }
+  if (!ctx) throw new Error("useAuth must be used inside an AuthProvider");
   return ctx;
 }

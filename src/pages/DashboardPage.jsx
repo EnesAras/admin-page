@@ -110,37 +110,50 @@ function DashboardPage() {
   });
 
   const [ordersLoading, setOrdersLoading] = useState(false);
-  const [ordersError, setOrdersError] = useState(null);
 
-  // ==== BACKEND'TEN ORDERS ÇEK ====
-  useEffect(() => {
-    async function fetchOrders() {
-      try {
-        setOrdersLoading(true);
-        setOrdersError(null);
+ // ==== BACKEND'TEN ORDERS ÇEK ====
+useEffect(() => {
+  const controller = new AbortController();
 
-        const res = await fetch("http://localhost:5000/api/orders");
-        if (!res.ok) {
-          throw new Error("Failed to fetch orders");
-        }
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
 
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setOrders(data);
-        }
-      } catch (err) {
-        console.error(err);
-        setOrdersError(
-          t("dashboardOrdersFetchError") ||
-            "Unable to load latest orders. Showing local data."
-        );
-      } finally {
-        setOrdersLoading(false);
-      }
+    try {
+      const res = await fetch("http://localhost:5000/api/orders", {
+        signal: controller.signal,
+      });
+
+      // Backend yoksa / 404 ise: mevcut (fallback/localStorage) orders'u KORU
+ if (!res.ok) {
+  console.warn("Orders API not available, keeping fallback/local data");
+  return;
+}
+
+
+      const data = await res.json();
+
+      const normalized = (Array.isArray(data) ? data : []).map((o) => ({
+  ...o,
+  date: o.date || o.createdAt || o.created_at,
+  total: Number(o.total ?? o.amount ?? o.price ?? 0),
+  status: o.status || "Pending",
+}));
+
+setOrders(normalized);
+localStorage.setItem("admin_orders", JSON.stringify(normalized));
+
+
+ } catch (err) {
+      if (err?.name !== "AbortError") console.warn("Fetch orders failed:", err);
+    } finally {
+      setOrdersLoading(false);
     }
+  };
 
-    fetchOrders();
-  }, [t]);
+  fetchOrders();
+  return () => controller.abort();
+}, []);
+
 
   // ==== USER METRICS ====
   const totalUsers = users.length;
@@ -240,9 +253,7 @@ function DashboardPage() {
           {t("dashboardLoading") || "Loading latest orders from server..."}
         </div>
       )}
-      {ordersError && !ordersLoading && (
-        <div className="dashboard-error">{ordersError}</div>
-      )}
+
 
       {/* USER CARDS */}
       <div className="dashboard-grid">
