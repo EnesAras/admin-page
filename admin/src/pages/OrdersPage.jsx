@@ -1,12 +1,11 @@
 // src/pages/OrdersPage.jsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import "./OrdersPage.css";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
 import ordersMock from "../data/orders.mock";
 
 const STATUS_FLOW = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
-const USE_BACKEND = false;
 
 const PAGE_SIZE = 20;
 
@@ -27,6 +26,30 @@ function getLocaleFromLangKey(langKey) {
     default:
       return "en-IE";
   }
+}
+
+function normalizeStatusValue(value) {
+  if (!value) return "Pending";
+  const trimmed = String(value).trim().toLowerCase();
+  if (!trimmed) return "Pending";
+  if (trimmed === "canceled") return "Cancelled";
+  return trimmed
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function normalizeOrder(order) {
+  return {
+    ...order,
+    status: normalizeStatusValue(order.status),
+  };
+}
+
+function normalizeOrdersPayload(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.orders)) return payload.orders;
+  return [];
 }
 
 function parseOrderDateMs(value) {
@@ -52,12 +75,15 @@ function OrdersPage({ language }) {
   const langKey = language || ctxLanguage || settings?.language || "en";
   const dict = translations[langKey] || translations.en;
 
-  const t = (key, fallback) => {
-    if (dict && dict[key] !== undefined) return dict[key];
-    if (translations.en && translations.en[key] !== undefined) return translations.en[key];
-    if (fallback !== undefined) return fallback;
-    return key;
-  };
+  const t = useCallback(
+    (key, fallback) => {
+      if (dict && dict[key] !== undefined) return dict[key];
+      if (translations.en && translations.en[key] !== undefined) return translations.en[key];
+      if (fallback !== undefined) return fallback;
+      return key;
+    },
+    [dict]
+  );
 
   const statusLabel = (status) => {
     switch (status) {
@@ -96,45 +122,57 @@ function OrdersPage({ language }) {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, dateRange, sortBy, sortDirection]);
 
-  // ==== BACKEND (isteğe bağlı) ====
   useEffect(() => {
-    if (!USE_BACKEND) return;
-
     let isMounted = true;
 
-    async function fetchOrders() {
+    const fetchOrders = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
-        setError(null);
+        const res = await fetch("/api/orders");
+        if (!res.ok) {
+          throw new Error("Failed to fetch orders");
+        }
 
-        const res = await fetch("http://localhost:5000/api/orders");
-        if (!res.ok) throw new Error("Failed to fetch orders");
-
-        const data = await res.json();
+        const payload = await res.json();
         if (!isMounted) return;
 
-        if (Array.isArray(data) && data.length > 0) {
-          setOrders(data);
+        const normalized = normalizeOrdersPayload(payload).map(normalizeOrder);
+
+        if (normalized.length > 0) {
+          setOrders(normalized);
         } else {
-          setOrders(ordersMock);
-          setError("No orders from backend yet. Showing sample data.");
+          setOrders(ordersMock.map(normalizeOrder));
+          setError(
+            t(
+              "orders.fetchEmpty",
+              "There are no orders yet. Showing sample data."
+            )
+          );
         }
       } catch (err) {
         console.error(err);
         if (!isMounted) return;
 
-        setOrders(ordersMock);
-        setError("There was a problem loading orders. Showing sample data.");
+        setOrders(ordersMock.map(normalizeOrder));
+        setError(
+          t(
+            "orders.fetchError",
+            "There was a problem loading orders. Showing sample data."
+          )
+        );
       } finally {
         if (isMounted) setLoading(false);
       }
-    }
+    };
 
     fetchOrders();
+
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   const formatDate = (dateStr) => {
     const ms = parseOrderDateMs(dateStr);
@@ -221,18 +259,42 @@ function OrdersPage({ language }) {
     return sortedOrders.slice(start, start + PAGE_SIZE);
   }, [sortedOrders, currentPage]);
 
-  const handleToggleStatus = (id) => {
-    setOrders((prev) =>
-      prev.map((order) => {
-        if (order.id !== id) return order;
-        const currentIndex = STATUS_FLOW.indexOf(order.status);
-        const nextStatus =
-          currentIndex === -1
-            ? "Pending"
-            : STATUS_FLOW[(currentIndex + 1) % STATUS_FLOW.length];
-        return { ...order, status: nextStatus };
-      })
-    );
+  const handleToggleStatus = async (id) => {
+    const targetOrder = orders.find((order) => String(order.id) === String(id));
+    if (!targetOrder) return;
+
+    const currentIndex = STATUS_FLOW.indexOf(targetOrder.status);
+    const nextStatus =
+      currentIndex === -1
+        ? STATUS_FLOW[0]
+        : STATUS_FLOW[(currentIndex + 1) % STATUS_FLOW.length];
+
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(targetOrder.id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update order status");
+      }
+
+      const updated = normalizeOrder(await res.json());
+      setOrders((prev) =>
+        prev.map((order) =>
+          String(order.id) === String(targetOrder.id) ? updated : order
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      setError(
+        t(
+          "orders.statusUpdateError",
+          "Unable to update the order status right now."
+        )
+      );
+    }
   };
 
   const handleSort = (key) => {

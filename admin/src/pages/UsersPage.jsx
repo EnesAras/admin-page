@@ -1,5 +1,5 @@
 // src/pages/UsersPage.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./UsersPage.css";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
@@ -35,14 +35,16 @@ function UsersPage({ language }) {
   const lang = language || ctxLanguage || settings?.language || "en";
 
   const dict = translations[lang] || translations.en;
-
-  const t = (key, fallback) => {
-    if (dict && dict[key] !== undefined) return dict[key];
-    if (translations.en && translations.en[key] !== undefined)
-      return translations.en[key];
-    if (fallback !== undefined) return fallback;
-    return key;
-  };
+  const t = useCallback(
+    (key, fallback) => {
+      if (dict && dict[key] !== undefined) return dict[key];
+      if (translations.en && translations.en[key] !== undefined)
+        return translations.en[key];
+      if (fallback !== undefined) return fallback;
+      return key;
+    },
+    [dict]
+  );
 
  const roleLabel = (role) => {
   if (!role) return "";
@@ -87,16 +89,17 @@ function UsersPage({ language }) {
       try {
         setLoading(true);
         setFetchError("");
-        const res = await fetch("http://localhost:5000/api/users");
+        const res = await fetch("/api/users");
         if (!res.ok) {
           throw new Error("Failed to fetch users");
         }
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setUsers(data);
-        } else {
-          setUsers(usersData);
-        }
+        const normalized = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.users)
+            ? data.users
+            : [];
+        setUsers(normalized.length > 0 ? normalized : usersData);
       } catch (err) {
         console.error(err);
         setFetchError(
@@ -112,7 +115,7 @@ function UsersPage({ language }) {
     }
 
     fetchUsers();
-  }, [lang , t]); // dil değişince tekrar çekmek istersen böyle kalsın
+  }, [lang, t]);
 
   const CURRENT_USER_ROLE = "Admin";
   const canEditUsers = CURRENT_USER_ROLE === "Admin";
@@ -217,7 +220,7 @@ function UsersPage({ language }) {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/api/users", {
+      const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -233,7 +236,7 @@ function UsersPage({ language }) {
 
       setNewUserName("");
       setNewUserEmail("");
-      setNewUserRole("User");
+      setNewUserRole("user");
       setNewUserStatus("Active");
       setIsAdding(false);
     } catch (err) {
@@ -300,14 +303,11 @@ function UsersPage({ language }) {
     };
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/users/${editingUserId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`/api/users/${editingUserId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) {
         throw new Error("Failed to update user");
@@ -325,7 +325,7 @@ function UsersPage({ language }) {
       setEditingUserId(null);
       setEditUserName("");
       setEditUserEmail("");
-      setEditUserRole("User");
+      setEditUserRole("user");
       setEditUserStatus("Active");
     } catch (err) {
       console.error(err);
@@ -361,14 +361,11 @@ function UsersPage({ language }) {
     const newStatus = user.status === "Active" ? "Inactive" : "Active";
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/users/${id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
+      const res = await fetch(`/api/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
       if (!res.ok) {
         throw new Error("Failed to toggle status");
@@ -393,12 +390,9 @@ function UsersPage({ language }) {
   // ========== DELETE (backend + state) ==========
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/users/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`/api/users/${id}`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         throw new Error("Failed to delete user");

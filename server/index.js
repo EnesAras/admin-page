@@ -37,9 +37,6 @@ const users = [
   },
 ];
 
-// ===== PRODUCTS (from file) =====
-let products = require("./data/products");
-
 // ===== ORDERS (in-memory) =====
 let orders = [
   {
@@ -160,32 +157,6 @@ app.delete("/api/users/:id", (req, res) => {
   res.json({ ok: true });
 });
 
-// ===== PRODUCTS CRUD =====
-app.get("/api/products", (req, res) => {
-  res.json(products);
-});
-
-app.post("/api/products", (req, res) => {
-  const newProduct = { id: Date.now(), ...req.body };
-  products.unshift(newProduct);
-  res.status(201).json(newProduct);
-});
-
-app.put("/api/products/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const idx = products.findIndex((p) => Number(p.id) === id);
-  if (idx === -1) return res.status(404).json({ error: "ProductNotFound" });
-
-  products[idx] = { ...products[idx], ...req.body, id: products[idx].id };
-  res.json(products[idx]);
-});
-
-app.delete("/api/products/:id", (req, res) => {
-  const id = Number(req.params.id);
-  products = products.filter((p) => Number(p.id) !== id);
-  res.json({ ok: true });
-});
-
 // ===== ORDERS CRUD =====
 app.get("/api/orders", (req, res) => {
   res.json(orders);
@@ -233,4 +204,3 @@ app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
 });
 setInterval(() => {}, 1000);
-

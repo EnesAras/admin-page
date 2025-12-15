@@ -35,28 +35,44 @@ export function SettingsProvider({ children }) {
 
   // 🎨 Tema sınıflarını yönet (body / html)
   useEffect(() => {
-    let effectiveTheme = settings.theme;
+    const mql =
+      typeof window !== "undefined" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 
-    // system seçiliyse OS tercihine göre karar ver
-    if (effectiveTheme === "system" && window.matchMedia) {
-      const prefersLight = window.matchMedia(
-        "(prefers-color-scheme: light)"
-      ).matches;
-      effectiveTheme = prefersLight ? "light" : "dark";
+    const applyTheme = (theme) => {
+      document.body.classList.remove("theme-light", "theme-dark");
+      if (theme === "light") {
+        document.body.classList.add("theme-light");
+      } else {
+        document.body.classList.add("theme-dark");
+      }
+      document.documentElement.setAttribute("data-theme", theme);
+    };
+
+    const resolveTheme = () => {
+      if (settings.theme === "system") {
+        const osDark = mql ? mql.matches : false;
+        applyTheme(osDark ? "dark" : "light");
+      } else {
+        applyTheme(settings.theme);
+      }
+    };
+
+    resolveTheme();
+
+    if (settings.theme === "system" && mql) {
+      const handler = (event) => {
+        applyTheme(event.matches ? "dark" : "light");
+      };
+      mql.addEventListener
+        ? mql.addEventListener("change", handler)
+        : mql.addListener(handler);
+
+      return () => {
+        mql.removeEventListener
+          ? mql.removeEventListener("change", handler)
+          : mql.removeListener(handler);
+      };
     }
-
-    // Önce önceki sınıfları temizle
-    document.body.classList.remove("theme-light", "theme-dark");
-
-    // Sonra aktif temayı ekle
-    if (effectiveTheme === "light") {
-      document.body.classList.add("theme-light");
-    } else {
-      document.body.classList.add("theme-dark");
-    }
-
-    // İstersen ileride CSS'te kullanmak için
-    document.documentElement.setAttribute("data-theme", effectiveTheme);
   }, [settings.theme]);
 
   // 🔧 Genel update fonksiyonu (patch)

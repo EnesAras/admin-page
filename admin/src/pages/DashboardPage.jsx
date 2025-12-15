@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./DashboardPage.css";
 import { useSettings } from "../context/SettingsContext";
 import {
@@ -76,8 +76,28 @@ const fallbackUsers = [
 ];
 
 function DashboardPage() {
-  const { t, language } = useSettings();
+  const { t, language, theme } = useSettings();
   const locale = language || "en";
+  const prefersDarkMode =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isLightTheme =
+    theme === "light" || (theme === "system" && !prefersDarkMode);
+  const axisColor = isLightTheme ? "#6b7280" : "#e5e7eb";
+  const gridColor = isLightTheme ? "#e2e8f0" : "#111827";
+  const tooltipBackground = isLightTheme ? "#ffffff" : "#020617";
+  const tooltipBorder = isLightTheme ? "#e5e7eb" : "#1f2937";
+  const tooltipColor = isLightTheme ? "#0f172a" : "#e5e7eb";
+  const cardFootAliases = {
+    cardFootPendingOrders: "pendingOrders",
+    cardFootShippedOrders: "shippedOrders",
+    cardFootTotalRevenue: "totalRevenue",
+  };
+  const getCardFootText = (key) => {
+    const alias = cardFootAliases[key];
+    if (alias) return t(alias);
+    return t(key);
+  };
 
   // USERS: Aynen eskisi gibi localStorage + fallback
   const [users] = useState(() => {
@@ -181,13 +201,70 @@ localStorage.setItem("admin_orders", JSON.stringify(normalized));
 
   // ==== ORDER METRICS ====
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter((o) => o.status === "Pending").length;
-  const shippedOrders = orders.filter((o) => o.status === "Shipped").length;
-  const cancelledOrders = orders.filter(
-    (o) => o.status === "Cancelled"
-  ).length;
-
   const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+  const statusCounts = useMemo(() => {
+    const normalizeKey = (status) => {
+      const raw = String(status ?? "unknown").trim().toLowerCase();
+      if (raw === "canceled") return "cancelled";
+      return raw;
+    };
+    return orders.reduce((acc, order) => {
+      const key = normalizeKey(order?.status);
+      if (!key) return acc;
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+  }, [orders]);
+
+  const formatStatusLabel = (key) => {
+    const mapping = {
+      pending: t("orderStatusPending"),
+      shipped: t("orderStatusShipped"),
+      cancelled: t("orderStatusCancelled"),
+      delivered: t("orderStatusDelivered") || "Delivered",
+    };
+    if (mapping[key]) return mapping[key];
+    return key
+      .split(/[\s_-]+/)
+      .map(
+        (part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+      )
+      .join(" ");
+  };
+
+  const priorityOrder = ["pending", "shipped", "delivered", "cancelled"];
+  const orderedStatusKeys = [
+    ...priorityOrder.filter((key) => statusCounts[key]),
+    ...Object.keys(statusCounts)
+      .filter((key) => !priorityOrder.includes(key))
+      .sort(),
+  ];
+
+  const statusChartData = orderedStatusKeys
+    .map((key) => {
+      const count = statusCounts[key];
+      if (!count) return null;
+      return {
+        key,
+        label: formatStatusLabel(key),
+        value: count,
+      };
+    })
+    .filter(Boolean);
+
+  const statusColorMap = {
+    pending: "#fbbf24",
+    shipped: "#22c55e",
+    delivered: "#22d3ee",
+    cancelled: "#f97373",
+  };
+  const statusTextClass = (key) => {
+    if (key === "pending") return "text-amber";
+    if (key === "shipped") return "text-green";
+    if (key === "cancelled") return "text-rose";
+    return "text-slate";
+  };
 
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -217,29 +294,24 @@ localStorage.setItem("admin_orders", JSON.stringify(normalized));
     monthlyRevenueMap.set(key, existing);
   });
 
+  const now = new Date();
+  for (let offset = 5; offset >= 0; offset -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const label = d.toLocaleString(locale, { month: "short" });
+    const sortKey = d.getFullYear() * 100 + d.getMonth();
+
+    const entry = monthlyRevenueMap.get(key) || { label, sortKey, revenue: 0 };
+    entry.label = label;
+    entry.sortKey = sortKey;
+    monthlyRevenueMap.set(key, entry);
+  }
+
   const revenueData = Array.from(monthlyRevenueMap.values()).sort(
     (a, b) => a.sortKey - b.sortKey
   );
 
   // ==== PIE CHART: STATUS DISTRIBUTION ====
-  const statusChartData = [
-    {
-      key: "Pending",
-      label: t("orderStatusPending"),
-      value: pendingOrders,
-    },
-    {
-      key: "Shipped",
-      label: t("orderStatusShipped"),
-      value: shippedOrders,
-    },
-    {
-      key: "Cancelled",
-      label: t("orderStatusCancelled"),
-      value: cancelledOrders,
-    },
-  ].filter((item) => item.value > 0);
-
   const hasStatusData = statusChartData.length > 0;
 
   return (
@@ -286,30 +358,32 @@ localStorage.setItem("admin_orders", JSON.stringify(normalized));
 
       {/* ORDER CARDS */}
       <div className="dashboard-grid">
-        <div className="dashboard-card">
-          <p className="card-label">{t("totalOrders")}</p>
-          <p className="card-number">{totalOrders}</p>
-        </div>
+      <div className="dashboard-card">
+        <p className="card-label">{t("totalOrders")}</p>
+        <p className="card-number">{totalOrders}</p>
+      </div>
 
-        <div className="dashboard-card">
-          <p className="card-label">{t("pendingOrders")}</p>
-          <p className="card-number text-amber">{pendingOrders}</p>
-          <p className="card-foot subtle">{t("cardFootPendingOrders")}</p>
-        </div>
+      {orderedStatusKeys.map((key) => {
+        const count = statusCounts[key] || 0;
+        if (count === 0) return null;
+        return (
+          <div className="dashboard-card" key={key}>
+            <p className="card-label">{formatStatusLabel(key)}</p>
+            <p className={`card-number ${statusTextClass(key)}`}>{count}</p>
+            <p className="card-foot subtle">
+              {t("ordersLabel")}
+            </p>
+          </div>
+        );
+      })}
 
-        <div className="dashboard-card">
-          <p className="card-label">{t("shippedOrders")}</p>
-          <p className="card-number text-green">{shippedOrders}</p>
-          <p className="card-foot subtle">{t("cardFootShippedOrders")}</p>
-        </div>
-
-        <div className="dashboard-card">
-          <p className="card-label">{t("totalRevenue")}</p>
-          <p className="card-number text-green">
-            €{totalRevenue.toFixed(2)}
-          </p>
-          <p className="card-foot subtle">{t("cardFootTotalRevenue")}</p>
-        </div>
+      <div className="dashboard-card">
+        <p className="card-label">{t("totalRevenue")}</p>
+        <p className="card-number text-green">
+          €{totalRevenue.toFixed(2)}
+        </p>
+        <p className="card-foot subtle">{getCardFootText("cardFootTotalRevenue")}</p>
+      </div>
       </div>
 
       {/* REVENUE LINE CHART */}
@@ -331,10 +405,19 @@ localStorage.setItem("admin_orders", JSON.stringify(normalized));
                 data={revenueData}
                 margin={{ top: 10, right: 10, bottom: 0, left: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#111827" />
-                <XAxis dataKey="label" stroke="#6b7280" tickLine={false} />
-                <YAxis stroke="#6b7280" tickLine={false} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis dataKey="label" stroke={axisColor} tickLine={false} />
+                <YAxis stroke={axisColor} tickLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: tooltipBackground,
+                    border: `1px solid ${tooltipBorder}`,
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  labelStyle={{ color: tooltipColor }}
+                  itemStyle={{ color: tooltipColor }}
+                />
                 <Line
                   type="monotone"
                   dataKey="revenue"
@@ -377,22 +460,22 @@ localStorage.setItem("admin_orders", JSON.stringify(normalized));
                   paddingAngle={4}
                 >
                   {statusChartData.map((entry) => (
-                    <Cell
-                      key={entry.key}
-                      fill={STATUS_COLORS[entry.key] || "#6b7280"}
-                    />
+                  <Cell
+                    key={entry.key}
+                    fill={statusColorMap[entry.key] || "#6b7280"}
+                  />
                   ))}
                 </Pie>
 
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#020617",
-                    border: "1px solid #1f2937",
+                    backgroundColor: tooltipBackground,
+                    border: `1px solid ${tooltipBorder}`,
                     borderRadius: "8px",
                     fontSize: "12px",
                   }}
-                  labelStyle={{ color: "#9ca3af" }}
-                  itemStyle={{ color: "#e5e7eb" }}
+                  labelStyle={{ color: tooltipColor }}
+                  itemStyle={{ color: tooltipColor }}
                   formatter={(value, name) => [
                     `${value} ${t("ordersLabel")}`,
                     name,

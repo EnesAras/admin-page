@@ -8,7 +8,7 @@ const users = [
     id: 1,
     name: "Admin User",
     email: "admin@example.com",
-    password: "admin123", // SADECE development için, production'da asla plain text olmaz :)
+    password: "admin123", 
     role: "admin",
   },
   {

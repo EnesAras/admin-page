@@ -341,3 +341,62 @@ body.theme-light .recent-email {
   color: #9ca3af;
 }
 
+.dashboard-chart-card.lighted {
+  /* placeholder if needed */
+}
+
+body.theme-light .dashboard-chart-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+}
+
+body.theme-light .chart-header h3,
+body.theme-light .chart-header p {
+  color: #1e293b;
+}
+
+body.theme-light .chart-badge {
+  border-color: rgba(37, 99, 235, 0.4);
+  background: rgba(226, 232, 240, 0.6);
+  color: #1d4ed8;
+}
+
+body.theme-light .chart-wrapper {
+  background: transparent;
+}
+
+body.theme-light .chart-tooltip {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #e5e7eb;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+body.theme-light .chart-tooltip-label {
+  color: #111827;
+}
+
+body.theme-light .chart-tooltip-value {
+  color: #475569;
+}
+
+body.theme-light .recharts-cartesian-axis-line,
+body.theme-light .recharts-cartesian-axis-tick line,
+body.theme-light .recharts-cartesian-grid line {
+  stroke: #d1d5db;
+}
+
+body.theme-light .recharts-tooltip-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+body.theme-light .recharts-tooltip-label,
+body.theme-light .recharts-tooltip-item {
+  color: #0f172a;
+}
+
+body.theme-light .recharts-pie-sector {
+  stroke: #ffffff;
+  stroke-width: 2px;
+}

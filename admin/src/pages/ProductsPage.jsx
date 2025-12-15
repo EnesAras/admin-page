@@ -7,6 +7,12 @@
 
   const statusOptions = ["Active", "Hidden", "OutOfStock"];
 
+  const normalizeProductsPayload = (data) => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.products)) return data.products;
+    return [];
+  };
+
   function ProductsPage({ language }) {
     const { settings, language: ctxLanguage } = useSettings();
 
@@ -52,11 +58,11 @@
           setLoading(true);
           setFetchError(null);
 
-          const res = await fetch("http://localhost:5000/api/products");
+          const res = await fetch("/api/products");
           if (!res.ok) throw new Error("Failed to fetch products");
 
           const data = await res.json();
-          setProducts(Array.isArray(data) ? data : []);
+          setProducts(normalizeProductsPayload(data));
         } catch (err) {
           console.error(err);
           setFetchError("FETCH_PRODUCTS_FAILED");
@@ -283,9 +289,8 @@ const handleSave = async () => {
   try {
     const isEdit = editingId != null;
 
-    const url = isEdit
-      ? `http://localhost:5000/api/products/${Number(editingId)}`
-      : "http://localhost:5000/api/products";
+    const baseUrl = "/api/products";
+    const url = isEdit ? `${baseUrl}/${Number(editingId)}` : baseUrl;
 
     const res = await fetch(url, {
       method: isEdit ? "PUT" : "POST",
@@ -322,7 +327,7 @@ const handleDelete = async (id) => {
   if (!Number.isFinite(safeId)) return;
 
   try {
-    const res = await fetch(`http://localhost:5000/api/products/${safeId}`, {
+    const res = await fetch(`/api/products/${safeId}`, {
       method: "DELETE",
     });
 
@@ -647,4 +652,3 @@ const handleDelete = async (id) => {
   }
 
   export default ProductsPage;
-
