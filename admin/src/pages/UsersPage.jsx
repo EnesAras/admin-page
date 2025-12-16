@@ -1,5 +1,5 @@
 // src/pages/UsersPage.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import "./UsersPage.css";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
@@ -338,94 +338,106 @@ function UsersPage({ language }) {
     }
   };
 
-  const handleEditClick = (user) => {
-    if (!canEditUsers) return;
+  const handleEditClick = useCallback(
+    (user) => {
+      if (!canEditUsers) return;
 
-    setIsAdding(false);
-    setIsEditing(true);
+      setIsAdding(false);
+      setIsEditing(true);
 
-    setEditingUserId(user.id);
-    setEditUserName(user.name);
-    setEditUserEmail(user.email);
-    setEditUserRole(user.role);
-    setEditUserStatus(user.status);
-  };
+      setEditingUserId(user.id);
+      setEditUserName(user.name);
+      setEditUserEmail(user.email);
+      setEditUserRole(user.role);
+      setEditUserStatus(user.status);
+    },
+    [canEditUsers]
+  );
 
   // ========== TOGGLE STATUS (backend + state) ==========
-  const handleToggleStatus = async (id) => {
-    if (!canToggleStatus) return;
+  const handleToggleStatus = useCallback(
+    async (id) => {
+      if (!canToggleStatus) return;
 
-    const user = users.find((u) => u.id === id);
-    if (!user) return;
+      const user = users.find((u) => u.id === id);
+      if (!user) return;
 
-    const newStatus = user.status === "Active" ? "Inactive" : "Active";
+      const newStatus = user.status === "Active" ? "Inactive" : "Active";
 
-    try {
-      const res = await fetch(`/api/users/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      try {
+        const res = await fetch(`/api/users/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
 
-      if (!res.ok) {
-        throw new Error("Failed to toggle status");
+        if (!res.ok) {
+          throw new Error("Failed to toggle status");
+        }
+
+        const updated = await res.json();
+
+        setUsers((prevUsers) =>
+          prevUsers.map((u) => (u.id === id ? updated : u))
+        );
+      } catch (err) {
+        console.error(err);
+        alert(
+          t(
+            "users.toggleError",
+            "There was a problem updating the status."
+          )
+        );
       }
-
-      const updated = await res.json();
-
-      setUsers((prevUsers) =>
-        prevUsers.map((u) => (u.id === id ? updated : u))
-      );
-    } catch (err) {
-      console.error(err);
-      alert(
-        t(
-          "users.toggleError",
-          "There was a problem updating the status."
-        )
-      );
-    }
-  };
+    },
+    [canToggleStatus, t, users]
+  );
 
   // ========== DELETE (backend + state) ==========
-  const handleDelete = async (id) => {
-    try {
-      const res = await fetch(`/api/users/${id}`, {
-        method: "DELETE",
-      });
+  const handleDelete = useCallback(
+    async (id) => {
+      try {
+        const res = await fetch(`/api/users/${id}`, {
+          method: "DELETE",
+        });
 
-      if (!res.ok) {
-        throw new Error("Failed to delete user");
+        if (!res.ok) {
+          throw new Error("Failed to delete user");
+        }
+
+        setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+      } catch (err) {
+        console.error(err);
+        alert(
+          t(
+            "users.deleteError",
+            "There was a problem deleting this user."
+          )
+        );
       }
+    },
+    [t]
+  );
 
-      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
-    } catch (err) {
-      console.error(err);
-      alert(
-        t(
-          "users.deleteError",
-          "There was a problem deleting this user."
-        )
-      );
-    }
-  };
-
-  const filteredUsers = users.filter((user) => {
+  const filteredUsers = useMemo(() => {
     const term = searchTerm.toLowerCase();
 
-    const matchesSearch =
-      user.name.toLowerCase().includes(term) ||
-      user.email.toLowerCase().includes(term);
+    return users.filter((user) => {
+      const matchesSearch =
+        user.name.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term);
 
-    const matchesStatus =
-      statusFilter === "all" || user.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || user.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
+  }, [users, searchTerm, statusFilter]);
 
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    let valA;
-    let valB;
+  const sortedUsers = useMemo(() => {
+    return [...filteredUsers].sort((a, b) => {
+      let valA;
+      let valB;
 
     switch (sortBy) {
       case "name":
@@ -459,19 +471,19 @@ function UsersPage({ language }) {
     if (valA < valB) return sortDirection === "asc" ? -1 : 1;
     if (valA > valB) return sortDirection === "asc" ? 1 : -1;
     return 0;
-  });
+    });
+  }, [filteredUsers, sortBy, sortDirection]);
 
-  const handleSort = (column) => {
+  const handleSort = useCallback((column) => {
     setSortBy((prevSortBy) => {
       if (prevSortBy === column) {
         setSortDirection((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
         return prevSortBy;
-      } else {
-        setSortDirection("asc");
-        return column;
       }
+      setSortDirection("asc");
+      return column;
     });
-  };
+  }, []);
 
   const renderSortIndicator = (column) => {
     if (sortBy !== column) return null;

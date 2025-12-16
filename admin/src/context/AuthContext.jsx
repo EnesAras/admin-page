@@ -2,71 +2,126 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../lib/api";
 
+const STORAGE_KEYS = {
+  auth: "admin_isAuthenticated",
+  user: "admin_currentUser",
+  token: "admin_authToken",
+};
+
+const getSessionStorage = () =>
+  typeof window !== "undefined" ? window.sessionStorage : null;
+const getLocalStorage = () =>
+  typeof window !== "undefined" ? window.localStorage : null;
+
+const readSessionValue = (key) => {
+  const session = getSessionStorage();
+  return session ? session.getItem(key) : null;
+};
+
+const writeSessionValue = (key, value) => {
+  const session = getSessionStorage();
+  if (!session) return;
+  if (value === null || value === undefined) {
+    session.removeItem(key);
+    return;
+  }
+  session.setItem(key, value);
+};
+
+const clearAuthPersistence = () => {
+  const session = getSessionStorage();
+  const local = getLocalStorage();
+  Object.values(STORAGE_KEYS).forEach((key) => {
+    session?.removeItem(key);
+    local?.removeItem(key);
+  });
+};
+
+const readCurrentUser = () => {
+  const stored = readSessionValue(STORAGE_KEYS.user);
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return null;
+  }
+};
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("admin_isAuthenticated") === "true";
+    return readSessionValue(STORAGE_KEYS.auth) === "true";
   });
 
-  const [currentUser, setCurrentUser] = useState(() => {
-    const stored = localStorage.getItem("admin_currentUser");
-    if (!stored) return null;
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return null;
+  const [currentUser, setCurrentUser] = useState(readCurrentUser);
+
+  useEffect(() => {
+    if (!getSessionStorage()) return;
+
+    if (isAuthenticated && currentUser) {
+      writeSessionValue(STORAGE_KEYS.auth, "true");
+      writeSessionValue(STORAGE_KEYS.user, JSON.stringify(currentUser));
+    } else if (!isAuthenticated) {
+      writeSessionValue(STORAGE_KEYS.auth, null);
+      writeSessionValue(STORAGE_KEYS.user, null);
+      writeSessionValue(STORAGE_KEYS.token, null);
     }
-  });
+  }, [currentUser, isAuthenticated]);
 
- const login = async (email, password) => {
-  try {
-    const res = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+  const login = async (email, password) => {
+    try {
+      const payload = {
         email: String(email || "").trim().toLowerCase(),
         password: String(password || "").trim(),
-      }),
-    });
+      };
 
-    const data = await res.json();
+      const data = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      throw new Error(data?.message || "Login failed");
+      const token =
+        data?.token ??
+        data?.authToken ??
+        data?.accessToken ??
+        data?.access_token ??
+        null;
+      const resolvedUser =
+        data?.user ??
+        data?.data?.user ??
+        data?.payload?.user ??
+        data?.result?.user ??
+        null;
+
+      writeSessionValue(STORAGE_KEYS.token, token);
+
+      if (!resolvedUser) {
+        clearAuthPersistence();
+        throw new Error("Login succeeded but user payload is missing.");
+      }
+
+      const serializedUser = JSON.stringify(resolvedUser);
+      writeSessionValue(STORAGE_KEYS.auth, "true");
+      writeSessionValue(STORAGE_KEYS.user, serializedUser);
+      const local = getLocalStorage();
+      local?.setItem(STORAGE_KEYS.user, serializedUser);
+
+      setIsAuthenticated(true);
+      setCurrentUser(resolvedUser);
+
+      return resolvedUser;
+    } catch (err) {
+      console.error("LOGIN ERROR:", err);
+      throw err;
     }
-
-    setIsAuthenticated(true);
-    setCurrentUser(data.user);
-
-    localStorage.setItem("admin_isAuthenticated", "true");
-    localStorage.setItem("admin_currentUser", JSON.stringify(data.user));
-
-    return data.user;
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    throw err;
-  }
-};
-
-
- 
+  };
 
   const logout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
-    localStorage.removeItem("admin_isAuthenticated");
-    localStorage.removeItem("admin_currentUser");
+    clearAuthPersistence();
   };
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    if (currentUser) {
-      localStorage.setItem("admin_currentUser", JSON.stringify(currentUser));
-    }
-  }, [isAuthenticated, currentUser]);
 
   const value = useMemo(
     () => ({ isAuthenticated, currentUser, login, logout }),

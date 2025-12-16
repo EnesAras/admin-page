@@ -44,6 +44,9 @@ const translations = {
     cardFootActiveUsers: 'Users with status "Active"',
     cardFootInactiveUsers: "Users currently inactive",
     cardFootAdmins: "Users with Admin role",
+    cardFootPendingOrders: "Pending orders",
+    cardFootShippedOrders: "Shipped orders",
+    cardFootTotalRevenue: "Total revenue",
 
     totalOrders: "Total orders",
     pendingOrders: "Pending",
@@ -63,6 +66,8 @@ const translations = {
     orderStatusPending: "Pending",
     orderStatusShipped: "Shipped",
     orderStatusCancelled: "Cancelled",
+    orderStatusProcessing: "Processing",
+    orderStatusDelivered: "Delivered",
 
     recentTitle: "Recent users",
     recentSubtitle: "latest users",

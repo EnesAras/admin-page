@@ -1,18 +1,24 @@
-const API_BASE = "http://localhost:5000";
-
 export async function apiFetch(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(path, {
+    ...options,
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
-    ...options,
   });
 
-  const data = await res.json();
+  const text = await res.text();
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = null;
+    }
+  }
 
   if (!res.ok) {
-    throw new Error(data?.message || "Request failed");
+    throw new Error(data?.error || data?.message || "Request failed");
   }
 
   return data;

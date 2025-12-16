@@ -29,7 +29,7 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { theme = "dark", language = "en" } = useSettings();
+  const { colorMode = "dark", language = "en", theme } = useSettings();
   const { isAuthenticated, logout, currentUser } = useAuth();
 
   const dict = translations[language] || translations.en;
@@ -118,8 +118,14 @@ const PrivateRoute = ({ children }) => {
   };
 
 
+  const rootTheme = colorMode === "light" ? "light" : "dark";
+  const themeClasses = ["app", `app-${rootTheme}`];
+  if (theme === "system") {
+    themeClasses.push("app-system");
+  }
+
   return (
-    <div className={`app app-${theme === "light" ? "light" : "dark"}`}>
+    <div className={themeClasses.join(" ")}>
       {/* Sidebar sadece login olunmuşsa */}
       {!isLoginPage && isAuthenticated && (
         <aside className="sidebar">

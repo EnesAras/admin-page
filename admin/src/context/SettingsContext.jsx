@@ -1,6 +1,6 @@
 // src/context/SettingsContext.jsx
-import { createContext, useContext, useState, useEffect } from "react";
-import translations from "../i18n/translations"; 
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import translations from "../i18n/translations";
 
 const defaultSettings = {
   displayName: "Admin User",
@@ -28,52 +28,67 @@ export function SettingsProvider({ children }) {
     return defaultSettings;
   });
 
+  const [prefersDark, setPrefersDark] = useState(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
+      return true;
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    if (typeof window.matchMedia !== "function") return undefined;
+
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (event) => {
+      setPrefersDark(event.matches);
+    };
+
+    setPrefersDark(mql.matches);
+
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", handleChange);
+      return () => {
+        mql.removeEventListener("change", handleChange);
+      };
+    }
+
+    mql.addListener(handleChange);
+    return () => {
+      mql.removeListener(handleChange);
+    };
+  }, []);
+
+  const effectiveTheme = useMemo(() => {
+    const targetTheme = settings.theme || "dark";
+    if (targetTheme === "system") {
+      return prefersDark ? "dark" : "light";
+    }
+    return targetTheme;
+  }, [settings.theme, prefersDark]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const applyTheme = (theme) => {
+      document.body.classList.remove("theme-light", "theme-dark");
+      document.body.classList.add(`theme-${theme}`);
+      document.documentElement.setAttribute("data-theme", theme);
+      document.documentElement.classList.remove("app-light", "app-dark");
+      document.documentElement.classList.add(`app-${theme}`);
+      document.body.dataset.userTheme = settings.theme || "dark";
+    };
+
+    applyTheme(effectiveTheme);
+  }, [effectiveTheme, settings.theme]);
+
   // 💾 Her değişiklikte localStorage'a kaydet
   useEffect(() => {
     localStorage.setItem("admin_settings", JSON.stringify(settings));
   }, [settings]);
-
-  // 🎨 Tema sınıflarını yönet (body / html)
-  useEffect(() => {
-    const mql =
-      typeof window !== "undefined" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-
-    const applyTheme = (theme) => {
-      document.body.classList.remove("theme-light", "theme-dark");
-      if (theme === "light") {
-        document.body.classList.add("theme-light");
-      } else {
-        document.body.classList.add("theme-dark");
-      }
-      document.documentElement.setAttribute("data-theme", theme);
-    };
-
-    const resolveTheme = () => {
-      if (settings.theme === "system") {
-        const osDark = mql ? mql.matches : false;
-        applyTheme(osDark ? "dark" : "light");
-      } else {
-        applyTheme(settings.theme);
-      }
-    };
-
-    resolveTheme();
-
-    if (settings.theme === "system" && mql) {
-      const handler = (event) => {
-        applyTheme(event.matches ? "dark" : "light");
-      };
-      mql.addEventListener
-        ? mql.addEventListener("change", handler)
-        : mql.addListener(handler);
-
-      return () => {
-        mql.removeEventListener
-          ? mql.removeEventListener("change", handler)
-          : mql.removeListener(handler);
-      };
-    }
-  }, [settings.theme]);
 
   // 🔧 Genel update fonksiyonu (patch)
   const updateSettings = (patch) => {
@@ -84,7 +99,6 @@ export function SettingsProvider({ children }) {
   };
 
   // 🆕 SettingsPage'in beklediği tek key/value fonksiyonu
-  // updateSetting("theme", "dark") gibi çağrılıyor
   const updateSetting = (key, value) => {
     setSettings((prev) => ({
       ...prev,
@@ -92,7 +106,6 @@ export function SettingsProvider({ children }) {
     }));
   };
 
-  // 🔥 Tema için helper'lar
   const setTheme = (theme) => {
     updateSettings({ theme });
   };
@@ -103,18 +116,20 @@ export function SettingsProvider({ children }) {
     });
   };
 
-  // 🌍 Dil için helper
   const setLanguage = (language) => {
     updateSettings({ language });
   };
 
-  // 🌐 GLOBAL TRANSLATION FONKSİYONU
-  const t = (key) => {
+  const t = (key, fallback) => {
     const langCode = settings.language || "en";
     const langPack = translations[langCode] || translations.en;
 
-    // Önce seçili dil, yoksa en, o da yoksa key'i olduğu gibi döndür
-    return langPack[key] || translations.en[key] || key;
+    return (
+      langPack[key] ??
+      translations.en[key] ??
+      fallback ??
+      key
+    );
   };
 
   const value = {
@@ -122,11 +137,12 @@ export function SettingsProvider({ children }) {
     updateSettings,
     updateSetting,
     theme: settings.theme,
+    colorMode: effectiveTheme,
     language: settings.language,
     setTheme,
     toggleTheme,
     setLanguage,
-    t, // 💥 her yerden kullanacağız
+    t,
   };
 
   return (

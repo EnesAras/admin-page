@@ -7,7 +7,7 @@ import { useAuth } from "../context/AuthContext";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { language = "en", theme = "dark" } = useSettings();
+  const { language = "en", colorMode = "dark" } = useSettings();
   const { login } = useAuth();
 
   const dict = translations[language] || translations.en;
@@ -35,34 +35,98 @@ function LoginPage() {
   else if (hour >= 12 && hour < 18) greetingKey = "login.greetingAfternoon";
   else greetingKey = "login.greetingEvening";
 
-   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+  const resolvedTheme = colorMode === "light" ? "light" : "dark";
+  const useColorModeValue = (lightValue, darkValue) =>
+    resolvedTheme === "light" ? lightValue : darkValue;
 
-  try {
-    await login(email, password); // backend çağrısını bekle
-    navigate("/");
-  } catch (err) {
-    if (err.message === "UserNotFound") {
-      setError("User not found");
-    } else if (err.message === "WrongPassword") {
-      setError("Incorrect password");
-    } else {
-      setError("Login failed. Please try again.");
+  const dynamicStyles = {
+    "--login-page-bg": useColorModeValue(
+      "radial-gradient(circle at top left, #ffffff 0%, #f3f4f6 35%, #e2e8f0 100%)",
+      "radial-gradient(circle at top left, #0f172a 0, #020617 40%, #000 100%)"
+    ),
+    "--login-shell-bg": useColorModeValue(
+      "rgba(255, 255, 255, 0.95)",
+      "rgba(15, 23, 42, 0.86)"
+    ),
+    "--login-shell-border": useColorModeValue(
+      "rgba(148, 163, 184, 0.6)",
+      "rgba(148, 163, 184, 0.25)"
+    ),
+    "--login-shell-shadow": useColorModeValue(
+      "0 20px 40px rgba(148, 163, 184, 0.4), 0 0 0 1px rgba(226, 232, 240, 0.5)",
+      "0 18px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(15, 23, 42, 0.4)"
+    ),
+    "--login-title-color": useColorModeValue("#0f172a", "#f9fafb"),
+    "--login-subtitle-color": useColorModeValue("#475569", "#9ca3af"),
+    "--login-logo-color": useColorModeValue("#0f172a", "#e5e7eb"),
+    "--login-badge-color": useColorModeValue("#111827", "#e5e7eb"),
+    "--login-badge-border": useColorModeValue(
+      "1px solid rgba(148, 163, 184, 0.6)",
+      "1px solid rgba(148, 163, 184, 0.6)"
+    ),
+    "--login-highlight-bg": useColorModeValue(
+      "linear-gradient(120deg, rgba(248, 250, 252, 0.9), rgba(226, 232, 240, 0.7))",
+      "radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9))"
+    ),
+    "--login-highlight-border": useColorModeValue(
+      "1px solid rgba(148, 163, 184, 0.4)",
+      "1px solid rgba(148, 163, 184, 0.6)"
+    ),
+    "--login-highlight-value": useColorModeValue("#111827", "#e5e7eb"),
+    "--login-footer-color": useColorModeValue("#475569", "#6b7280"),
+    "--login-form-card-bg": useColorModeValue("#ffffff", "rgba(15, 23, 42, 0.95)"),
+    "--login-form-card-border": useColorModeValue(
+      "rgba(148, 163, 184, 0.5)",
+      "rgba(148, 163, 184, 0.6)"
+    ),
+    "--login-form-card-shadow": useColorModeValue(
+      "0 20px 40px rgba(148, 163, 184, 0.4)",
+      "0 14px 30px rgba(0, 0, 0, 0.8)"
+    ),
+    "--login-greeting-color": useColorModeValue("#475569", "#9ca3af"),
+    "--login-form-title-color": useColorModeValue("#0f172a", "#f9fafb"),
+    "--login-form-subtitle-color": useColorModeValue("#475569", "#6b7280"),
+    "--login-label-color": useColorModeValue("#475569", "#e5e7eb"),
+    "--login-input-bg": useColorModeValue("#ffffff", "#020617"),
+    "--login-input-border": useColorModeValue("#d1d5db", "#4b5563"),
+    "--login-input-color": useColorModeValue("#111827", "#f9fafb"),
+    "--login-meta-color": useColorModeValue("#475569", "#6b7280"),
+    "--login-submit-bg": useColorModeValue(
+      "linear-gradient(135deg, #4c1d95, #7c3aed, #ec4899)",
+      "linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899)"
+    ),
+    "--login-submit-shadow": useColorModeValue(
+      "0 18px 32px rgba(99, 102, 241, 0.45)",
+      "0 12px 26px rgba(79, 70, 229, 0.7)"
+    ),
+    "--login-submit-color": "#f9fafb",
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      await login(email, password); // backend çağrısını bekle
+      navigate("/");
+    } catch (err) {
+      if (err.message === "UserNotFound") {
+        setError("User not found");
+      } else if (err.message === "WrongPassword") {
+        setError("Incorrect password");
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError("Login failed. Please try again.");
+      }
+
+      setShake(true);
+      setTimeout(() => setShake(false), 400);
+    } finally {
+      setLoading(false);
     }
-
-    setShake(true);
-    setTimeout(() => setShake(false), 400);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
- 
-
+  };
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -72,12 +136,7 @@ function LoginPage() {
   };
 
   return (
-    <div
-      className={`login-page login-page-${
-        theme === "light" ? "light" : "dark"
-      }`}
-      onMouseMove={handleMouseMove}
-    >
+    <div className="login-page" style={dynamicStyles} onMouseMove={handleMouseMove}>
       <div className="login-shell">
         {/* Sol kısım */}
         <div className="login-side">

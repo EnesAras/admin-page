@@ -6,11 +6,10 @@
   padding: 24px;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle at top left, #0f172a 0, #020617 40%, #000 100%);
-}
-
-.login-page-light {
-  background: radial-gradient(circle at top left, #e5e7eb 0, #f3f4f6 40%, #e5e7eb 100%);
+  background: var(
+    --login-page-bg,
+    radial-gradient(circle at top left, #0f172a 0, #020617 40%, #000 100%)
+  );
 }
 
 .login-shell {
@@ -22,21 +21,20 @@
   gap: 32px;
   padding: 24px;
   border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: rgba(15, 23, 42, 0.76);
+  border: 1px solid var(
+    --login-shell-border,
+    rgba(148, 163, 184, 0.25)
+  );
+  background: var(
+    --login-shell-bg,
+    rgba(15, 23, 42, 0.76)
+  );
   backdrop-filter: blur(24px);
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(15, 23, 42, 0.4);
+  box-shadow: var(
+    --login-shell-shadow,
+    0 18px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(15, 23, 42, 0.4)
+  );
   z-index: 2;
-}
-
-.login-page-light .login-shell {
-  background: rgba(248, 250, 252, 0.9);
-  border-color: rgba(148, 163, 184, 0.35);
-  box-shadow:
-    0 18px 40px rgba(148, 163, 184, 0.35),
-    0 0 0 1px rgba(209, 213, 219, 0.4);
 }
 
 .login-side {
@@ -50,11 +48,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #e5e7eb;
-}
-
-.login-page-light .login-logo {
-  color: #0f172a;
+  color: var(--login-logo-color, #e5e7eb);
 }
 
 .login-badge {
@@ -64,18 +58,17 @@
   font-size: 11px;
   padding: 5px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  color: #e5e7eb;
+  border: var(
+    --login-badge-border,
+    1px solid rgba(148, 163, 184, 0.6)
+  );
+  color: var(--login-badge-color, #e5e7eb);
   background: linear-gradient(
     120deg,
     rgba(56, 189, 248, 0.12),
     rgba(129, 140, 248, 0.18),
     rgba(236, 72, 153, 0.12)
   );
-}
-
-.login-page-light .login-badge {
-  color: #111827;
 }
 
 .pill-dot {
@@ -90,21 +83,13 @@
   font-size: 28px;
   line-height: 1.2;
   margin: 8px 0 4px;
-  color: #f9fafb;
-}
-
-.login-page-light .login-title {
-  color: #0f172a;
+  color: var(--login-title-color, #f9fafb);
 }
 
 .login-subtitle {
   font-size: 14px;
-  color: #9ca3af;
+  color: var(--login-subtitle-color, #9ca3af);
   max-width: 360px;
-}
-
-.login-page-light .login-subtitle {
-  color: #6b7280;
 }
 
 .login-highlight-cards {
@@ -119,12 +104,14 @@
   min-width: 140px;
   padding: 10px 12px;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9));
-}
-
-.login-page-light .highlight-card {
-  background: radial-gradient(circle at top left, #f9fafb, #e5e7eb);
+  border: var(
+    --login-highlight-border,
+    1px solid rgba(148, 163, 184, 0.5)
+  );
+  background: var(
+    --login-highlight-bg,
+    radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9))
+  );
 }
 
 .highlight-label {
@@ -138,11 +125,7 @@
 .highlight-value {
   font-size: 20px;
   font-weight: 600;
-  color: #e5e7eb;
-}
-
-.login-page-light .highlight-value {
-  color: #111827;
+  color: var(--login-highlight-value, #e5e7eb);
 }
 
 .highlight-trend {
@@ -158,11 +141,7 @@
 .login-footer-text {
   margin-top: auto;
   font-size: 12px;
-  color: #6b7280;
-}
-
-.login-page-light .login-footer-text {
-  color: #6b7280;
+  color: var(--login-footer-color, #6b7280);
 }
 
 /* Sağ taraftaki form */
@@ -178,36 +157,58 @@
   max-width: 380px;
   padding: 20px 20px 18px;
   border-radius: 20px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: rgba(15, 23, 42, 0.95);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.8);
+  border: 1px solid var(
+    --login-form-card-border,
+    rgba(148, 163, 184, 0.6)
+  );
+  background: var(
+    --login-form-card-bg,
+    rgba(15, 23, 42, 0.95)
+  );
+  box-shadow: var(
+    --login-form-card-shadow,
+    0 14px 30px rgba(0, 0, 0, 0.8)
+  );
 }
 
-.login-page-light .login-form-card {
-  background: #f9fafb;
-  border-color: rgba(148, 163, 184, 0.7);
-  box-shadow: 0 14px 30px rgba(148, 163, 184, 0.5);
+.app-light .login-page {
+  background: #eef2ff;
+}
+
+.app-light .login-shell {
+  backdrop-filter: none;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+}
+
+.app-light .login-form-card {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.app-light .login-submit {
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+.app-light .login-orb {
+  filter: blur(40px);
+  opacity: 0.35;
 }
 
 .login-greeting {
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--login-greeting-color, #9ca3af);
   margin: 0;
 }
 
 .login-form-title {
   font-size: 20px;
   margin: 4px 0 2px;
-  color: #f9fafb;
-}
-
-.login-page-light .login-form-title {
-  color: #111827;
+  color: var(--login-form-title-color, #f9fafb);
 }
 
 .login-form-subtitle {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--login-form-subtitle-color, #6b7280);
   margin: 0 0 12px;
 }
 
@@ -227,11 +228,7 @@
 .form-group label {
   font-size: 13px;
   font-weight: 500;
-  color: #e5e7eb;
-}
-
-.login-page-light .form-group label {
-  color: #111827;
+  color: var(--login-label-color, #e5e7eb);
 }
 
 .form-label-row {
@@ -242,19 +239,13 @@
 
 .form-group input {
   border-radius: 10px;
-  border: 1px solid #4b5563;
+  border: 1px solid var(--login-input-border, #4b5563);
   padding: 9px 10px;
   font-size: 13px;
-  background: #020617;
-  color: #f9fafb;
+  background: var(--login-input-bg, #020617);
+  color: var(--login-input-color, #f9fafb);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-
-.login-page-light .form-group input {
-  background: #ffffff;
-  color: #111827;
-  border-color: #d1d5db;
 }
 
 .form-group input:focus {
@@ -291,9 +282,15 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
-  color: #f9fafb;
-  box-shadow: 0 12px 26px rgba(79, 70, 229, 0.7);
+  background: var(
+    --login-submit-bg,
+    linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899)
+  );
+  color: var(--login-submit-color, #f9fafb);
+  box-shadow: var(
+    --login-submit-shadow,
+    0 12px 26px rgba(79, 70, 229, 0.7)
+  );
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
 
@@ -312,7 +309,7 @@
 .login-meta {
   margin-top: 8px;
   font-size: 11px;
-  color: #6b7280;
+  color: var(--login-meta-color, #6b7280);
 }
 
 /* Arka plandaki blur orb'lar */
@@ -380,4 +377,3 @@
   80% { transform: translateX(4px); }
   100% { transform: translateX(0); }
 }
-

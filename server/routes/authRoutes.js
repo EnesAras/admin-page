@@ -1,55 +1,24 @@
 // routes/authRoutes.js
 const express = require("express");
+const { findUserByEmail, safeUser } = require("../data/mockStore");
+
 const router = express.Router();
 
-// Şimdilik fake kullanıcılar (ileride DB'ye taşırız)
-const users = [
-  {
-    id: 1,
-    name: "Admin User",
-    email: "admin@example.com",
-    password: "admin123", 
-    role: "admin",
-  },
-  {
-    id: 2,
-    name: "Normal User",
-    email: "user@example.com",
-    password: "user123",
-    role: "user",
-  },
-];
-
-// POST /api/auth/login
 router.post("/login", (req, res) => {
-  const { email, password } = req.body;
-
-  // Eksik data kontrolü
+  const { email, password } = req.body || {};
   if (!email || !password) {
-    return res.status(400).json({ message: "Email ve şifre zorunludur." });
+    return res.status(400).json({ error: "Email and password are required." });
   }
 
-  // Kullanıcıyı bul
-  const user = users.find(
-    (u) => u.email === email && u.password === password
-  );
-
-  if (!user) {
-    // Bilerek generic mesaj: hangi kısmın yanlış olduğunu söylemiyoruz
-    return res.status(401).json({ message: "Geçersiz email veya şifre." });
+  const user = findUserByEmail(String(email).toLowerCase());
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: "Invalid email or password." });
   }
 
-  // Şimdilik sahte token
   const fakeToken = `fake-jwt-token-${user.id}`;
-
   return res.json({
     token: fakeToken,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: safeUser(user),
   });
 });
 

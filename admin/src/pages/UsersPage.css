@@ -2,12 +2,28 @@
   padding: 20px;
   min-height: 100vh;
 
-  /* diğer sayfalarla tutarlı layout */
   max-width: 1120px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.app-light .users-container {
+  background: #f4f6fb;
+  border-radius: 26px;
+  padding: 32px;
+  border: none;
+  box-shadow: none;
+}
+
+.app-light .users-container {
+  background: #f4f6fb;
+  border-radius: 26px;
+  padding: 32px;
+  border: none;
+  box-shadow: none;
 }
 
 /* =============== TABLO GENEL =============== */
@@ -15,6 +31,7 @@
 .users-table {
   width: 100%;
   border-collapse: collapse;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 /* Başlık + hücre ortak */
@@ -53,32 +70,44 @@ body.theme-dark .users-table tr:hover td {
 }
 
 /* LIGHT THEME TABLO */
-body.theme-light .users-table {
+.app-light .users-table {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.4),
+    0 16px 30px rgba(15, 23, 42, 0.08);
+  border-top: 4px solid #f97316;
 }
 
-body.theme-light .users-table thead th {
+.app-light .users-table thead th {
   background: #f3f4f6;
   color: #111827;
   border-bottom: 1px solid #e5e7eb;
   font-weight: 600;
+  box-shadow: inset 0 -1px 0 #d1d5db;
 }
 
-body.theme-light .users-table td {
+.app-light .users-table td {
   background: #ffffff;
   color: #111827;
   border-bottom: 1px solid #f3f4f6;
 }
 
-body.theme-light .users-table tr:nth-child(even) td {
+.app-light .users-table tr:nth-child(even) td {
   background: #f9fafb;
 }
 
-body.theme-light .users-table tr:hover td {
+.app-light .users-table tr:hover td {
   background-color: #eef2ff;
+}
+
+.app-light .users-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.app-light .users-table tbody tr + tr td {
+  border-top: 1px solid #f1f5f9;
 }
 
 /* =============== HEADER + SEARCH + FILTERS =============== */
@@ -88,6 +117,23 @@ body.theme-light .users-table tr:hover td {
   flex-direction: column; /* başlık üstte, alt bar altta */
   gap: 10px;
   margin-bottom: 12px;
+  transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.app-light .users-header {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 18px 22px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.app-light .users-header {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 18px 22px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 /* üst satır: başlık + küçük istatistikler */
@@ -111,7 +157,7 @@ body.theme-dark .users-header h2 {
 }
 
 /* Light başlık rengi */
-body.theme-light .users-header h2 {
+.app-light .users-header h2 {
   color: #111827;
 }
 
@@ -125,11 +171,24 @@ body.theme-light .users-header h2 {
   align-items: center;
 }
 
+.app-light .users-header-bottom {
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+}
+
+.app-light .users-header-bottom {
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+}
+
 /* sağ taraf: search + add button */
 .users-header-right {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 /* =============== STATS PILL'LERİ =============== */
@@ -160,7 +219,7 @@ body.theme-dark .users-stat-pill {
 }
 
 /* Light stats */
-body.theme-light .users-stat-pill {
+.app-light .users-stat-pill {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   color: #111827;
@@ -217,21 +276,25 @@ body.theme-dark .search-input:focus {
 }
 
 /* Light search */
-body.theme-light .search-input {
+.app-light .search-input {
   border: 1px solid #d1d5db;
   background-color: #ffffff;
   color: #111827;
 }
 
-body.theme-light .search-input::placeholder {
+.app-light .search-input::placeholder {
   color: #9ca3af;
   font-weight: 300;
 }
 
-body.theme-light .search-input:focus {
+.app-light .search-input:focus {
   border-color: #f97316;
   box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.25);
   background-color: #ffffff;
+}
+
+.app-light .search-input {
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
 }
 
 @media (max-width: 600px) {
@@ -266,6 +329,24 @@ body.theme-light .search-input:focus {
   flex-wrap: wrap;
 }
 
+.app-light .filters {
+  background: #fff;
+  border-radius: 20px;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: inset 0 0 0 1px rgba(229, 231, 235, 0.8),
+    0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.app-light .filters {
+  background: #fff;
+  border-radius: 20px;
+  padding: 6px 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: inset 0 0 0 1px rgba(229, 231, 235, 0.8),
+    0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
 .filter-btn {
   padding: 6px 14px;
   border-radius: 20px;
@@ -295,19 +376,19 @@ body.theme-dark .filter-btn.active {
 }
 
 /* Light filter */
-body.theme-light .filter-btn {
+.app-light .filter-btn {
   border: 1px solid #e5e7eb;
   background-color: #ffffff;
   color: #374151;
 }
 
-body.theme-light .filter-btn:hover {
+.app-light .filter-btn:hover {
   background-color: #fee2e2;
   border-color: #fecaca;
   color: #991b1b;
 }
 
-body.theme-light .filter-btn.active {
+.app-light .filter-btn.active {
   background-color: #f97316;
   border-color: #f97316;
   color: #ffffff;
@@ -338,13 +419,13 @@ body.theme-dark .delete-btn:hover {
 }
 
 /* Light delete */
-body.theme-light .delete-btn {
+.app-light .delete-btn {
   border: 1px solid #fecaca;
   background-color: #fef2f2;
   color: #b91c1c;
 }
 
-body.theme-light .delete-btn:hover {
+.app-light .delete-btn:hover {
   background-color: #ef4444;
   border-color: #ef4444;
   color: #ffffff;
@@ -373,13 +454,13 @@ body.theme-dark .edit-btn:hover {
 }
 
 /* Light edit */
-body.theme-light .edit-btn {
+.app-light .edit-btn {
   border: 1px solid #d1d5db;
   background-color: #ffffff;
   color: #374151;
 }
 
-body.theme-light .edit-btn:hover {
+.app-light .edit-btn:hover {
   background-color: #f97316;
   border-color: #f97316;
   color: #ffffff;
@@ -420,7 +501,7 @@ body.theme-dark .add-user-placeholder {
 }
 
 /* Light placeholder bg */
-body.theme-light .add-user-placeholder {
+.app-light .add-user-placeholder {
   background: #f9fafb;
   color: #374151;
   border-color: #d1d5db;
@@ -444,7 +525,7 @@ body.theme-dark .add-user-panel {
 }
 
 /* Light panel bg */
-body.theme-light .add-user-panel {
+.app-light .add-user-panel {
   background: #ffffff;
 }
 
@@ -458,7 +539,7 @@ body.theme-dark .add-user-header h3 {
   color: #f9fafb;
 }
 
-body.theme-light .add-user-header h3 {
+.app-light .add-user-header h3 {
   color: #111827;
 }
 
@@ -470,7 +551,7 @@ body.theme-dark .add-user-subtitle {
   color: #9ca3af;
 }
 
-body.theme-light .add-user-subtitle {
+.app-light .add-user-subtitle {
   color: #6b7280;
 }
 
@@ -510,19 +591,19 @@ body.theme-dark .add-user-grid select:focus {
 }
 
 /* Light inputs */
-body.theme-light .add-user-grid input,
-body.theme-light .add-user-grid select {
+.app-light .add-user-grid input,
+.app-light .add-user-grid select {
   border: 1px solid #d1d5db;
   background-color: #ffffff;
   color: #111827;
 }
 
-body.theme-light .add-user-grid input::placeholder {
+.app-light .add-user-grid input::placeholder {
   color: #9ca3af;
 }
 
-body.theme-light .add-user-grid input:focus,
-body.theme-light .add-user-grid select:focus {
+.app-light .add-user-grid input:focus,
+.app-light .add-user-grid select:focus {
   border-color: #f97316;
   box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.35);
 }
@@ -592,13 +673,13 @@ body.theme-dark .btn-ghost:hover {
 }
 
 /* Light ghost */
-body.theme-light .btn-ghost {
+.app-light .btn-ghost {
   border: 1px solid #d1d5db;
   background: #ffffff;
   color: #374151;
 }
 
-body.theme-light .btn-ghost:hover {
+.app-light .btn-ghost:hover {
   background: #f3f4f6;
   border-color: #9ca3af;
 }
@@ -616,7 +697,7 @@ body.theme-light .btn-ghost:hover {
 }
 
 /* Light theme error daha soft olsun */
-body.theme-light .input-error {
+.app-light .input-error {
   border-color: #f97373;
   background-color: #fee2e2;
 }
@@ -653,22 +734,46 @@ body.theme-dark .role-moderator {
 }
 
 /* Light role badges */
-body.theme-light .role-admin {
-  background: #fff7ed;
-  color: #c2410c;
-  border: 1px solid #fed7aa;
+.app-light .role-admin {
+  background: #fff5ed;
+  color: #b45309;
+  border: 1px solid #fdd6b1;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.1);
 }
 
-body.theme-light .role-user {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
+.app-light .role-admin {
+  background: #fff5ed;
+  color: #b45309;
+  border: 1px solid #fdd6b1;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.1);
 }
 
-body.theme-light .role-moderator {
+.app-light .role-user {
+  background: #f8fafc;
+  color: #1f2937;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
+}
+
+.app-light .role-user {
+  background: #f8fafc;
+  color: #1f2937;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
+}
+
+.app-light .role-moderator {
   background: #eff6ff;
-  color: #1d4ed8;
+  color: #1e3a8a;
   border: 1px solid #bfdbfe;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.18);
+}
+
+.app-light .role-moderator {
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.18);
 }
 
 /* =============== STATUS BADGES =============== */
@@ -697,13 +802,13 @@ body.theme-dark .status-inactive {
 }
 
 /* Light status */
-body.theme-light .status-active {
+.app-light .status-active {
   background: #dcfce7;
   color: #166534;
   border: 1px solid #86efac;
 }
 
-body.theme-light .status-inactive {
+.app-light .status-inactive {
   background: #fee2e2;
   color: #991b1b;
   border: 1px solid #fecaca;
@@ -748,7 +853,7 @@ body.theme-dark .user-avatar {
 }
 
 /* Light avatar */
-body.theme-light .user-avatar {
+.app-light .user-avatar {
   background: #eef2ff;
   color: #1d4ed8;
   border: 1px solid #c7d2fe;
@@ -789,7 +894,7 @@ body.theme-dark .empty-state {
 }
 
 /* Light empty */
-body.theme-light .empty-state {
+.app-light .empty-state {
   color: #6b7280;
 }
 /* =========================
@@ -819,9 +924,9 @@ body.theme-light .empty-state {
 
   box-shadow:
     0 0 0 1px rgba(15, 23, 42, 0.95),
-    0 10px 30px var(--role-glow);
+    0 6px 18px var(--role-glow);
 
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
 
   transition:
     background 0.18s ease,
@@ -836,7 +941,7 @@ body.theme-light .empty-state {
   filter: brightness(1.05);
   box-shadow:
     0 0 0 1px rgba(15, 23, 42, 1),
-    0 16px 40px rgba(0, 0, 0, 0.7);
+    0 10px 26px rgba(0, 0, 0, 0.45);
 }
 
 
@@ -875,3 +980,40 @@ body.theme-light .empty-state {
   color: #f3e8ff;
 }
 
+.app-light .role-badge {
+  --role-bg: #ffffff;
+  --role-border: #e5e7eb;
+  --role-glow: rgba(0, 0, 0, 0);
+  color: #1f2937;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  backdrop-filter: none;
+}
+
+.app-light .role-admin {
+  --role-bg: #fff5ed;
+  --role-border: #fdd6b1;
+  color: #b45309;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.12);
+}
+
+.app-light .role-user {
+  --role-bg: #f8fafc;
+  --role-border: #e2e8f0;
+  color: #1f2937;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+}
+
+.app-light .role-moderator {
+  --role-bg: #eef2ff;
+  --role-border: #c7d2fe;
+  color: #1e3a8a;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+}
+
+.app-light .role-owner,
+.app-light .role-manager {
+  --role-bg: #fffaf0;
+  --role-border: #fde68a;
+  color: #92400e;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.12);
+}

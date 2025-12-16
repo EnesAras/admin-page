@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.jsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import "./DashboardPage.css";
 import { useSettings } from "../context/SettingsContext";
 import {
@@ -14,6 +14,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { apiFetch } from "../lib/api";
 
 const fallbackOrders = [
   {
@@ -45,12 +46,6 @@ const fallbackOrders = [
   },
 ];
 
-const STATUS_COLORS = {
-  Pending: "#fbbf24",
-  Shipped: "#22c55e",
-  Cancelled: "#f97373",
-};
-
 const fallbackUsers = [
   {
     id: 1,
@@ -74,184 +69,223 @@ const fallbackUsers = [
     status: "Active",
   },
 ];
+const DASHBOARD_PRIORITY_ORDER = ["pending", "shipped", "delivered", "cancelled"];
+const ROLE_PRIORITY = {
+  Admin: 1,
+  Moderator: 2,
+  User: 3,
+};
+
+const normalizeOrder = (order) => ({
+  ...order,
+  date: order.date || order.createdAt || order.created_at || "",
+  total: Number(order.total ?? order.amount ?? order.price ?? 0),
+  status: order.status || "Pending",
+});
+
+const buildStatusCounts = (ordersList) => {
+  const counts = ordersList.reduce((acc, order) => {
+    const raw = String(order?.status ?? "pending")
+      .trim()
+      .toLowerCase();
+    const key = raw === "canceled" ? "cancelled" : raw;
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    pending: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+    ...counts,
+  };
+};
+
+const buildMonthlyRevenue = (ordersList, months = 6) => {
+  const map = new Map();
+  const now = new Date();
+
+  for (let offset = months - 1; offset >= 0; offset -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    map.set(key, { year: d.getFullYear(), month: d.getMonth(), revenue: 0 });
+  }
+
+  ordersList.forEach((order) => {
+    const date = new Date(order.date);
+    if (Number.isNaN(date)) return;
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    const bucket = map.get(key);
+    if (!bucket) return;
+    bucket.revenue += Number(order.total) || 0;
+  });
+
+  return Array.from(map.values());
+};
+
+const buildDashboardState = (ordersList, usersList) => {
+  const normalizedOrders = ordersList.map(normalizeOrder);
+  const statusCounts = buildStatusCounts(normalizedOrders);
+  const monthlyRevenue = buildMonthlyRevenue(normalizedOrders);
+  const recentOrders = [...normalizedOrders]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 5);
+
+  const sanitizedUsers = [...usersList].map((user) => ({ ...user }));
+  const recentUsers = sanitizedUsers
+    .sort((a, b) => b.id - a.id)
+    .slice(0, 5);
+
+  const activeUsers = usersList.filter((u) => u.status === "Active").length;
+  const adminCount = usersList.filter((u) => u.role === "Admin").length;
+
+  return {
+    totalUsers: usersList.length,
+    activeUsers,
+    inactiveUsers: usersList.length - activeUsers,
+    adminCount,
+    totalOrders: normalizedOrders.length,
+    totalRevenue: normalizedOrders.reduce(
+      (sum, o) => sum + (Number(o.total) || 0),
+      0
+    ),
+    statusCounts,
+    monthlyRevenue,
+    recentOrders,
+    recentUsers,
+    pendingOrders: statusCounts.pending,
+    shippedOrders: statusCounts.shipped,
+    productsCount: 0,
+  };
+};
 
 function DashboardPage() {
-  const { t, language, theme } = useSettings();
+  const { t, language, colorMode } = useSettings();
   const locale = language || "en";
-  const prefersDarkMode =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const isLightTheme =
-    theme === "light" || (theme === "system" && !prefersDarkMode);
+  const isLightTheme = colorMode === "light";
   const axisColor = isLightTheme ? "#6b7280" : "#e5e7eb";
   const gridColor = isLightTheme ? "#e2e8f0" : "#111827";
   const tooltipBackground = isLightTheme ? "#ffffff" : "#020617";
   const tooltipBorder = isLightTheme ? "#e5e7eb" : "#1f2937";
   const tooltipColor = isLightTheme ? "#0f172a" : "#e5e7eb";
-  const cardFootAliases = {
-    cardFootPendingOrders: "pendingOrders",
-    cardFootShippedOrders: "shippedOrders",
+  const cardFootFallbacks = {
+    cardFootPendingOrders: "ordersLabel",
+    cardFootShippedOrders: "ordersLabel",
     cardFootTotalRevenue: "totalRevenue",
   };
   const getCardFootText = (key) => {
-    const alias = cardFootAliases[key];
-    if (alias) return t(alias);
-    return t(key);
+    const text = t(key);
+    if (text !== key) return text;
+    const fallbackKey = cardFootFallbacks[key];
+    if (fallbackKey) return t(fallbackKey, key);
+    return key;
   };
 
-  // USERS: Aynen eskisi gibi localStorage + fallback
-  const [users] = useState(() => {
-    const stored = localStorage.getItem("admin_users");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? parsed : fallbackUsers;
-      } catch {
-        return fallbackUsers;
-      }
-    }
-    return fallbackUsers;
-  });
+  const fallbackDashboard = useMemo(
+    () => buildDashboardState(fallbackOrders, fallbackUsers),
+    []
+  );
 
-  // ORDERS: Başlangıçta fallback, sonra backend'ten override ediyoruz
-  const [orders, setOrders] = useState(() => {
-    const stored = localStorage.getItem("admin_orders");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return fallbackOrders;
-  });
+  const [dashboardData, setDashboardData] = useState(fallbackDashboard);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
-  const [ordersLoading, setOrdersLoading] = useState(false);
+  useEffect(() => {
+    let mounted = true;
 
- // ==== BACKEND'TEN ORDERS ÇEK ====
-useEffect(() => {
-  const controller = new AbortController();
-
-  const fetchOrders = async () => {
-    setOrdersLoading(true);
-
-    try {
-      const res = await fetch("http://localhost:5000/api/orders", {
-        signal: controller.signal,
+    setDashboardLoading(true);
+    apiFetch("/api/dashboard")
+      .then((data) => {
+        if (!mounted) return;
+        setDashboardData((prev) => ({
+          ...prev,
+          ...data,
+          statusCounts: { ...prev.statusCounts, ...(data.statusCounts || {}) },
+          monthlyRevenue: data.monthlyRevenue || prev.monthlyRevenue,
+          recentOrders: data.recentOrders || prev.recentOrders,
+          recentUsers: data.recentUsers || prev.recentUsers,
+        }));
+      })
+      .catch((err) => {
+        console.warn("Failed to load dashboard data:", err);
+      })
+      .finally(() => {
+        if (mounted) setDashboardLoading(false);
       });
 
-      // Backend yoksa / 404 ise: mevcut (fallback/localStorage) orders'u KORU
- if (!res.ok) {
-  console.warn("Orders API not available, keeping fallback/local data");
-  return;
-}
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-
-      const data = await res.json();
-
-      const normalized = (Array.isArray(data) ? data : []).map((o) => ({
-  ...o,
-  date: o.date || o.createdAt || o.created_at,
-  total: Number(o.total ?? o.amount ?? o.price ?? 0),
-  status: o.status || "Pending",
-}));
-
-setOrders(normalized);
-localStorage.setItem("admin_orders", JSON.stringify(normalized));
-
-
- } catch (err) {
-      if (err?.name !== "AbortError") console.warn("Fetch orders failed:", err);
-    } finally {
-      setOrdersLoading(false);
-    }
-  };
-
-  fetchOrders();
-  return () => controller.abort();
-}, []);
-
-
-  // ==== USER METRICS ====
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === "Active").length;
-  const inactiveUsers = totalUsers - activeUsers;
-  const adminCount = users.filter((u) => u.role === "Admin").length;
+  const {
+    totalUsers,
+    activeUsers,
+    inactiveUsers,
+    adminCount,
+    totalOrders,
+    totalRevenue,
+    statusCounts: statusCountsData = {},
+    monthlyRevenue: monthlyRevenueData = [],
+    recentOrders: recentOrdersData = [],
+    recentUsers: recentUsersData = [],
+  } = dashboardData;
 
   const activeRate =
     totalUsers === 0 ? 0 : Math.round((activeUsers / totalUsers) * 100);
 
-  const rolePriority = {
-    Admin: 1,
-    Moderator: 2,
-    User: 3,
-  };
-
-  const recentUsers = [...users]
-    .sort((a, b) => {
-      if (rolePriority[a.role] !== rolePriority[b.role]) {
-        return rolePriority[a.role] - rolePriority[b.role];
-      }
-      return b.id - a.id;
-    })
-    .slice(0, 5);
-
-  // ==== ORDER METRICS ====
-  const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
-
-  const statusCounts = useMemo(() => {
-    const normalizeKey = (status) => {
-      const raw = String(status ?? "unknown").trim().toLowerCase();
-      if (raw === "canceled") return "cancelled";
-      return raw;
-    };
-    return orders.reduce((acc, order) => {
-      const key = normalizeKey(order?.status);
-      if (!key) return acc;
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-  }, [orders]);
-
-  const formatStatusLabel = (key) => {
-    const mapping = {
-      pending: t("orderStatusPending"),
-      shipped: t("orderStatusShipped"),
-      cancelled: t("orderStatusCancelled"),
-      delivered: t("orderStatusDelivered") || "Delivered",
-    };
-    if (mapping[key]) return mapping[key];
-    return key
-      .split(/[\s_-]+/)
-      .map(
-        (part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-      )
-      .join(" ");
-  };
-
-  const priorityOrder = ["pending", "shipped", "delivered", "cancelled"];
-  const orderedStatusKeys = [
-    ...priorityOrder.filter((key) => statusCounts[key]),
-    ...Object.keys(statusCounts)
-      .filter((key) => !priorityOrder.includes(key))
-      .sort(),
-  ];
-
-  const statusChartData = orderedStatusKeys
-    .map((key) => {
-      const count = statusCounts[key];
-      if (!count) return null;
-      return {
-        key,
-        label: formatStatusLabel(key),
-        value: count,
+  const formatStatusLabel = useCallback(
+    (key) => {
+      const mapping = {
+        pending: t("orderStatusPending"),
+        shipped: t("orderStatusShipped"),
+        cancelled: t("orderStatusCancelled"),
+        delivered: t("orderStatusDelivered") || "Delivered",
       };
-    })
-    .filter(Boolean);
+      if (mapping[key]) return mapping[key];
+      return key
+        .split(/[\s_-]+/)
+        .map(
+          (part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+        )
+        .join(" ");
+    },
+    [t]
+  );
+
+  const statusCounts = useMemo(
+    () => ({
+      pending: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+      ...statusCountsData,
+    }),
+    [statusCountsData]
+  );
+
+  const orderedStatusKeys = useMemo(() => {
+    return [
+      ...DASHBOARD_PRIORITY_ORDER.filter((key) => statusCounts[key]),
+      ...Object.keys(statusCounts)
+        .filter((key) => !DASHBOARD_PRIORITY_ORDER.includes(key))
+        .sort(),
+    ];
+  }, [statusCounts]);
+
+  const statusChartData = useMemo(() => {
+    return orderedStatusKeys
+      .map((key) => {
+        const count = statusCounts[key];
+        if (!count) return null;
+        return {
+          key,
+          label: formatStatusLabel(key),
+          value: count,
+        };
+      })
+      .filter(Boolean);
+  }, [orderedStatusKeys, statusCounts, formatStatusLabel]);
 
   const statusColorMap = {
     pending: "#fbbf24",
@@ -266,50 +300,30 @@ localStorage.setItem("admin_orders", JSON.stringify(normalized));
     return "text-slate";
   };
 
-  const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 3);
+  const recentUsers = useMemo(() => {
+    return [...recentUsersData]
+      .sort((a, b) => {
+        if (ROLE_PRIORITY[a.role] !== ROLE_PRIORITY[b.role]) {
+          return ROLE_PRIORITY[a.role] - ROLE_PRIORITY[b.role];
+        }
+        return b.id - a.id;
+      });
+  }, [recentUsersData]);
+
+  const recentOrders = useMemo(() => {
+    return [...recentOrdersData];
+  }, [recentOrdersData]);
 
   // ==== LINE CHART: MONTHLY REVENUE ====
-  const monthlyRevenueMap = new Map();
-
-  orders.forEach((order) => {
-    if (!order.date) return;
-    const d = new Date(order.date);
-    if (isNaN(d)) return;
-
-    const month = d.getMonth();
-    const year = d.getFullYear();
-    const sortKey = year * 100 + month;
-    const label = d.toLocaleString(locale, { month: "short" });
-    const key = `${year}-${month}`;
-
-    const existing = monthlyRevenueMap.get(key) || {
-      label,
-      sortKey,
-      revenue: 0,
-    };
-
-    existing.revenue += order.total || 0;
-    monthlyRevenueMap.set(key, existing);
-  });
-
-  const now = new Date();
-  for (let offset = 5; offset >= 0; offset -= 1) {
-    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    const key = `${d.getFullYear()}-${d.getMonth()}`;
-    const label = d.toLocaleString(locale, { month: "short" });
-    const sortKey = d.getFullYear() * 100 + d.getMonth();
-
-    const entry = monthlyRevenueMap.get(key) || { label, sortKey, revenue: 0 };
-    entry.label = label;
-    entry.sortKey = sortKey;
-    monthlyRevenueMap.set(key, entry);
-  }
-
-  const revenueData = Array.from(monthlyRevenueMap.values()).sort(
-    (a, b) => a.sortKey - b.sortKey
-  );
+  const revenueData = useMemo(() => {
+    if (!monthlyRevenueData?.length) return [];
+    return monthlyRevenueData.map((entry) => ({
+      label: new Intl.DateTimeFormat(locale, { month: "short" }).format(
+        new Date(entry.year, entry.month, 1)
+      ),
+      revenue: entry.revenue,
+    }));
+  }, [monthlyRevenueData, locale]);
 
   // ==== PIE CHART: STATUS DISTRIBUTION ====
   const hasStatusData = statusChartData.length > 0;
@@ -320,7 +334,7 @@ localStorage.setItem("admin_orders", JSON.stringify(normalized));
       <p className="dashboard-subtitle">{t("dashboardSubtitle")}</p>
 
       {/* ORDERS FETCH DURUMU */}
-      {ordersLoading && (
+      {dashboardLoading && (
         <div className="dashboard-loading">
           {t("dashboardLoading") || "Loading latest orders from server..."}
         </div>
