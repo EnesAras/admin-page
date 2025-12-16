@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import "./SettingsPage.css";
 import { useSettings } from "../context/SettingsContext";
+import { useAuth } from "../context/AuthContext";
 
 const translations = {
   en: {
@@ -29,6 +30,8 @@ const translations = {
     weeklySub: "Get a weekly summary of users and orders.",
 
     savedPill: "Settings saved",
+    moderatorTitle: "Limited control mode",
+    moderatorSubtitle: "You can only update theme and language preferences.",
   },
   tr: {
     settingsTitle: "Ayarlar",
@@ -55,6 +58,8 @@ const translations = {
     weeklySub: "Kullanıcılar ve siparişler için haftalık özet al.",
 
     savedPill: "Ayarlar kaydedildi",
+    moderatorTitle: "Sınırlı kontrol modu",
+    moderatorSubtitle: "Yalnızca tema ve dil tercihlerini değiştirebilirsin.",
   },
   de: {
     settingsTitle: "Einstellungen",
@@ -81,6 +86,8 @@ const translations = {
     weeklySub: "Wöchentlicher Überblick über Nutzer und Bestellungen.",
 
     savedPill: "Einstellungen gespeichert",
+    moderatorTitle: "Eingeschränkter Modus",
+    moderatorSubtitle: "Du kannst nur Theme und Sprache anpassen.",
   },
   es: {
     settingsTitle: "Configuración",
@@ -107,6 +114,8 @@ const translations = {
     weeklySub: "Resumen semanal de usuarios y pedidos.",
 
     savedPill: "Configuración guardada",
+    moderatorTitle: "Modo de control limitado",
+    moderatorSubtitle: "Solo puedes modificar el tema y el idioma.",
   },
   fr: {
     settingsTitle: "Paramètres",
@@ -133,6 +142,9 @@ const translations = {
     weeklySub: "Résumé hebdomadaire des utilisateurs et commandes.",
 
     savedPill: "Paramètres enregistrés",
+    moderatorTitle: "Mode d'accès limité",
+    moderatorSubtitle:
+      "Tu peux uniquement définir le thème et la langue.",
   },
   it: {
     settingsTitle: "Impostazioni",
@@ -159,6 +171,8 @@ const translations = {
     weeklySub: "Riepilogo settimanale di utenti e ordini.",
 
     savedPill: "Impostazioni salvate",
+    moderatorTitle: "Modalità controllo limitata",
+    moderatorSubtitle: "Puoi modificare solo tema e lingua.",
   },
   ru: {
     settingsTitle: "Настройки",
@@ -185,6 +199,8 @@ const translations = {
     weeklySub: "Краткий отчёт по пользователям и заказам.",
 
     savedPill: "Настройки сохранены",
+    moderatorTitle: "Ограниченный режим",
+    moderatorSubtitle: "Можно менять только тему и язык.",
   },
 };
 
@@ -192,6 +208,9 @@ function SettingsPage() {
   const { settings, updateSetting } = useSettings();
   const [displayName, setDisplayName] = useState(settings.displayName || "");
   const [showSaved, setShowSaved] = useState(false);
+  const { currentUser } = useAuth();
+  const isModerator =
+    String(currentUser?.role || "").trim().toLowerCase() === "moderator";
 
   const currentLang = settings.language || "en";
   const t = translations[currentLang] || translations.en;
@@ -242,27 +261,42 @@ function SettingsPage() {
         )}
       </div>
 
-      <div className="settings-grid">
-        <section className="settings-card">
-          <div className="settings-card-header">
-            <div>
-              <h3>{t.profileTitle}</h3>
-              <p>{t.profileDesc}</p>
-            </div>
-          </div>
-
-          <div className="settings-field">
-            <label htmlFor="displayName">{t.displayNameLabel}</label>
-            <input
-              id="displayName"
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              onBlur={handleDisplayNameBlur}
-              placeholder={t.displayNamePlaceholder}
-            />
-          </div>
+      {isModerator && (
+        <section className="settings-moderator-note">
+          <p className="settings-moderator-title">
+            {t.moderatorTitle ||
+              "Moderators can only update the look & feel."}
+          </p>
+          <p className="settings-moderator-subtitle">
+            {t.moderatorSubtitle ||
+              "Theme and language settings are the only available preferences."}
+          </p>
         </section>
+      )}
+
+      <div className="settings-grid">
+        {!isModerator && (
+          <section className="settings-card">
+            <div className="settings-card-header">
+              <div>
+                <h3>{t.profileTitle}</h3>
+                <p>{t.profileDesc}</p>
+              </div>
+            </div>
+
+            <div className="settings-field">
+              <label htmlFor="displayName">{t.displayNameLabel}</label>
+              <input
+                id="displayName"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                onBlur={handleDisplayNameBlur}
+                placeholder={t.displayNamePlaceholder}
+              />
+            </div>
+          </section>
+        )}
 
         <section className="settings-card">
           <div className="settings-card-header">
@@ -279,8 +313,7 @@ function SettingsPage() {
                 <button
                   type="button"
                   className={
-                    "settings-chip" +
-                    (settings.theme === "dark" ? " active" : "")
+                    "settings-chip" + (settings.theme === "dark" ? " active" : "")
                   }
                   onClick={() => {
                     updateSetting("theme", "dark");
@@ -337,40 +370,42 @@ function SettingsPage() {
           </div>
         </section>
 
-        <section className="settings-card settings-card-full">
-          <div className="settings-card-header">
-            <div>
-              <h3>{t.notifTitle}</h3>
-              <p>{t.notifDesc}</p>
+        {!isModerator && (
+          <section className="settings-card settings-card-full">
+            <div className="settings-card-header">
+              <div>
+                <h3>{t.notifTitle}</h3>
+                <p>{t.notifDesc}</p>
+              </div>
             </div>
-          </div>
 
-          <div className="settings-toggle-list">
-            <label className="settings-toggle">
-              <input
-                type="checkbox"
-                checked={settings.mainEmail ?? true}
-                onChange={handleMainEmailChange}
-              />
-              <div className="settings-toggle-text">
-                <span>{t.mainEmailLabel}</span>
-                <small>{t.mainEmailSub}</small>
-              </div>
-            </label>
+            <div className="settings-toggle-list">
+              <label className="settings-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.mainEmail ?? true}
+                  onChange={handleMainEmailChange}
+                />
+                <div className="settings-toggle-text">
+                  <span>{t.mainEmailLabel}</span>
+                  <small>{t.mainEmailSub}</small>
+                </div>
+              </label>
 
-            <label className="settings-toggle">
-              <input
-                type="checkbox"
-                checked={settings.weeklySummary ?? false}
-                onChange={handleWeeklyChange}
-              />
-              <div className="settings-toggle-text">
-                <span>{t.weeklyLabel}</span>
-                <small>{t.weeklySub}</small>
-              </div>
-            </label>
-          </div>
-        </section>
+              <label className="settings-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.weeklySummary ?? false}
+                  onChange={handleWeeklyChange}
+                />
+                <div className="settings-toggle-text">
+                  <span>{t.weeklyLabel}</span>
+                  <small>{t.weeklySub}</small>
+                </div>
+              </label>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

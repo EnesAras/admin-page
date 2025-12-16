@@ -15,6 +15,8 @@ import {
   Cell,
 } from "recharts";
 import { apiFetch } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const fallbackOrders = [
   {
@@ -162,6 +164,8 @@ const buildDashboardState = (ordersList, usersList) => {
 
 function DashboardPage() {
   const { t, language, colorMode } = useSettings();
+  const { currentUser } = useAuth();
+  const { lastNotification } = useToast();
   const locale = language || "en";
   const isLightTheme = colorMode === "light";
   const axisColor = isLightTheme ? "#6b7280" : "#e5e7eb";
@@ -186,6 +190,27 @@ function DashboardPage() {
     () => buildDashboardState(fallbackOrders, fallbackUsers),
     []
   );
+
+  const capabilityLabelMap = {
+    manageUsers: t("capabilityManageUsers", "Manage users"),
+    manageProducts: t("capabilityManageProducts", "Manage products"),
+    manageOrders: t("capabilityManageOrders", "Manage orders"),
+    accessSettings: t("capabilityAccessSettings", "Access settings"),
+    fullAccess: t("capabilityFullAccess", "Full system access"),
+  };
+  const roleKey = currentUser?.role
+    ? `role${currentUser.role.charAt(0).toUpperCase()}${currentUser.role
+        .slice(1)
+        .toLowerCase()}`
+    : "roleUser";
+  const roleLabel = t(roleKey, currentUser?.role || "User");
+
+  const capabilityEntries = useMemo(() => {
+    const caps = currentUser?.capabilities || {};
+    return Object.keys(caps)
+      .filter((key) => caps[key])
+      .map((key) => capabilityLabelMap[key] || key);
+  }, [currentUser, capabilityLabelMap]);
 
   const [dashboardData, setDashboardData] = useState(fallbackDashboard);
   const [dashboardLoading, setDashboardLoading] = useState(true);
@@ -332,6 +357,18 @@ function DashboardPage() {
     <div className="dashboard-container">
       <h2 className="dashboard-title">{t("dashboardTitle")}</h2>
       <p className="dashboard-subtitle">{t("dashboardSubtitle")}</p>
+      {lastNotification && (
+        <div
+          className={`dashboard-api-banner dashboard-api-banner-${
+            lastNotification.type || "info"
+          }`}
+        >
+          <p className="banner-label">
+            {t("apiBannerLabel", "API notification")}
+          </p>
+          <p className="banner-message">{lastNotification.message}</p>
+        </div>
+      )}
 
       {/* ORDERS FETCH DURUMU */}
       {dashboardLoading && (
@@ -585,6 +622,8 @@ function DashboardPage() {
                 <tr>
                   <th>{t("thId")}</th>
                   <th>{t("thCustomer")}</th>
+                  <th>{t("orders.thPayment")}</th>
+                  <th>{t("orders.thShipping", "Shipping")}</th>
                   <th>{t("thTotal")}</th>
                   <th>{t("thStatus")}</th>
                 </tr>
@@ -598,7 +637,18 @@ function DashboardPage() {
                   return (
                     <tr key={order.id}>
                       <td>#{order.id}</td>
-                      <td>{order.customer}</td>
+                      <td>
+                        <div>{order.customer}</div>
+                        {order.items?.length ? (
+                          <div className="order-items">
+                            {order.items.map((item) => item.name).join(", ")}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td>{order.method || t("orders.detailsPayment", "Payment")}</td>
+                      <td className="order-shipping">
+                        {order.shippingAddress || "-"}
+                      </td>
                       <td>€{order.total.toFixed(2)}</td>
                       <td>
                         <span
@@ -616,6 +666,35 @@ function DashboardPage() {
             </table>
           )}
         </div>
+      </div>
+      <div className="dashboard-role-panel">
+        <div className="role-header">
+          <div>
+            <p className="role-title">
+              {t("rolePanelTitle", "Your role & capabilities")}
+            </p>
+            <p className="role-subtitle">
+              {t(
+                "rolePanelSubtitle",
+                "Permissions currently granted to your account."
+              )}
+            </p>
+          </div>
+          <span className={`role-badge role-${currentUser?.role || "user"}`}>
+            {roleLabel}
+          </span>
+        </div>
+        {capabilityEntries.length ? (
+          <ul className="role-capabilities">
+            {capabilityEntries.map((capability) => (
+              <li key={capability}>{capability}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="role-empty">
+            {t("rolePanelEmpty", "No extra permissions defined.")}
+          </p>
+        )}
       </div>
     </div>
   );

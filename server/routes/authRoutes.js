@@ -2,6 +2,28 @@
 const express = require("express");
 const { findUserByEmail, safeUser } = require("../data/mockStore");
 
+const ROLE_CAPABILITIES = {
+  admin: {
+    manageUsers: true,
+    manageProducts: true,
+    manageOrders: true,
+    accessSettings: true,
+  },
+  owner: {
+    manageUsers: true,
+    manageProducts: true,
+    manageOrders: true,
+    accessSettings: true,
+    fullAccess: true,
+  },
+  moderator: {
+    manageUsers: false,
+    manageProducts: false,
+    manageOrders: true,
+    accessSettings: false,
+  },
+};
+
 const router = express.Router();
 
 router.post("/login", (req, res) => {
@@ -15,10 +37,19 @@ router.post("/login", (req, res) => {
     return res.status(401).json({ error: "Invalid email or password." });
   }
 
-  const fakeToken = `fake-jwt-token-${user.id}`;
+  if (String(user.status).toLowerCase() !== "active") {
+    return res.status(403).json({ error: "AccountInactive" });
+  }
+
+  const fakeToken = `fake-jwt-token-${user.id}-${Date.now()}`;
+  const role = String(user.role || "user").toLowerCase();
+  const capabilities =
+    ROLE_CAPABILITIES[role] || ROLE_CAPABILITIES["moderator"] || {};
+
   return res.json({
     token: fakeToken,
     user: safeUser(user),
+    capabilities,
   });
 });
 

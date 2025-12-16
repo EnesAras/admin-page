@@ -18,37 +18,73 @@ const initialUsers = [
     role: "owner",
     status: "Active",
   },
+  {
+    id: 3,
+    email: "mira@example.com",
+    password: "moderator123",
+    name: "Mira Gomez",
+    role: "moderator",
+    status: "Active",
+  },
 ];
 
-const initialOrders = [
-  {
-    id: 101,
-    customer: "Alex Turner",
-    email: "alex.turner@example.com",
-    date: "2025-12-01",
-    total: 125.5,
-    status: "Pending",
-    method: "Credit Card",
-  },
-  {
-    id: 102,
-    customer: "Maria Lopez",
-    email: "maria.lopez@example.com",
-    date: "2025-12-03",
-    total: 89.99,
-    status: "Shipped",
-    method: "PayPal",
-  },
-  {
-    id: 103,
-    customer: "David Kim",
-    email: "david.kim@example.com",
-    date: "2025-12-05",
-    total: 42.0,
-    status: "Cancelled",
-    method: "Bank Transfer",
-  },
+const CUSTOMER_NAMES = [
+  "Alex Turner",
+  "Maria Lopez",
+  "David Kim",
+  "Nadia Patel",
+  "Samuel Rivera",
+  "Elena Chen",
+  "Diego Alvarez",
+  "Sasha Ivanova",
+  "Mateo Rossi",
+  "Chloe Baker",
 ];
+const ORDER_STATUSES = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
+const PAYMENT_METHODS = ["Credit Card", "PayPal", "Apple Pay", "Bank Transfer", "Klarna"];
+const ORDER_ITEMS = [
+  "Premium Figure Bundle",
+  "Collector Manga Set",
+  "Gaming Poster Pack",
+  "Anime Accessory Haul",
+  "Limited Edition Hoodie",
+  "LED Desk Lamp",
+];
+
+const randomFrom = (arr, idx) => arr[idx % arr.length];
+const randomTotal = (base, variance = 0.2) => {
+  const delta = base * variance;
+  return Number((base + (Math.random() * 2 - 1) * delta).toFixed(2));
+};
+
+const formatDate = (date) => date.toISOString().split("T")[0];
+
+const createPastOrder = (seed) => {
+  const now = new Date();
+  const daysBack = Math.floor(seed * 3.7) + 1;
+  const orderDate = new Date(now);
+  orderDate.setDate(now.getDate() - daysBack);
+
+  return {
+    id: 200 + seed,
+    customer: randomFrom(CUSTOMER_NAMES, seed),
+    email: `${randomFrom(CUSTOMER_NAMES, seed)
+      .toLowerCase()
+      .replace(/[^a-z]/g, ".")}@example.com`,
+    date: formatDate(orderDate),
+    total: randomTotal(50 + (seed % 6) * 25),
+    status: randomFrom(ORDER_STATUSES, seed + 2),
+    method: randomFrom(PAYMENT_METHODS, seed + 1),
+    items: Array.from({ length: 2 }, (_, idx) => ({
+      name: `${randomFrom(ORDER_ITEMS, seed + idx * 3)} ×${2 + (idx % 3)}`,
+      price: randomTotal(15 + idx * 7),
+      quantity: idx + 1,
+    })),
+    shippingAddress: `${seed % 999} Harbor Ave, Suite ${seed + 11}`,
+  };
+};
+
+const initialOrders = Array.from({ length: 30 }, (_, idx) => createPastOrder(idx));
 
 const users = [...initialUsers];
 let orders = [...initialOrders];

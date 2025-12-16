@@ -23,6 +23,14 @@ import { useState, useEffect, useRef } from "react";
 
 
 
+const ROLES = {
+  ADMIN: "admin",
+  OWNER: "owner",
+  MODERATOR: "moderator",
+};
+const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.OWNER, ROLES.MODERATOR];
+const ADMIN_OWNER_ROLES = [ROLES.ADMIN, ROLES.OWNER];
+
 function App() {
   const menuRef = useRef(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -30,7 +38,7 @@ function App() {
   const navigate = useNavigate();
 
   const { colorMode = "dark", language = "en", theme } = useSettings();
-  const { isAuthenticated, logout, currentUser } = useAuth();
+  const { isAuthenticated, logout, currentUser, hasRole } = useAuth();
 
   const dict = translations[language] || translations.en;
   const displayName = currentUser?.name || "Guest User";
@@ -101,12 +109,40 @@ useEffect(() => {
     }
   };
 
-const PrivateRoute = ({ children }) => {
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  }
-  return children;
-};
+  const AccessDenied = () => (
+    <div className="access-denied">
+      <div>
+        <p className="access-denied-title">
+          {t("accessDeniedTitle", "Access denied")}
+        </p>
+        <p className="access-denied-message">
+          {t(
+            "accessDeniedMessage",
+            "You do not have the required permissions for this area."
+          )}
+        </p>
+      </div>
+      <button
+        type="button"
+        className="access-denied-button"
+        onClick={() => navigate("/")}
+      >
+        {t("accessDeniedButton", "Return to dashboard")}
+      </button>
+    </div>
+  );
+
+  const PrivateRoute = ({ children, allowedRoles = [] }) => {
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    }
+
+    if (allowedRoles.length && !hasRole(allowedRoles)) {
+      return <AccessDenied />;
+    }
+
+    return children;
+  };
 
 
   const isLoginPage = location.pathname === "/login";
@@ -246,7 +282,7 @@ const PrivateRoute = ({ children }) => {
             <Route
               path="/"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={FULL_ACCESS_ROLES}>
                   <DashboardPage language={language} />
                 </PrivateRoute>
               }
@@ -254,7 +290,7 @@ const PrivateRoute = ({ children }) => {
             <Route
               path="/users"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={ADMIN_OWNER_ROLES}>
                   <UsersPage language={language} />
                 </PrivateRoute>
               }
@@ -262,7 +298,7 @@ const PrivateRoute = ({ children }) => {
             <Route
               path="/products"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={ADMIN_OWNER_ROLES}>
                   <ProductsPage language={language} />
                 </PrivateRoute>
               }
@@ -270,7 +306,7 @@ const PrivateRoute = ({ children }) => {
             <Route
               path="/orders"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={FULL_ACCESS_ROLES}>
                   <OrdersPage language={language} />
                 </PrivateRoute>
               }
@@ -278,7 +314,7 @@ const PrivateRoute = ({ children }) => {
             <Route
               path="/settings"
               element={
-                <PrivateRoute>
+                <PrivateRoute allowedRoles={FULL_ACCESS_ROLES}>
                   <SettingsPage language={language} />
                 </PrivateRoute>
               }

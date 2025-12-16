@@ -63,6 +63,22 @@ const translations = {
     orderStatusDistributionEmpty: "No orders to display.",
     ordersLabel: "orders",
 
+    accessDeniedTitle: "Access denied",
+    accessDeniedMessage:
+      "You do not have the required permissions to view this page.",
+    accessDeniedButton: "Return to dashboard",
+
+    apiBannerLabel: "API notification",
+
+    rolePanelTitle: "Your role & capabilities",
+    rolePanelSubtitle: "Permissions currently granted to your account.",
+    rolePanelEmpty: "No extra permissions defined.",
+    capabilityManageUsers: "Manage users",
+    capabilityManageProducts: "Manage products",
+    capabilityManageOrders: "Manage orders",
+    capabilityAccessSettings: "Access settings",
+    capabilityFullAccess: "Full system access",
+
     orderStatusPending: "Pending",
     orderStatusShipped: "Shipped",
     orderStatusCancelled: "Cancelled",
@@ -85,6 +101,7 @@ const translations = {
     thId: "ID",
     thCustomer: "Customer",
     thTotal: "Total",
+    thShipping: "Shipping",
 
     roleAdmin: "Admin",
     roleModerator: "Moderator",
@@ -246,6 +263,21 @@ const translations = {
     orderStatusDistributionEmpty: "Gösterilecek sipariş yok.",
     ordersLabel: "sipariş",
 
+    rolePanelTitle: "Rolünüz ve yetkileriniz",
+    rolePanelSubtitle: "Hesabınıza tanımlanmış geçerli izinler.",
+    rolePanelEmpty: "Ekstra izin tanımlı değil.",
+    capabilityManageUsers: "Kullanıcıları yönet",
+    capabilityManageProducts: "Ürünleri yönet",
+    capabilityManageOrders: "Siparişleri yönet",
+    capabilityAccessSettings: "Ayarlar sayfasına erişim",
+    capabilityFullAccess: "Tam sistem erişimi",
+
+    accessDeniedTitle: "Erişim engellendi",
+    accessDeniedMessage: "Bu alanı görüntülemek için yeterli yetkin yok.",
+    accessDeniedButton: "Panele geri dön",
+
+    apiBannerLabel: "API bildirimi",
+
     orderStatusPending: "Beklemede",
     orderStatusShipped: "Gönderildi",
     orderStatusCancelled: "İptal edildi",
@@ -266,6 +298,7 @@ const translations = {
     thId: "ID",
     thCustomer: "Müşteri",
     thTotal: "Tutar",
+    thShipping: "Teslimat",
 
     roleAdmin: "Admin",
     roleModerator: "Moderatör",

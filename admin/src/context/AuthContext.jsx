@@ -1,5 +1,12 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import { apiFetch } from "../lib/api";
 
 const STORAGE_KEYS = {
@@ -93,12 +100,21 @@ export function AuthProvider({ children }) {
         data?.payload?.user ??
         data?.result?.user ??
         null;
+      const capabilities =
+        data?.capabilities ??
+        data?.permissions ??
+        resolvedUser?.capabilities ??
+        null;
 
       writeSessionValue(STORAGE_KEYS.token, token);
 
       if (!resolvedUser) {
         clearAuthPersistence();
         throw new Error("Login succeeded but user payload is missing.");
+      }
+
+      if (capabilities) {
+        resolvedUser.capabilities = capabilities;
       }
 
       const serializedUser = JSON.stringify(resolvedUser);
@@ -123,9 +139,24 @@ export function AuthProvider({ children }) {
     clearAuthPersistence();
   };
 
+  const hasRole = useCallback(
+    (allowedRoles) => {
+      if (!allowedRoles) return true;
+      const required = Array.isArray(allowedRoles)
+        ? allowedRoles
+        : [allowedRoles];
+      const currentRole = (currentUser?.role || "").toLowerCase();
+      if (!currentRole) return false;
+      return required.some(
+        (role) => String(role).toLowerCase() === currentRole
+      );
+    },
+    [currentUser]
+  );
+
   const value = useMemo(
-    () => ({ isAuthenticated, currentUser, login, logout }),
-    [isAuthenticated, currentUser]
+    () => ({ isAuthenticated, currentUser, login, logout, hasRole }),
+    [isAuthenticated, currentUser, hasRole]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
