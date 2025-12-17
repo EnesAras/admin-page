@@ -133,6 +133,19 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateCurrentUser = (partial) => {
+    setCurrentUser((prev) => {
+      if (!prev) return null;
+      const next = { ...prev, ...partial };
+      if (getSessionStorage()) {
+        writeSessionValue(STORAGE_KEYS.user, JSON.stringify(next));
+      }
+      const local = getLocalStorage();
+      local?.setItem(STORAGE_KEYS.user, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const logout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
@@ -155,7 +168,14 @@ export function AuthProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ isAuthenticated, currentUser, login, logout, hasRole }),
+    () => ({
+      isAuthenticated,
+      currentUser,
+      login,
+      logout,
+      hasRole,
+      updateCurrentUser,
+    }),
     [isAuthenticated, currentUser, hasRole]
   );
 

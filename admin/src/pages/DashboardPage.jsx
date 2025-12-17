@@ -165,7 +165,7 @@ const buildDashboardState = (ordersList, usersList) => {
 function DashboardPage() {
   const { t, language, colorMode } = useSettings();
   const { currentUser } = useAuth();
-  const { lastNotification } = useToast();
+  const { lastNotification, notificationHistory, addToast } = useToast();
   const locale = language || "en";
   const isLightTheme = colorMode === "light";
   const axisColor = isLightTheme ? "#6b7280" : "#e5e7eb";
@@ -211,6 +211,22 @@ function DashboardPage() {
       .filter((key) => caps[key])
       .map((key) => capabilityLabelMap[key] || key);
   }, [currentUser, capabilityLabelMap]);
+
+  const formatTimestamp = (value) => {
+    if (!value) return "-";
+    return new Intl.DateTimeFormat(language || "en", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  };
+
+  const getActivityLabel = (count) => {
+    const template = t(
+      "apiHealthEvents",
+      "{count} recent notifications"
+    );
+    return template.replace("{count}", String(count));
+  };
 
   const [dashboardData, setDashboardData] = useState(fallbackDashboard);
   const [dashboardLoading, setDashboardLoading] = useState(true);
@@ -363,10 +379,33 @@ function DashboardPage() {
             lastNotification.type || "info"
           }`}
         >
-          <p className="banner-label">
-            {t("apiBannerLabel", "API notification")}
-          </p>
-          <p className="banner-message">{lastNotification.message}</p>
+          <div>
+            <p className="banner-label">
+              {t("apiBannerLabel", "API notification")}
+            </p>
+            <p className="banner-message">{lastNotification.message}</p>
+          </div>
+          {notificationHistory?.length > 0 && (
+            <div className="banner-events">
+              {notificationHistory.slice(0, 3).map((event) => (
+                <div key={`${event.timestamp}-${event.message}`} className="banner-event">
+                  <span
+                    className={`banner-event-type banner-event-${event.type || "info"}`}
+                  >
+                    {t(
+                      `apiEventType${(event.type || "info")
+                        .toString()
+                        .toUpperCase()}`,
+                      event.type || "info"
+                    )}
+                  </span>
+                  <span className="banner-event-time">
+                    {formatTimestamp(event.timestamp)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -404,6 +443,90 @@ function DashboardPage() {
           <p className="card-label">{t("cardAdmins")}</p>
           <p className="card-number text-sky">{adminCount}</p>
           <p className="card-foot subtle">{t("cardFootAdmins")}</p>
+        </div>
+      </div>
+
+      <div className="dashboard-card dashboard-api-card">
+        <p className="card-label">{t("apiHealthTitle", "API health")}</p>
+        <p className="card-number">
+          {notificationHistory.length > 0
+            ? getActivityLabel(notificationHistory.length)
+            : t("apiHealthIdle", "No API notifications yet.")}
+        </p>
+        <ul className="api-event-list">
+          {notificationHistory.length === 0 ? (
+            <li className="api-event-empty">
+              {t("apiHealthIdle", "No API notifications yet.")}
+            </li>
+          ) : (
+            notificationHistory.map((event) => (
+              <li key={`${event.timestamp}-${event.message}`}>
+                <span
+                  className={`api-event-type api-event-${event.type || "info"}`}
+                >
+                  {t(
+                    `apiEventType${(
+                      event.type || "info"
+                    ).toString().toUpperCase()}`,
+                    event.type || "info"
+                  )}
+                </span>
+                <div className="api-event-details">
+                  <p className="api-event-message">{event.message}</p>
+                  <span className="api-event-time">
+                    {formatTimestamp(event.timestamp)}
+                  </span>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+
+      <div className="dashboard-card dashboard-toast-log">
+        <div className="toast-log-header">
+          <p>{t("apiToastLogTitle", "Recent API toasts")}</p>
+          <span className="toast-log-subtitle">
+            {t("apiToastLogSubtitle", "Tap an entry to replay the message.")}
+          </span>
+        </div>
+        <div className="toast-log-list">
+          {notificationHistory.length === 0 && (
+            <p className="toast-log-empty">
+              {t("apiToastLogEmpty", "No toast history yet.")}
+            </p>
+          )}
+          {notificationHistory.map((event) => (
+            <button
+              key={`${event.timestamp}-${event.message}`}
+              type="button"
+              className="toast-log-item"
+              onClick={() =>
+                addToast({
+                  message: event.message,
+                  type: event.type,
+                  duration: 2200,
+                })
+              }
+            >
+              <span
+                className={`toast-log-type toast-log-${
+                  event.type || "info"
+                }`}
+              >
+                {t(
+                  `apiEventType${(event.type || "info")
+                    .toString()
+                    .toUpperCase()}`,
+                  event.type || "info"
+                )}
+              </span>
+              <div>
+                <p>{event.message}</p>
+                <small>{formatTimestamp(event.timestamp)}</small>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 

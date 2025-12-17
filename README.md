@@ -81,3 +81,5 @@ Frontend should call relative URLs like /api/auth/login (proxy handles localhost
 - Terminal 1: npm start
 - Terminal 2: cd server && npm start
 
+### API Simulation
+- Set `REACT_APP_ENABLE_API_SIMULATION=true` in your `.env.development.local` to activate simulated delays/failures for `/api/auth/login` and `/api/dashboard`. Toasts, dashboard banner, and API health card will make the simulated events visible while you work.

@@ -12,6 +12,7 @@ const ToastContext = createContext(null);
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const [lastNotification, setLastNotification] = useState(null);
+  const [notificationHistory, setNotificationHistory] = useState([]);
 
   const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
@@ -36,10 +37,12 @@ export function ToastProvider({ children }) {
     const handler = (event) => {
       const detail = event?.detail || {};
       addToast(detail);
-      setLastNotification({
+      const enriched = {
         ...detail,
         timestamp: Date.now(),
-      });
+      };
+      setLastNotification(enriched);
+      setNotificationHistory((prev) => [enriched, ...prev].slice(0, 4));
     };
 
     window.addEventListener("api-toast", handler);
@@ -47,8 +50,8 @@ export function ToastProvider({ children }) {
   }, [addToast]);
 
   const value = useMemo(
-    () => ({ addToast, lastNotification }),
-    [addToast, lastNotification]
+    () => ({ addToast, lastNotification, notificationHistory }),
+    [addToast, lastNotification, notificationHistory]
   );
 
   return (

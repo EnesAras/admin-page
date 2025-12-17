@@ -1,5 +1,13 @@
 // src/context/SettingsContext.jsx
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useAuth } from "./AuthContext";
 import translations from "../i18n/translations";
 
 const defaultSettings = {
@@ -13,6 +21,7 @@ const defaultSettings = {
 const SettingsContext = createContext();
 
 export function SettingsProvider({ children }) {
+  const { currentUser } = useAuth();
   const [settings, setSettings] = useState(() => {
     const stored = localStorage.getItem("admin_settings");
     if (stored) {
@@ -61,6 +70,18 @@ export function SettingsProvider({ children }) {
       mql.removeListener(handleChange);
     };
   }, []);
+
+  const refreshSystemPreference = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (typeof window.matchMedia !== "function") return;
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    setPrefersDark(mql.matches);
+  }, []);
+
+  useEffect(() => {
+    if (settings.theme !== "system") return;
+    refreshSystemPreference();
+  }, [refreshSystemPreference, settings.theme]);
 
   const effectiveTheme = useMemo(() => {
     const targetTheme = settings.theme || "dark";
@@ -132,6 +153,28 @@ export function SettingsProvider({ children }) {
     );
   };
 
+  // Sync display name with authenticated user unless a custom name is already set.
+  useEffect(() => {
+    if (!currentUser?.name) return;
+
+    setSettings((prev) => {
+      const currentDisplayName = prev.displayName;
+      const hasCustomName =
+        currentDisplayName &&
+        currentDisplayName !== defaultSettings.displayName &&
+        currentDisplayName !== currentUser.name;
+
+      if (hasCustomName || currentDisplayName === currentUser.name) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        displayName: currentUser.name,
+      };
+    });
+  }, [currentUser?.name]);
+
   const value = {
     settings,
     updateSettings,
@@ -143,6 +186,8 @@ export function SettingsProvider({ children }) {
     toggleTheme,
     setLanguage,
     t,
+    osPrefersDark: prefersDark,
+    refreshSystemPreference,
   };
 
   return (

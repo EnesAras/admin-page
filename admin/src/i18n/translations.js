@@ -70,6 +70,17 @@ const translations = {
 
     apiBannerLabel: "API notification",
 
+    apiHealthTitle: "API health",
+    apiHealthEvents: "{count} recent notifications",
+    apiHealthIdle: "No API notifications yet.",
+    apiEventTypeINFO: "Info",
+    apiEventTypeWARNING: "Warning",
+    apiEventTypeERROR: "Error",
+
+    apiToastLogTitle: "Recent API toasts",
+    apiToastLogSubtitle: "Tap an entry to replay the message.",
+    apiToastLogEmpty: "No toast history yet.",
+
     rolePanelTitle: "Your role & capabilities",
     rolePanelSubtitle: "Permissions currently granted to your account.",
     rolePanelEmpty: "No extra permissions defined.",
@@ -82,8 +93,8 @@ const translations = {
     orderStatusPending: "Pending",
     orderStatusShipped: "Shipped",
     orderStatusCancelled: "Cancelled",
-    orderStatusProcessing: "Processing",
     orderStatusDelivered: "Delivered",
+    orderStatusProcessing: "Processing",
 
     recentTitle: "Recent users",
     recentSubtitle: "latest users",
@@ -104,6 +115,8 @@ const translations = {
     thShipping: "Shipping",
 
     roleAdmin: "Admin",
+    roleOwner: "Owner",
+    roleManager: "Manager",
     roleModerator: "Moderator",
     roleUser: "User",
     statusActive: "Active",
@@ -122,6 +135,9 @@ const translations = {
     "users.filter.all": "All",
     "users.filter.active": "Active",
     "users.filter.inactive": "Inactive",
+    "users.stats.total": "Total",
+    "users.stats.active": "Active",
+    "users.stats.inactive": "Inactive",
     // PRODUCTS
     "products.title": "Products",
     "products.subtitle": "Manage your anime, manga and gaming items.",
@@ -278,9 +294,22 @@ const translations = {
 
     apiBannerLabel: "API bildirimi",
 
+    apiHealthTitle: "API durumu",
+    apiHealthEvents: "{count} yeni bildirim",
+    apiHealthIdle: "Henüz API bildirimi yok.",
+    apiEventTypeINFO: "Bilgi",
+    apiEventTypeWARNING: "Uyarı",
+    apiEventTypeERROR: "Hata",
+
+    apiToastLogTitle: "Son API toast’ları",
+    apiToastLogSubtitle: "Bir kayda dokun, mesajı yeniden göster.",
+    apiToastLogEmpty: "Henüz toast geçmişi yok.",
+
     orderStatusPending: "Beklemede",
     orderStatusShipped: "Gönderildi",
+    orderStatusProcessing: "İşlemde",
     orderStatusCancelled: "İptal edildi",
+    orderStatusDelivered: "Teslim edildi",
 
     recentTitle: "Son kullanıcılar",
     recentSubtitle: "son kullanıcı",
@@ -301,6 +330,8 @@ const translations = {
     thShipping: "Teslimat",
 
     roleAdmin: "Admin",
+    roleOwner: "Sahip",
+    roleManager: "Yönetici",
     roleModerator: "Moderatör",
     roleUser: "Kullanıcı",
     statusActive: "Aktif",
@@ -318,6 +349,9 @@ const translations = {
     "users.filter.all": "Hepsi",
     "users.filter.active": "Aktif",
     "users.filter.inactive": "Pasif",
+    "users.stats.total": "Toplam",
+    "users.stats.active": "Aktif",
+    "users.stats.inactive": "Pasif",
         // PRODUCTS
     "products.title": "Ürünler",
     "products.subtitle": "Anime, manga ve gaming ürünlerini yönet.",
@@ -460,9 +494,32 @@ const translations = {
     orderStatusDistributionEmpty: "Keine Bestellungen.",
     ordersLabel: "Bestellungen",
 
+    apiBannerLabel: "API-Benachrichtigung",
+    apiHealthTitle: "API-Zustand",
+    apiHealthEvents: "{count} aktuelle Benachrichtigungen",
+    apiHealthIdle: "Noch keine API-Benachrichtigungen.",
+    apiEventTypeINFO: "Info",
+    apiEventTypeWARNING: "Warnung",
+    apiEventTypeERROR: "Fehler",
+
+    apiToastLogTitle: "Aktuelle API-Toasts",
+    apiToastLogSubtitle: "Tippe einen Eintrag, um die Nachricht erneut anzuzeigen.",
+    apiToastLogEmpty: "Noch keine Toast-Historie.",
+
+    rolePanelTitle: "Deine Rolle & Berechtigungen",
+    rolePanelSubtitle: "Aktuell deinem Konto zugewiesene Berechtigungen.",
+    rolePanelEmpty: "Keine zusätzlichen Berechtigungen definiert.",
+    capabilityManageUsers: "Benutzer verwalten",
+    capabilityManageProducts: "Produkte verwalten",
+    capabilityManageOrders: "Bestellungen verwalten",
+    capabilityAccessSettings: "Einstellungen öffnen",
+    capabilityFullAccess: "Voller Systemzugriff",
+
     orderStatusPending: "Ausstehend",
+    orderStatusProcessing: "In Bearbeitung",
     orderStatusShipped: "Versendet",
     orderStatusCancelled: "Storniert",
+    orderStatusDelivered: "Zugestellt",
 
     recentTitle: "Neueste Benutzer",
     recentSubtitle: "letzte Benutzer",
@@ -481,6 +538,8 @@ const translations = {
     thTotal: "Summe",
 
     roleAdmin: "Admin",
+    roleOwner: "Eigentümer",
+    roleManager: "Manager",
     roleModerator: "Moderator",
     roleUser: "Benutzer",
     statusActive: "Aktiv",
@@ -499,6 +558,9 @@ const translations = {
     "users.filter.all": "Alle",
     "users.filter.active": "Aktiv",
     "users.filter.inactive": "Inaktiv",
+    "users.stats.total": "Gesamt",
+    "users.stats.active": "Aktiv",
+    "users.stats.inactive": "Inaktiv",
     // PRODUCTS (DE)
     "products.title": "Produkte",
     "products.subtitle": "Verwalte deine Anime-, Manga- und Gaming-Artikel.",
@@ -647,9 +709,32 @@ const translations = {
     orderStatusDistributionEmpty: "No hay pedidos.",
     ordersLabel: "pedidos",
 
+    apiBannerLabel: "Notificación de API",
+    apiHealthTitle: "Salud de la API",
+    apiHealthEvents: "{count} notificaciones recientes",
+    apiHealthIdle: "Aún no hay notificaciones de API.",
+    apiEventTypeINFO: "Info",
+    apiEventTypeWARNING: "Advertencia",
+    apiEventTypeERROR: "Error",
+
+    apiToastLogTitle: "Toasts recientes de API",
+    apiToastLogSubtitle: "Toca una entrada para reenviar el mensaje.",
+    apiToastLogEmpty: "No hay historial de toasts.",
+
+    rolePanelTitle: "Tu rol y capacidades",
+    rolePanelSubtitle: "Permisos actualmente asignados a tu cuenta.",
+    rolePanelEmpty: "No se han definido permisos adicionales.",
+    capabilityManageUsers: "Gestionar usuarios",
+    capabilityManageProducts: "Gestionar productos",
+    capabilityManageOrders: "Gestionar pedidos",
+    capabilityAccessSettings: "Acceder a ajustes",
+    capabilityFullAccess: "Acceso completo al sistema",
+
     orderStatusPending: "Pendiente",
+    orderStatusProcessing: "En proceso",
     orderStatusShipped: "Enviado",
     orderStatusCancelled: "Cancelado",
+    orderStatusDelivered: "Entregado",
 
     recentTitle: "Usuarios recientes",
     recentSubtitle: "últimos usuarios",
@@ -669,6 +754,8 @@ const translations = {
     thTotal: "Total",
 
     roleAdmin: "Admin",
+    roleOwner: "Propietario",
+    roleManager: "Gerente",
     roleModerator: "Moderador",
     roleUser: "Usuario",
     statusActive: "Activo",
@@ -687,6 +774,9 @@ const translations = {
     "users.filter.all": "Todos",
     "users.filter.active": "Activos",
     "users.filter.inactive": "Inactivos",
+    "users.stats.total": "Total",
+    "users.stats.active": "Activos",
+    "users.stats.inactive": "Inactivos",
     // PRODUCTS
     "products.title": "Productos",
     "products.subtitle": "Gestiona tus productos de anime, manga y gaming.",
@@ -837,9 +927,34 @@ const translations = {
       "Aucune commande à afficher.",
     ordersLabel: "commandes",
 
+    apiBannerLabel: "Notification API",
+    apiHealthTitle: "Santé de l'API",
+    apiHealthEvents: "{count} notifications récentes",
+    apiHealthIdle: "Pas encore de notifications API.",
+    apiEventTypeINFO: "Info",
+    apiEventTypeWARNING: "Avertissement",
+    apiEventTypeERROR: "Erreur",
+
+    apiToastLogTitle: "Toasts récents de l'API",
+    apiToastLogSubtitle:
+      "Touchez une entrée pour rejouer le message.",
+    apiToastLogEmpty: "Pas encore d'historique de toasts.",
+
+    rolePanelTitle: "Votre rôle et capacités",
+    rolePanelSubtitle:
+      "Permissions actuellement accordées à votre compte.",
+    rolePanelEmpty: "Aucune permission supplémentaire définie.",
+    capabilityManageUsers: "Gérer les utilisateurs",
+    capabilityManageProducts: "Gérer les produits",
+    capabilityManageOrders: "Gérer les commandes",
+    capabilityAccessSettings: "Accéder aux paramètres",
+    capabilityFullAccess: "Accès complet au système",
+
     orderStatusPending: "En attente",
+    orderStatusProcessing: "En cours",
     orderStatusShipped: "Expédiée",
     orderStatusCancelled: "Annulée",
+    orderStatusDelivered: "Livrée",
 
     recentTitle: "Utilisateurs récents",
     recentSubtitle: "derniers utilisateurs",
@@ -861,6 +976,8 @@ const translations = {
     thTotal: "Total",
 
     roleAdmin: "Admin",
+    roleOwner: "Propriétaire",
+    roleManager: "Manager",
     roleModerator: "Modérateur",
     roleUser: "Utilisateur",
     statusActive: "Actif",
@@ -880,6 +997,9 @@ const translations = {
     "users.filter.all": "Tous",
     "users.filter.active": "Actifs",
     "users.filter.inactive": "Inactifs",
+    "users.stats.total": "Total",
+    "users.stats.active": "Actifs",
+    "users.stats.inactive": "Inactifs",
     // PRODUCTS
     "products.title": "Produits",
     "products.subtitle": "Gérez vos articles d’anime, de manga et de gaming.",
@@ -1032,9 +1152,34 @@ const translations = {
       "Nessun ordine da mostrare.",
     ordersLabel: "ordini",
 
+    apiBannerLabel: "Notifica API",
+    apiHealthTitle: "Salute dell'API",
+    apiHealthEvents: "{count} notifiche recenti",
+    apiHealthIdle: "Ancora nessuna notifica API.",
+    apiEventTypeINFO: "Info",
+    apiEventTypeWARNING: "Avviso",
+    apiEventTypeERROR: "Errore",
+
+    apiToastLogTitle: "Ultimi toast API",
+    apiToastLogSubtitle:
+      "Tocca una voce per riprodurre il messaggio.",
+    apiToastLogEmpty: "Nessuna cronologia dei toast.",
+
+    rolePanelTitle: "Il tuo ruolo e le capacità",
+    rolePanelSubtitle:
+      "Permessi attualmente assegnati al tuo account.",
+    rolePanelEmpty: "Nessun permesso extra definito.",
+    capabilityManageUsers: "Gestire gli utenti",
+    capabilityManageProducts: "Gestire i prodotti",
+    capabilityManageOrders: "Gestire gli ordini",
+    capabilityAccessSettings: "Accedere alle impostazioni",
+    capabilityFullAccess: "Accesso completo al sistema",
+
     orderStatusPending: "In attesa",
+    orderStatusProcessing: "In lavorazione",
     orderStatusShipped: "Spedito",
     orderStatusCancelled: "Annullato",
+    orderStatusDelivered: "Consegnato",
 
     recentTitle: "Utenti recenti",
     recentSubtitle: "ultimi utenti",
@@ -1055,6 +1200,8 @@ const translations = {
     thTotal: "Totale",
 
     roleAdmin: "Admin",
+    roleOwner: "Proprietario",
+    roleManager: "Manager",
     roleModerator: "Moderatore",
     roleUser: "Utente",
     statusActive: "Attivo",
@@ -1074,6 +1221,9 @@ const translations = {
     "users.filter.all": "Tutti",
     "users.filter.active": "Attivi",
     "users.filter.inactive": "Inattivi",
+    "users.stats.total": "Totale",
+    "users.stats.active": "Attivi",
+    "users.stats.inactive": "Inattivi",
     // PRODUCTS
     "products.title": "Prodotti",
     "products.subtitle": "Gestisci i tuoi articoli anime, manga e gaming.",
@@ -1225,9 +1375,34 @@ const translations = {
       "Нет заказов для отображения.",
     ordersLabel: "заказов",
 
+    apiBannerLabel: "Уведомление API",
+    apiHealthTitle: "Состояние API",
+    apiHealthEvents: "{count} последних уведомлений",
+    apiHealthIdle: "Пока нет уведомлений API.",
+    apiEventTypeINFO: "Инфо",
+    apiEventTypeWARNING: "Предупреждение",
+    apiEventTypeERROR: "Ошибка",
+
+    apiToastLogTitle: "Недавние API-toast'ы",
+    apiToastLogSubtitle:
+      "Нажми на запись, чтобы повторно показать сообщение.",
+    apiToastLogEmpty: "История toast'ов пуста.",
+
+    rolePanelTitle: "Ваша роль и возможности",
+    rolePanelSubtitle:
+      "Права, назначенные вашей учётной записи.",
+    rolePanelEmpty: "Дополнительные разрешения не заданы.",
+    capabilityManageUsers: "Управлять пользователями",
+    capabilityManageProducts: "Управлять товарами",
+    capabilityManageOrders: "Управлять заказами",
+    capabilityAccessSettings: "Доступ к настройкам",
+    capabilityFullAccess: "Полный доступ к системе",
+
     orderStatusPending: "В ожидании",
+    orderStatusProcessing: "В обработке",
     orderStatusShipped: "Отправлен",
     orderStatusCancelled: "Отменён",
+    orderStatusDelivered: "Доставлен",
 
     recentTitle: "Недавние пользователи",
     recentSubtitle: "последние пользователи",
@@ -1249,6 +1424,8 @@ const translations = {
     thTotal: "Сумма",
 
     roleAdmin: "Админ",
+    roleOwner: "Владелец",
+    roleManager: "Менеджер",
     roleModerator: "Модератор",
     roleUser: "Пользователь",
     statusActive: "Активен",
@@ -1268,6 +1445,9 @@ const translations = {
     "users.filter.all": "Все",
     "users.filter.active": "Активные",
     "users.filter.inactive": "Неактивные",
+    "users.stats.total": "Всего",
+    "users.stats.active": "Активные",
+    "users.stats.inactive": "Неактивные",
     // PRODUCTS
     "products.title": "Товары",
     "products.subtitle": "Управляйте товарами по аниме, манге и играм.",

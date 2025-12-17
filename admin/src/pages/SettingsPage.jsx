@@ -17,6 +17,10 @@ const translations = {
     prefsTitle: "Preferences",
     prefsDesc: "Choose your visual theme and interface language.",
     themeLabel: "Theme",
+    themeSystemHint: "System follows your OS color preference.",
+    themeSystemStatusDark: "Your OS is currently using dark mode.",
+    themeSystemStatusLight: "Your OS is currently using light mode.",
+    themeSystemAction: "Sync with OS",
     languageLabel: "Language",
     themeOptionDark: "Dark",
     themeOptionLight: "Light",
@@ -45,6 +49,10 @@ const translations = {
     prefsTitle: "Tercihler",
     prefsDesc: "Tema ve arayüz dilini seç.",
     themeLabel: "Tema",
+    themeSystemHint: "Sistem, işletim sisteminin renk tercihlerini takip eder.",
+    themeSystemStatusDark: "İşletim sistemin şu anda koyu modda.",
+    themeSystemStatusLight: "İşletim sistemin şu anda açık modda.",
+    themeSystemAction: "OS ile eşitle",
     languageLabel: "Dil",
     themeOptionDark: "Karanlık",
     themeOptionLight: "Açık",
@@ -73,6 +81,10 @@ const translations = {
     prefsTitle: "Präferenzen",
     prefsDesc: "Wähle Thema und Sprache der Oberfläche.",
     themeLabel: "Theme",
+    themeSystemHint: "System passt sich der OS-Farbpalette an.",
+    themeSystemStatusDark: "Dein OS verwendet derzeit den Dunkelmodus.",
+    themeSystemStatusLight: "Dein OS verwendet derzeit den Hellmodus.",
+    themeSystemAction: "Mit OS synchronisieren",
     languageLabel: "Sprache",
     themeOptionDark: "Dunkel",
     themeOptionLight: "Hell",
@@ -101,6 +113,10 @@ const translations = {
     prefsTitle: "Preferencias",
     prefsDesc: "Elige tema visual e idioma de la interfaz.",
     themeLabel: "Tema",
+    themeSystemHint: "Sistema sigue la preferencia de color de tu SO.",
+    themeSystemStatusDark: "Tu SO está usando el modo oscuro actualmente.",
+    themeSystemStatusLight: "Tu SO está usando el modo claro actualmente.",
+    themeSystemAction: "Sincronizar con el SO",
     languageLabel: "Idioma",
     themeOptionDark: "Oscuro",
     themeOptionLight: "Claro",
@@ -129,6 +145,10 @@ const translations = {
     prefsTitle: "Préférences",
     prefsDesc: "Choisis le thème visuel et la langue de l’interface.",
     themeLabel: "Thème",
+    themeSystemHint: "Système suit la préférence de couleur de ton OS.",
+    themeSystemStatusDark: "Ton OS utilise actuellement le mode sombre.",
+    themeSystemStatusLight: "Ton OS utilise actuellement le mode clair.",
+    themeSystemAction: "Synchroniser avec l’OS",
     languageLabel: "Langue",
     themeOptionDark: "Sombre",
     themeOptionLight: "Clair",
@@ -158,6 +178,10 @@ const translations = {
     prefsTitle: "Preferenze",
     prefsDesc: "Scegli tema e lingua dell’interfaccia.",
     themeLabel: "Tema",
+    themeSystemHint: "Sistema segue le preferenze di colore del tuo OS.",
+    themeSystemStatusDark: "Il tuo sistema usa attualmente la modalità scura.",
+    themeSystemStatusLight: "Il tuo sistema usa attualmente la modalità chiara.",
+    themeSystemAction: "Sincronizza con il sistema",
     languageLabel: "Lingua",
     themeOptionDark: "Scuro",
     themeOptionLight: "Chiaro",
@@ -186,6 +210,10 @@ const translations = {
     prefsTitle: "Предпочтения",
     prefsDesc: "Выбери тему и язык интерфейса.",
     themeLabel: "Тема",
+    themeSystemHint: "Система следует настройкам цвета ОС.",
+    themeSystemStatusDark: "Ваша ОС сейчас использует тёмный режим.",
+    themeSystemStatusLight: "Ваша ОС сейчас использует светлый режим.",
+    themeSystemAction: "Синхронизировать с ОС",
     languageLabel: "Язык",
     themeOptionDark: "Тёмная",
     themeOptionLight: "Светлая",
@@ -205,10 +233,13 @@ const translations = {
 };
 
 function SettingsPage() {
-  const { settings, updateSetting } = useSettings();
-  const [displayName, setDisplayName] = useState(settings.displayName || "");
+  const { settings, updateSetting, refreshSystemPreference, osPrefersDark } =
+    useSettings();
+  const { currentUser, updateCurrentUser } = useAuth();
+  const [displayName, setDisplayName] = useState(
+    currentUser?.name || settings.displayName || ""
+  );
   const [showSaved, setShowSaved] = useState(false);
-  const { currentUser } = useAuth();
   const isModerator =
     String(currentUser?.role || "").trim().toLowerCase() === "moderator";
 
@@ -225,9 +256,17 @@ function SettingsPage() {
     triggerSaved();
   };
 
+  const handleSystemSync = () => {
+    updateSetting("theme", "system");
+    refreshSystemPreference();
+    triggerSaved();
+  };
+
   const handleDisplayNameBlur = () => {
-    if (displayName !== settings.displayName) {
-      updateSetting("displayName", displayName.trim());
+    const trimmed = displayName.trim();
+    if (trimmed && trimmed !== currentUser?.name) {
+      updateCurrentUser({ name: trimmed });
+      updateSetting("displayName", trimmed);
       triggerSaved();
     }
   };
@@ -243,8 +282,10 @@ function SettingsPage() {
   };
 
   useEffect(() => {
-    setDisplayName(settings.displayName || "");
-  }, [settings.displayName]);
+    setDisplayName(
+      currentUser?.name || settings.displayName || ""
+    );
+  }, [currentUser?.name, settings.displayName]);
 
   return (
     <div className="settings-container">
@@ -347,6 +388,25 @@ function SettingsPage() {
                   }}
                 >
                   {t.themeOptionSystem}
+                </button>
+              </div>
+              <div
+                className={`settings-theme-note${
+                  settings.theme === "system" ? " active" : ""
+                }`}
+              >
+                <span>{t.themeSystemHint}</span>
+                <span className="settings-theme-status">
+                  {osPrefersDark
+                    ? t.themeSystemStatusDark
+                    : t.themeSystemStatusLight}
+                </span>
+                <button
+                  type="button"
+                  className="settings-theme-sync"
+                  onClick={handleSystemSync}
+                >
+                  {t.themeSystemAction}
                 </button>
               </div>
             </div>
