@@ -98,3 +98,45 @@ Frontend should call relative URLs like /api/auth/login (proxy handles localhost
 
 - Production builds use `REACT_APP_API_URL` as the base for any `/api/*` calls, so configure that variable (e.g., `https://myapp-backend.onrender.com`) in Vercel/Netlify instead of relying on CRA proxying.
 - In development the app still calls relative `/api/*` paths so the local React dev server can proxy to `localhost:5000`; no extra changes are needed when `REACT_APP_API_URL` is unset.
+
+## Post-Deployment Smoke Test
+
+Run the following checks against the LIVE URLs (Render/Railway + Vercel/Netlify) after deployment to guard critical production flows:
+
+1. **Backend health**
+   - Start the server with `NODE_ENV=production` and confirm the boot logs show `[server] NODE_ENV=production` plus a `[db] connected ...` line; no credentials should appear in the log.
+   - Hit `GET /api/health` (or another light endpoint) and expect `200 OK`.
+
+2. **CORS & networking**
+   - From the deployed frontend domain(s) defined in `FRONTEND_ORIGINS`, call any `/api/...` endpoint and confirm the request succeeds.
+   - Repeat the same call from a different origin (e.g., a playground on a different domain); it should be blocked by CORS.
+   - Search the production bundle for `localhost` references to ensure no dev URLs survived the build.
+
+3. **Authentication**
+   - Log in with a seeded/registered user through the deployed UI.
+   - Refresh the page; the token/session should persist and keep the user signed in.
+   - Use the logout control and confirm the state clears and redirect happens if expected.
+   - Submit invalid credentials and verify a user-friendly error (no 500).
+
+4. **Core CRUD flows**
+   - Users: list loads, updating status or role persists after refresh.
+   - Products: create (if allowed), edit, and delete operations succeed and the data remains in the Postgres dashboard.
+   - Orders: change a status from the UI and confirm the change reflects in both the Orders list and dashboard stats.
+
+5. **Dashboard integrity**
+   - Metrics/cards load without console errors.
+   - Recent orders/users display readable data (no missing translations or placeholders).
+   - Toasts or other live indicators behave without repeating loops.
+
+6. **Performance sanity**
+   - First meaningful paint should remain reasonable on realistic devices.
+   - There are no uncontrolled re-fetch loops or repeated API calls in the production bundle.
+   - Heavy UI effects (animations, gradients) do not introduce obvious jank.
+
+7. **Env & config validation**
+   - `FRONTEND_ORIGINS` equals your deployed frontend domain(s).
+   - `DATABASE_URL` points at the production Postgres instance (and honors SSL).
+   - `REACT_APP_API_URL` uses the live backend URL.
+   - `SEED_ON_BOOT` is unset or `false` so seeds only run when tables are empty.
+
+If any check fails, document the failure in this section along with the fix before flagging the deployment as production-ready.
