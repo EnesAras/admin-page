@@ -2,6 +2,19 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Live Demo
+
+- Frontend: https://your-frontend
+- Backend: https://your-backend
+
+## Demo Credentials
+
+- **Admin:** `admin@example.com` / `admin123`
+- **Moderator:** `mod@example.com` / `mod123`
+- **User:** `user@example.com` / `user123`
+
+_Need other accounts? Seed entries exist under `server/data/store.js`; add users directly via the backend API or SQL if needed._
+
 ## Available Scripts
 
 In the project directory, you can run:
@@ -83,6 +96,28 @@ Frontend should call relative URLs like /api/auth/login (proxy handles localhost
 
 ### API Simulation
 - Set `REACT_APP_ENABLE_API_SIMULATION=true` in your `.env.development.local` to activate simulated delays/failures for `/api/auth/login` and `/api/dashboard`. Toasts, dashboard banner, and API health card will make the simulated events visible while you work.
+
+## Screenshots
+
+- Login: `/docs/screenshots/login.png`
+- Dashboard: `/docs/screenshots/dashboard.png`
+- Users: `/docs/screenshots/users.png`
+- Products: `/docs/screenshots/products.png`
+- Orders: `/docs/screenshots/orders.png`
+
+## Tech Stack
+
+- **Frontend:** React (Create React App), i18n translations, theme system
+- **Backend:** Node.js + Express
+- **Database:** PostgreSQL
+- **Deployment:** Vercel (frontend), Render/Railway (backend), managed Postgres
+
+## Configuration
+
+- **Development:** CRA proxy handles `/api/*` so the React dev server can call `localhost:5000`.
+- **Production:** Set `REACT_APP_API_URL=https://your-backend` so `apiFetch` targets the live service instead of the proxy.
+- **CORS:** Provide your deployed frontend domain(s) via `FRONTEND_ORIGINS` so the backend only permits requests from them.
+- **Seeding:** Leave `SEED_ON_BOOT` unset/false in production; use `SEED_ON_BOOT=true` temporarily for staging resets.
 
 ## Backend Database
 
