@@ -14,21 +14,33 @@ dotenv.config();
 const app = express();
 const NODE_ENV = process.env.NODE_ENV || "development";
 const PORT = Number(process.env.PORT || 5000);
-const DEFAULT_FRONTEND_ORIGINS = [
+const DEFAULT_DEV_FRONTEND_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:3001",
   "http://127.0.0.1:3001",
-  "http://localhost:5000",
-  "http://127.0.0.1:5000",
 ];
 
-// keep CRA dev-server origins in sync with this list.
-const allowedOrigins = (
-  (process.env.FRONTEND_ORIGINS ?? DEFAULT_FRONTEND_ORIGINS.join(","))
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean)
+const originSource =
+  process.env.FRONTEND_ORIGINS?.trim() ||
+  (NODE_ENV === "development" ? DEFAULT_DEV_FRONTEND_ORIGINS.join(",") : "");
+
+const allowedOrigins = originSource
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+if (NODE_ENV === "production" && allowedOrigins.length === 0) {
+  console.warn(
+    "[server] FRONTEND_ORIGINS is empty in production; cross-origin requests will be blocked."
+  );
+}
+
+console.log(`[server] NODE_ENV=${NODE_ENV}`);
+console.log(
+  `[server] allowed origins: ${
+    allowedOrigins.length ? allowedOrigins.join(", ") : "none (CORS will reject non-null origins)"
+  }`
 );
 
 const corsOptions = {

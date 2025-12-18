@@ -76,7 +76,17 @@ const simulateNetwork = async (requestPath) => {
 export async function apiFetch(path, options = {}) {
   await simulateNetwork(path);
 
-  const res = await fetch(path, {
+  const targetPath = (() => {
+    const normalized = path.startsWith("/") ? path : `/${path}`;
+    const apiUrl = process.env.REACT_APP_API_URL?.trim();
+    if (apiUrl && process.env.NODE_ENV === "production") {
+      const base = apiUrl.replace(/\/$/, "");
+      return `${base}${normalized}`;
+    }
+    return normalized;
+  })();
+
+  const res = await fetch(targetPath, {
     ...options,
     headers: {
       "Content-Type": "application/json",

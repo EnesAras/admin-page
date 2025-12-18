@@ -90,3 +90,11 @@ Frontend should call relative URLs like /api/auth/login (proxy handles localhost
 - Default fallback credentials point at `postgres:postgres@localhost:5432/admin_panel`, which you can override for production.
 - When the server starts it also seeds sample users (Admin/Owner/Moderator), products, and 30 historical orders if the tables are empty, so you can start developing without manual inserts.
 - To introspect or extend the schema, edit `server/db/schema.sql` and restart the server; the next boot will re-run `CREATE TABLE IF NOT EXISTS` and keep the existing data while adding new columns.
+- The backend now respects a `FRONTEND_ORIGINS` comma-separated allowlist before switching on CORS, so point that at your deployed frontend URL(s) (localhost defaults remain active in development).
+- Set `SEED_ON_BOOT=true` only when you need to reset the sample data; by default seeds run only when the corresponding tables are empty.
+- Run the server in production with `npm start` (the development-only `npm run dev` uses nodemon and mimics your local workflow).
+
+## Frontend Environment
+
+- Production builds use `REACT_APP_API_URL` as the base for any `/api/*` calls, so configure that variable (e.g., `https://myapp-backend.onrender.com`) in Vercel/Netlify instead of relying on CRA proxying.
+- In development the app still calls relative `/api/*` paths so the local React dev server can proxy to `localhost:5000`; no extra changes are needed when `REACT_APP_API_URL` is unset.

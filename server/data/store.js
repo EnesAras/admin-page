@@ -27,6 +27,12 @@ const DEFAULT_USERS = [
   },
 ];
 
+const shouldSeedTable = async (tableName) => {
+  if (process.env.SEED_ON_BOOT === "true") return true;
+  const { rows } = await query(`SELECT COUNT(*) FROM ${tableName}`);
+  return Number(rows[0].count) === 0;
+};
+
 const ORDER_STATUSES = [
   "Pending",
   "Processing",
@@ -106,8 +112,7 @@ const ensureSchema = async () => {
 };
 
 const seedUsers = async () => {
-  const { rows } = await query("SELECT COUNT(*) FROM users");
-  if (Number(rows[0].count) > 0) return;
+  if (!(await shouldSeedTable("users"))) return;
   for (const user of DEFAULT_USERS) {
     await query(
       `
@@ -124,8 +129,7 @@ const seedUsers = async () => {
 };
 
 const seedProducts = async () => {
-  const { rows } = await query("SELECT COUNT(*) FROM products");
-  if (Number(rows[0].count) > 0) return;
+  if (!(await shouldSeedTable("products"))) return;
   for (const product of rawProducts) {
     await query(
       `
@@ -150,8 +154,7 @@ const seedProducts = async () => {
 };
 
 const seedOrders = async () => {
-  const { rows } = await query("SELECT COUNT(*) FROM orders");
-  if (Number(rows[0].count) > 0) return;
+  if (!(await shouldSeedTable("orders"))) return;
   for (let index = 0; index < 30; index += 1) {
     const order = createPastOrder(index);
     await query(
