@@ -73,9 +73,10 @@ const fallbackUsers = [
 ];
 const DASHBOARD_PRIORITY_ORDER = ["pending", "shipped", "delivered", "cancelled"];
 const ROLE_PRIORITY = {
-  Admin: 1,
-  Moderator: 2,
-  User: 3,
+  Owner: 1,
+  Admin: 2,
+  Moderator: 3,
+  User: 4,
 };
 
 const normalizeOrder = (order) => ({
@@ -685,9 +686,15 @@ function DashboardPage() {
               </thead>
               <tbody>
                 {recentUsers.map((user) => {
+                  const normalizedRole = String(user.role || "")
+                    .trim()
+                    .toLowerCase();
                   let roleKey = "roleUser";
-                  if (user.role === "Admin") roleKey = "roleAdmin";
-                  else if (user.role === "Moderator") roleKey = "roleModerator";
+                  if (normalizedRole === "admin") roleKey = "roleAdmin";
+                  else if (normalizedRole === "owner") roleKey = "roleOwner";
+                  else if (normalizedRole === "manager") roleKey = "roleManager";
+                  else if (normalizedRole === "moderator")
+                    roleKey = "roleModerator";
 
                   const statusKey =
                     user.status === "Active"

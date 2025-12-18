@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const usersRoutes = require("./routes/usersRoutes");
 const ordersRoutes = require("./routes/ordersRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const { initStore } = require("./data/store");
 
 dotenv.config();
 
@@ -55,25 +56,36 @@ app.use("/api/orders", ordersRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
-const listener = app.listen(PORT, "0.0.0.0", () => {
-  const address = listener.address();
-  if (!address) {
-    console.log(`API running in ${NODE_ENV} mode (PID ${process.pid})`);
-    console.log(`  → Node ${process.version}, cwd=${process.cwd()}`);
-    return;
+const startServer = async () => {
+  try {
+    await initStore();
+  } catch (err) {
+    console.error("Failed to initialize data store:", err);
+    process.exit(1);
   }
 
-  const host =
-    typeof address === "string"
-      ? address
-      : `${address.address === "::" ? "0.0.0.0" : address.address}`;
+  const listener = app.listen(PORT, "0.0.0.0", () => {
+    const address = listener.address();
+    if (!address) {
+      console.log(`API running in ${NODE_ENV} mode (PID ${process.pid})`);
+      console.log(`  → Node ${process.version}, cwd=${process.cwd()}`);
+      return;
+    }
 
-  const timestamp = new Date().toISOString();
-  console.log(`API running in ${NODE_ENV} mode (PID ${process.pid})`);
-  console.log(
-    `  → Bound to http://${host}:${address.port} ` +
-      `(allowed origins: ${allowedOrigins.join(", ")})`
-  );
-  console.log(`  → Node ${process.version}, cwd=${process.cwd()}`);
-  console.log(`  → ${timestamp}`);
-});
+    const host =
+      typeof address === "string"
+        ? address
+        : `${address.address === "::" ? "0.0.0.0" : address.address}`;
+
+    const timestamp = new Date().toISOString();
+    console.log(`API running in ${NODE_ENV} mode (PID ${process.pid})`);
+    console.log(
+      `  → Bound to http://${host}:${address.port} ` +
+        `(allowed origins: ${allowedOrigins.join(", ")})`
+    );
+    console.log(`  → Node ${process.version}, cwd=${process.cwd()}`);
+    console.log(`  → ${timestamp}`);
+  });
+};
+
+startServer();

@@ -83,3 +83,10 @@ Frontend should call relative URLs like /api/auth/login (proxy handles localhost
 
 ### API Simulation
 - Set `REACT_APP_ENABLE_API_SIMULATION=true` in your `.env.development.local` to activate simulated delays/failures for `/api/auth/login` and `/api/dashboard`. Toasts, dashboard banner, and API health card will make the simulated events visible while you work.
+
+## Backend Database
+
+- The server now bootstraps a PostgreSQL schema located at `server/db/schema.sql` before listening, so set `DATABASE_URL` or the standard `PG*` environment variables in `server/.env` (e.g., `PGUSER`, `PGPASSWORD`, `PGHOST`, `PGPORT`, `PGDATABASE`).
+- Default fallback credentials point at `postgres:postgres@localhost:5432/admin_panel`, which you can override for production.
+- When the server starts it also seeds sample users (Admin/Owner/Moderator), products, and 30 historical orders if the tables are empty, so you can start developing without manual inserts.
+- To introspect or extend the schema, edit `server/db/schema.sql` and restart the server; the next boot will re-run `CREATE TABLE IF NOT EXISTS` and keep the existing data while adding new columns.

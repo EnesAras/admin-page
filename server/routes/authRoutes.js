@@ -1,6 +1,6 @@
 // routes/authRoutes.js
 const express = require("express");
-const { findUserByEmail, safeUser } = require("../data/mockStore");
+const { findUserByEmail, safeUser } = require("../data/store");
 
 const ROLE_CAPABILITIES = {
   admin: {
@@ -26,31 +26,38 @@ const ROLE_CAPABILITIES = {
 
 const router = express.Router();
 
-router.post("/login", (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required." });
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ error: "Email and password are required." });
+    }
+
+    const user = await findUserByEmail(String(email).toLowerCase());
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: "Invalid email or password." });
+    }
+
+    if (String(user.status).toLowerCase() !== "active") {
+      return res.status(403).json({ error: "AccountInactive" });
+    }
+
+    const fakeToken = `fake-jwt-token-${user.id}-${Date.now()}`;
+    const role = String(user.role || "user").toLowerCase();
+    const capabilities =
+      ROLE_CAPABILITIES[role] || ROLE_CAPABILITIES["moderator"] || {};
+
+    return res.json({
+      token: fakeToken,
+      user: safeUser(user),
+      capabilities,
+    });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    return res.status(500).json({ error: "ServerError" });
   }
-
-  const user = findUserByEmail(String(email).toLowerCase());
-  if (!user || user.password !== password) {
-    return res.status(401).json({ error: "Invalid email or password." });
-  }
-
-  if (String(user.status).toLowerCase() !== "active") {
-    return res.status(403).json({ error: "AccountInactive" });
-  }
-
-  const fakeToken = `fake-jwt-token-${user.id}-${Date.now()}`;
-  const role = String(user.role || "user").toLowerCase();
-  const capabilities =
-    ROLE_CAPABILITIES[role] || ROLE_CAPABILITIES["moderator"] || {};
-
-  return res.json({
-    token: fakeToken,
-    user: safeUser(user),
-    capabilities,
-  });
 });
 
 module.exports = router;
