@@ -79,10 +79,26 @@ const ROLE_PRIORITY = {
   User: 4,
 };
 
+const normalizeTotal = (value) => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const cleaned = value.replace(/[^\d.-]+/g, "");
+    const parsed = parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+};
+
+const formatMoney = (value) => normalizeTotal(value).toFixed(2);
+
 const normalizeOrder = (order) => ({
   ...order,
   date: order.date || order.createdAt || order.created_at || "",
-  total: Number(order.total ?? order.amount ?? order.price ?? 0),
+  total: normalizeTotal(order.total ?? order.amount ?? order.price ?? 0),
   status: order.status || "Pending",
 });
 
@@ -121,7 +137,7 @@ const buildMonthlyRevenue = (ordersList, months = 6) => {
     const key = `${date.getFullYear()}-${date.getMonth()}`;
     const bucket = map.get(key);
     if (!bucket) return;
-    bucket.revenue += Number(order.total) || 0;
+    bucket.revenue += normalizeTotal(order.total);
   });
 
   return Array.from(map.values());
@@ -150,7 +166,7 @@ const buildDashboardState = (ordersList, usersList) => {
     adminCount,
     totalOrders: normalizedOrders.length,
     totalRevenue: normalizedOrders.reduce(
-      (sum, o) => sum + (Number(o.total) || 0),
+      (sum, o) => sum + normalizeTotal(o.total),
       0
     ),
     statusCounts,
@@ -161,6 +177,46 @@ const buildDashboardState = (ordersList, usersList) => {
     shippedOrders: statusCounts.shipped,
     productsCount: 0,
   };
+};
+
+const CARD_FOOT_FALLBACKS = {
+  cardFootPendingOrders: "ordersLabel",
+  cardFootShippedOrders: "ordersLabel",
+  cardFootTotalRevenue: "totalRevenue",
+};
+
+const DASHBOARD_CACHE_TTL = 45 * 1000;
+let dashboardCache = null;
+let dashboardCacheTimestamp = 0;
+let dashboardFetchPromise = null;
+
+const fetchDashboardSnapshot = async () => {
+  const now = Date.now();
+  if (dashboardCache && now - dashboardCacheTimestamp < DASHBOARD_CACHE_TTL) {
+    return dashboardCache;
+  }
+  if (!dashboardFetchPromise) {
+    const timerLabel = "dashboard-fetch";
+    const shouldProfile =
+      process.env.NODE_ENV !== "production" &&
+      typeof console !== "undefined" &&
+      typeof console.time === "function" &&
+      typeof console.timeEnd === "function";
+
+    dashboardFetchPromise = (async () => {
+      if (shouldProfile) console.time(timerLabel);
+      try {
+        const data = await apiFetch("/api/dashboard");
+        dashboardCache = data;
+        dashboardCacheTimestamp = Date.now();
+        return data;
+      } finally {
+        if (shouldProfile) console.timeEnd(timerLabel);
+        dashboardFetchPromise = null;
+      }
+    })();
+  }
+  return dashboardFetchPromise;
 };
 
 function DashboardPage() {
@@ -174,15 +230,10 @@ function DashboardPage() {
   const tooltipBackground = isLightTheme ? "#ffffff" : "#020617";
   const tooltipBorder = isLightTheme ? "#e5e7eb" : "#1f2937";
   const tooltipColor = isLightTheme ? "#0f172a" : "#e5e7eb";
-  const cardFootFallbacks = {
-    cardFootPendingOrders: "ordersLabel",
-    cardFootShippedOrders: "ordersLabel",
-    cardFootTotalRevenue: "totalRevenue",
-  };
   const getCardFootText = (key) => {
     const text = t(key);
     if (text !== key) return text;
-    const fallbackKey = cardFootFallbacks[key];
+    const fallbackKey = CARD_FOOT_FALLBACKS[key];
     if (fallbackKey) return t(fallbackKey, key);
     return key;
   };
@@ -192,13 +243,16 @@ function DashboardPage() {
     []
   );
 
-  const capabilityLabelMap = {
-    manageUsers: t("capabilityManageUsers", "Manage users"),
-    manageProducts: t("capabilityManageProducts", "Manage products"),
-    manageOrders: t("capabilityManageOrders", "Manage orders"),
-    accessSettings: t("capabilityAccessSettings", "Access settings"),
-    fullAccess: t("capabilityFullAccess", "Full system access"),
-  };
+  const capabilityLabelMap = useMemo(
+    () => ({
+      manageUsers: t("capabilityManageUsers", "Manage users"),
+      manageProducts: t("capabilityManageProducts", "Manage products"),
+      manageOrders: t("capabilityManageOrders", "Manage orders"),
+      accessSettings: t("capabilityAccessSettings", "Access settings"),
+      fullAccess: t("capabilityFullAccess", "Full system access"),
+    }),
+    [t]
+  );
   const roleKey = currentUser?.role
     ? `role${currentUser.role.charAt(0).toUpperCase()}${currentUser.role
         .slice(1)
@@ -235,10 +289,11 @@ function DashboardPage() {
   useEffect(() => {
     let mounted = true;
 
-    setDashboardLoading(true);
-    apiFetch("/api/dashboard")
-      .then((data) => {
-        if (!mounted) return;
+    const loadDashboard = async () => {
+      setDashboardLoading(true);
+      try {
+        const data = await fetchDashboardSnapshot();
+        if (!mounted || !data) return;
         setDashboardData((prev) => ({
           ...prev,
           ...data,
@@ -247,13 +302,16 @@ function DashboardPage() {
           recentOrders: data.recentOrders || prev.recentOrders,
           recentUsers: data.recentUsers || prev.recentUsers,
         }));
-      })
-      .catch((err) => {
+      } catch (err) {
         console.warn("Failed to load dashboard data:", err);
-      })
-      .finally(() => {
-        if (mounted) setDashboardLoading(false);
-      });
+      } finally {
+        if (mounted) {
+          setDashboardLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
 
     return () => {
       mounted = false;
@@ -533,7 +591,7 @@ function DashboardPage() {
 
       {/* ORDER CARDS */}
       <div className="dashboard-grid">
-      <div className="dashboard-card">
+        <div className="dashboard-card">
         <p className="card-label">{t("totalOrders")}</p>
         <p className="card-number">{totalOrders}</p>
       </div>
@@ -555,7 +613,7 @@ function DashboardPage() {
       <div className="dashboard-card">
         <p className="card-label">{t("totalRevenue")}</p>
         <p className="card-number text-green">
-          €{totalRevenue.toFixed(2)}
+          €{formatMoney(totalRevenue)}
         </p>
         <p className="card-foot subtle">{getCardFootText("cardFootTotalRevenue")}</p>
       </div>
@@ -779,7 +837,7 @@ function DashboardPage() {
                       <td className="order-shipping">
                         {order.shippingAddress || "-"}
                       </td>
-                      <td>€{order.total.toFixed(2)}</td>
+                      <td>€{formatMoney(order.total)}</td>
                       <td>
                         <span
                           className={`order-status order-status-${String(

@@ -8,6 +8,10 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  background: var(--palette-card);
+  border: 1px solid var(--palette-border);
+  border-radius: 26px;
+  box-shadow: var(--palette-card-shadow);
 }
 
 /* =============== HEADER =============== */
@@ -43,12 +47,12 @@
 }
 
 .settings-moderator-note {
-  background: #111827;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: var(--palette-panel-soft);
+  border: 1px solid var(--palette-border);
   border-radius: 14px;
-  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--palette-card-shadow-soft);
   padding: 14px 18px;
-  color: #e5e7eb;
+  color: var(--palette-muted);
 }
 
 .settings-moderator-title {
@@ -102,12 +106,10 @@
 .settings-card {
   position: relative;
   border-radius: 18px;
-  padding: 14px 16px 16px;
-  background: radial-gradient(circle at top left, #020617, #020617);
-  border: 1px solid #111827;
-  box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.9),
-    0 0 0 1px rgba(15, 23, 42, 0.9);
+  padding: 16px;
+  background: var(--palette-card);
+  border: 1px solid var(--palette-border);
+  box-shadow: var(--palette-card-shadow);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -115,35 +117,10 @@
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-/* dış glow */
-
-.settings-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid transparent;
-  background: linear-gradient(
-    135deg,
-    rgba(148, 163, 184, 0.15),
-    rgba(56, 189, 248, 0.15),
-    rgba(249, 115, 22, 0.45)
-  );
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
 .settings-card:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 26px 60px rgba(15, 23, 42, 0.95),
-    0 0 0 1px rgba(30, 64, 175, 0.7);
-  border-color: rgba(30, 64, 175, 0.6);
-}
-
-.settings-card:hover::before {
-  opacity: 1;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.35);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 .settings-card-full {
@@ -163,13 +140,13 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #f9fafb;
+  color: var(--palette-text);
 }
 
 .settings-card-header p {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--palette-muted);
 }
 
 /* =============== FIELDS =============== */
@@ -182,22 +159,34 @@
 
 .settings-field label {
   font-size: 12px;
-  color: #e5e7eb;
+  color: var(--palette-muted);
 }
 
 .settings-field input,
 .settings-field select {
   padding: 9px 11px;
   border-radius: 11px;
-  border: 1px solid #1f2937;
-  background: radial-gradient(circle at top left, #020617, #020617);
-  color: #e5e7eb;
+  border: 1px solid var(--palette-border);
+  background: var(--palette-input-bg);
+  color: var(--palette-text);
   font-size: 13px;
   transition:
     border-color 0.16s ease,
     box-shadow 0.16s ease,
     background-color 0.16s ease,
     transform 0.08s ease;
+}
+
+.settings-field input::placeholder,
+.settings-field select::placeholder {
+  color: var(--palette-muted-strong);
+}
+
+.settings-field input:focus,
+.settings-field select:focus {
+  outline: none;
+  border-color: var(--palette-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
 }
 
 .settings-field input::placeholder {
@@ -383,91 +372,6 @@
   display: block;
   font-size: 11px;
   color: #9ca3af;
-}
-
-/* checked olduğunda yazıyı da biraz vurgula */
-
-.settings-toggle input:checked + .settings-toggle-text span {
-  color: #fef3c7;
-}
-
-/* =============== LIGHT THEME OVERRIDES =============== */
-
-body.theme-light .settings-header h2 {
-  background: linear-gradient(120deg, #111827, #4b5563);
-
-  /* Standart + WebKit birlikte */
-  background-clip: text;
-  -webkit-background-clip: text;
-
-  color: transparent;
-}
-
-
-body.theme-light .settings-header p {
-  color: #6b7280;
-}
-
-body.theme-light .settings-card {
-  background: #ffffff;
-  border-color: #e5e7eb;
-  box-shadow: 0 18px 46px rgba(148, 163, 184, 0.5);
-}
-
-body.theme-light .settings-card::before {
-  background: linear-gradient(
-    135deg,
-    rgba(148, 163, 184, 0.25),
-    rgba(249, 115, 22, 0.35)
-  );
-}
-
-body.theme-light .settings-card-header h3 {
-  color: #111827;
-}
-
-body.theme-light .settings-card-header p {
-  color: #6b7280;
-}
-
-body.theme-light .settings-field label {
-  color: #374151;
-}
-
-body.theme-light .settings-field input,
-body.theme-light .settings-field select {
-  background: #ffffff;
-  border-color: #d1d5db;
-  color: #111827;
-}
-
-body.theme-light .settings-field input::placeholder {
-  color: #9ca3af;
-}
-
-body.theme-light .settings-chip {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  color: #4b5563;
-}
-
-body.theme-light .settings-toggle:hover {
-  background: #f3f4f6;
-}
-
-body.theme-light .settings-toggle-text span {
-  color: #111827;
-}
-
-body.theme-light .settings-toggle-text small {
-  color: #6b7280;
-}
-
-/* light theme toggle yuvarlak */
-
-body.theme-light .settings-toggle-text::before {
-  background: #ffffff;
-  border-color: #d1d5db;
 }
 
 /* =============== RESPONSIVE =============== */

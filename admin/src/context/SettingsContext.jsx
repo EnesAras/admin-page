@@ -18,6 +18,13 @@ const defaultSettings = {
   weeklySummary: true,
 };
 
+const getInitialPrefersDark = () => {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return false;
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+};
+
 const SettingsContext = createContext();
 
 export function SettingsProvider({ children }) {
@@ -37,15 +44,7 @@ export function SettingsProvider({ children }) {
     return defaultSettings;
   });
 
-  const [prefersDark, setPrefersDark] = useState(() => {
-    if (
-      typeof window === "undefined" ||
-      typeof window.matchMedia !== "function"
-    ) {
-      return true;
-    }
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
+  const [prefersDark, setPrefersDark] = useState(getInitialPrefersDark);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -72,10 +71,7 @@ export function SettingsProvider({ children }) {
   }, []);
 
   const refreshSystemPreference = useCallback(() => {
-    if (typeof window === "undefined") return;
-    if (typeof window.matchMedia !== "function") return;
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    setPrefersDark(mql.matches);
+    setPrefersDark(getInitialPrefersDark());
   }, []);
 
   useEffect(() => {

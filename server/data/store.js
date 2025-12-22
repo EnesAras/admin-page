@@ -1,7 +1,20 @@
 const fs = require("fs").promises;
 const path = require("path");
+const bcrypt = require("bcryptjs");
 const { query } = require("../db");
 const rawProducts = require("./products");
+
+const HASH_ROUNDS = 10;
+
+const normalizePassword = (value = "") => {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  return String(value);
+};
+
+const hashPassword = async (password = "") =>
+  bcrypt.hash(normalizePassword(password), HASH_ROUNDS);
 
 const DEFAULT_USERS = [
   {
@@ -114,13 +127,14 @@ const ensureSchema = async () => {
 const seedUsers = async () => {
   if (!(await shouldSeedTable("users"))) return;
   for (const user of DEFAULT_USERS) {
+    const hashedPassword = await hashPassword(user.password);
     await query(
       `
       INSERT INTO users (name, email, password, role, status)
       VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (email) DO NOTHING
     `,
-      [user.name, user.email, user.password, user.role, user.status]
+      [user.name, user.email, hashedPassword, user.role, user.status]
     );
   }
   await query(
@@ -251,6 +265,7 @@ const findUserByEmail = async (email) => {
 
 const addUser = async (payload) => {
   if (!payload?.email || !payload?.name) return null;
+  const passwordHash = await hashPassword(payload?.password);
   const { rows } = await query(
     `
     INSERT INTO users (name, email, password, role, status)
@@ -260,7 +275,7 @@ const addUser = async (payload) => {
     [
       payload.name,
       payload.email.trim().toLowerCase(),
-      payload.password || "",
+      passwordHash,
       payload.role || "user",
       payload.status || "Active",
     ]

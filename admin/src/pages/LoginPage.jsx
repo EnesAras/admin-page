@@ -107,6 +107,8 @@ function LoginPage() {
     setError("");
     setLoading(true);
 
+    console.log("[LoginPage] submitting", { email, password });
+
     try {
       await login(email, password); // backend çağrısını bekle
       navigate("/");

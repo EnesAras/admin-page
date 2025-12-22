@@ -19,6 +19,8 @@ const DEFAULT_DEV_FRONTEND_ORIGINS = [
   "http://127.0.0.1:3000",
   "http://localhost:3001",
   "http://127.0.0.1:3001",
+  "http://localhost:3002",
+  "http://127.0.0.1:3002",
 ];
 
 const originSource =
@@ -45,21 +47,35 @@ console.log(
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+    console.log("CORS origin:", origin);
+    if (!origin) {
       return callback(null, true);
     }
-    callback(new Error("Not allowed by CORS"));
+    const normalizedOrigin =
+      typeof origin === "string" ? origin.trim() : origin;
+
+    if (
+      allowedOrigins.includes("*") ||
+      (typeof normalizedOrigin === "string" &&
+        allowedOrigins.includes(normalizedOrigin))
+    ) {
+      return callback(null, true);
+    }
+
+    const err = new Error("CORS_NOT_ALLOWED");
+    err.status = 403;
+    return callback(err);
   },
   credentials: true,
   optionsSuccessStatus: 200,
 };
 
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions));
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, environment: NODE_ENV });
+  res.json({ ok: true, env: NODE_ENV });
 });
 
 app.use("/api/auth", authRoutes);
@@ -67,6 +83,22 @@ app.use("/api/users", usersRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+
+app.use((err, req, res, next) => {
+  if (err?.message === "CORS_NOT_ALLOWED") {
+    console.error("CORS REJECTED", err?.message, err?.stack || "");
+    if (res.headersSent) {
+      return next(err);
+    }
+    return res.status(err.status || 403).json({ error: "CorsNotAllowed" });
+  }
+
+  console.error("UNHANDLED ERROR:", err?.message || err, err?.stack || "");
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).json({ error: "Internal Server Error" });
+});
 
 const startServer = async () => {
   try {

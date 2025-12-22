@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import "./UsersPage.css";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
+import { apiFetch } from "../lib/api";
 
 const usersData = [
   {
@@ -89,11 +90,7 @@ function UsersPage({ language }) {
       try {
         setLoading(true);
         setFetchError("");
-        const res = await fetch("/api/users");
-        if (!res.ok) {
-          throw new Error("Failed to fetch users");
-        }
-        const data = await res.json();
+        const data = await apiFetch("/api/users");
         const normalized = Array.isArray(data)
           ? data
           : Array.isArray(data?.users)
@@ -220,17 +217,10 @@ function UsersPage({ language }) {
     };
 
     try {
-      const res = await fetch("/api/users", {
+      const created = await apiFetch("/api/users", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to create user");
-      }
-
-      const created = await res.json();
 
       setUsers((prevUsers) => [...prevUsers, created]);
 
@@ -303,17 +293,10 @@ function UsersPage({ language }) {
     };
 
     try {
-      const res = await fetch(`/api/users/${editingUserId}`, {
+      const updated = await apiFetch(`/api/users/${editingUserId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to update user");
-      }
-
-      const updated = await res.json();
 
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
@@ -365,17 +348,10 @@ function UsersPage({ language }) {
       const newStatus = user.status === "Active" ? "Inactive" : "Active";
 
       try {
-        const res = await fetch(`/api/users/${id}`, {
+        const updated = await apiFetch(`/api/users/${id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: newStatus }),
         });
-
-        if (!res.ok) {
-          throw new Error("Failed to toggle status");
-        }
-
-        const updated = await res.json();
 
         setUsers((prevUsers) =>
           prevUsers.map((u) => (u.id === id ? updated : u))
@@ -397,13 +373,9 @@ function UsersPage({ language }) {
   const handleDelete = useCallback(
     async (id) => {
       try {
-        const res = await fetch(`/api/users/${id}`, {
+        await apiFetch(`/api/users/${id}`, {
           method: "DELETE",
         });
-
-        if (!res.ok) {
-          throw new Error("Failed to delete user");
-        }
 
         setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
       } catch (err) {

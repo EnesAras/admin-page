@@ -3,6 +3,7 @@
   import "./ProductsPage.css";
   import { useSettings } from "../context/SettingsContext";
   import translations from "../i18n/translations";
+  import { apiFetch } from "../lib/api";
 
 
   const statusOptions = ["Active", "Hidden", "OutOfStock"];
@@ -58,10 +59,7 @@
           setLoading(true);
           setFetchError(null);
 
-          const res = await fetch("/api/products");
-          if (!res.ok) throw new Error("Failed to fetch products");
-
-          const data = await res.json();
+          const data = await apiFetch("/api/products");
           setProducts(normalizeProductsPayload(data));
         } catch (err) {
           console.error(err);
@@ -277,48 +275,43 @@ const handleSave = async () => {
     return;
   }
 
-  const payload = {
-    name: safeName,
-    category: String(formCategory ?? "").trim() || "Other",
-    fandom: String(formFandom ?? "").trim() || "General",
-    price: priceValue,
-    stock: stockValue,
-    status: String(formStatus ?? "Active"),
-  };
+    const payload = {
+      name: safeName,
+      category: String(formCategory ?? "").trim() || "Other",
+      fandom: String(formFandom ?? "").trim() || "General",
+      price: priceValue,
+      stock: stockValue,
+      status: String(formStatus ?? "Active"),
+    };
 
-  try {
-    const isEdit = editingId != null;
+    try {
+      const isEdit = editingId != null;
+      const baseUrl = "/api/products";
+      const url = isEdit ? `${baseUrl}/${Number(editingId)}` : baseUrl;
 
-    const baseUrl = "/api/products";
-    const url = isEdit ? `${baseUrl}/${Number(editingId)}` : baseUrl;
+      const saved = await apiFetch(url, {
+        method: isEdit ? "PUT" : "POST",
+        body: JSON.stringify(payload),
+      });
 
-    const res = await fetch(url, {
-      method: isEdit ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+      if (isEdit) {
+        setProducts((prev) =>
+          prev.map((p) => (Number(p?.id) === Number(editingId) ? saved : p))
+        );
+        setSelectedId(Number(editingId));
+      } else {
+        setProducts((prev) => [saved, ...prev]);
+        setSelectedId(Number(saved?.id));
+      }
 
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      // backend: { error: "NameRequired" | "PriceInvalid" | ... }
-      setFormError(data?.error || t("products.error.generic", "Something went wrong."));
-      return;
+      closePanel();
+    } catch (err) {
+      console.error(err);
+      setFormError(
+        err?.message ||
+          t("products.error.generic", "Something went wrong. Please try again.")
+      );
     }
-
-    if (isEdit) {
-      setProducts((prev) => prev.map((p) => (Number(p?.id) === Number(editingId) ? data : p)));
-      setSelectedId(Number(editingId));
-    } else {
-      setProducts((prev) => [data, ...prev]); // yeni ürün en üste
-      setSelectedId(Number(data?.id));
-    }
-
-    closePanel();
-  } catch (err) {
-    console.error(err);
-    setFormError(t("products.error.generic", "Something went wrong. Please try again."));
-  }
 };
 
 
@@ -327,16 +320,9 @@ const handleDelete = async (id) => {
   if (!Number.isFinite(safeId)) return;
 
   try {
-    const res = await fetch(`/api/products/${safeId}`, {
+    await apiFetch(`/api/products/${safeId}`, {
       method: "DELETE",
     });
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      console.error("Delete failed:", data);
-      return;
-    }
 
     setProducts((prev) => prev.filter((p) => Number(p?.id) !== safeId));
     if (Number(selectedId) === safeId) setSelectedId(null);

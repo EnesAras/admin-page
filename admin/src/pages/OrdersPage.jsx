@@ -4,6 +4,7 @@ import "./OrdersPage.css";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
 import ordersMock from "../data/orders.mock";
+import { apiFetch } from "../lib/api";
 
 const STATUS_FLOW = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
 
@@ -130,12 +131,7 @@ function OrdersPage({ language }) {
       setError(null);
 
       try {
-        const res = await fetch("/api/orders");
-        if (!res.ok) {
-          throw new Error("Failed to fetch orders");
-        }
-
-        const payload = await res.json();
+        const payload = await apiFetch("/api/orders");
         if (!isMounted) return;
 
         const normalized = normalizeOrdersPayload(payload).map(normalizeOrder);
@@ -270,17 +266,12 @@ function OrdersPage({ language }) {
         : STATUS_FLOW[(currentIndex + 1) % STATUS_FLOW.length];
 
     try {
-      const res = await fetch(`/api/orders/${encodeURIComponent(targetOrder.id)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to update order status");
-      }
-
-      const updated = normalizeOrder(await res.json());
+      const updated = normalizeOrder(
+        await apiFetch(`/api/orders/${encodeURIComponent(targetOrder.id)}`, {
+          method: "PUT",
+          body: JSON.stringify({ status: nextStatus }),
+        })
+      );
       setOrders((prev) =>
         prev.map((order) =>
           String(order.id) === String(targetOrder.id) ? updated : order

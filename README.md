@@ -94,9 +94,6 @@ Frontend should call relative URLs like /api/auth/login (proxy handles localhost
 - Terminal 1: npm start
 - Terminal 2: cd server && npm start
 
-### API Simulation
-- Set `REACT_APP_ENABLE_API_SIMULATION=true` in your `.env.development.local` to activate simulated delays/failures for `/api/auth/login` and `/api/dashboard`. Toasts, dashboard banner, and API health card will make the simulated events visible while you work.
-
 ## Screenshots
 
 - Login: `/docs/screenshots/login.png`
@@ -117,6 +114,7 @@ Frontend should call relative URLs like /api/auth/login (proxy handles localhost
 - **Development:** CRA proxy handles `/api/*` so the React dev server can call `localhost:5000`.
 - **Production:** Set `REACT_APP_API_URL=https://your-backend` so `apiFetch` targets the live service instead of the proxy.
 - **CORS:** Provide your deployed frontend domain(s) via `FRONTEND_ORIGINS` so the backend only permits requests from them.
+- **Health check:** `GET /api/health` returns `{ ok: true, env: NODE_ENV }` for lightweight uptime verification.
 - **Seeding:** Leave `SEED_ON_BOOT` unset/false in production; use `SEED_ON_BOOT=true` temporarily for staging resets.
 
 ## Backend Database
@@ -140,7 +138,7 @@ Run the following checks against the LIVE URLs (Render/Railway + Vercel/Netlify)
 
 1. **Backend health**
    - Start the server with `NODE_ENV=production` and confirm the boot logs show `[server] NODE_ENV=production` plus a `[db] connected ...` line; no credentials should appear in the log.
-   - Hit `GET /api/health` (or another light endpoint) and expect `200 OK`.
+   - Hit `GET /api/health` (or another light endpoint) and expect `200 OK` with a body such as `{ ok: true, env: NODE_ENV }`.
 
 2. **CORS & networking**
    - From the deployed frontend domain(s) defined in `FRONTEND_ORIGINS`, call any `/api/...` endpoint and confirm the request succeeds.

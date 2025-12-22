@@ -78,6 +78,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
+      console.log("[AuthContext] login called", { email, password });
       const payload = {
         email: String(email || "").trim().toLowerCase(),
         password: String(password || "").trim(),
@@ -85,7 +86,10 @@ export function AuthProvider({ children }) {
 
       const data = await apiFetch("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: payload,
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       const token =
