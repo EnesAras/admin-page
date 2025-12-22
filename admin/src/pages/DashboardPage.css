@@ -246,6 +246,88 @@
   color: #94a3b8;
 }
 
+.dashboard-activity-card {
+  grid-column: span 4;
+  background: var(--palette-card);
+  border-radius: 16px;
+  border: 1px solid var(--palette-card-border);
+  padding: 18px 22px;
+  box-shadow: var(--palette-card-shadow);
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.activity-subtitle {
+  font-size: 12px;
+  color: var(--palette-muted);
+}
+
+.activity-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activity-entry {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--palette-border);
+  background: var(--palette-panel-soft);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.activity-entry:hover {
+  border-color: var(--palette-accent);
+  box-shadow: var(--palette-card-shadow-soft);
+}
+
+.activity-entry-body p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--palette-text);
+}
+
+.activity-entry-actor {
+  font-size: 12px;
+  color: var(--palette-muted);
+}
+
+.activity-entry-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--palette-muted);
+}
+
+.activity-reason {
+  font-size: 11px;
+  color: var(--palette-muted-strong);
+}
+
+.activity-placeholder,
+.activity-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--palette-muted);
+}
+
+.activity-error {
+  color: #f97316;
+}
+
 .dashboard-api-card {
   grid-column: span 4;
   background: linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%);
@@ -327,6 +409,50 @@
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
+.api-health-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.api-health-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--palette-muted);
+}
+
+.api-health-status-idle {
+  color: #475569;
+}
+
+.api-health-status-healthy {
+  color: #059669;
+}
+
+.api-health-status-error {
+  color: #b91c1c;
+}
+
+.api-health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+  background: #94a3b8;
+}
+
+.api-health-status-healthy .api-health-dot {
+  background: #22c55e;
+}
+
+.api-health-status-error .api-health-dot {
+  background: #ef4444;
+}
+
 .dashboard-card {
   background: var(--palette-card);
   border-radius: 14px;
@@ -400,18 +526,26 @@
 .dashboard-bottom {
   display: flex;
   margin-top: 10px;
-  gap: 16px;               
-  align-items: stretch;    
+  gap: 16px;
+  align-items: flex-start;
+  align-content: flex-start;
 }
 
 .recent-users {
   flex: 1;
-  background: #020617;
+  background: var(--palette-card);
   border-radius: 14px;
   padding: 16px 18px;
-  border: 1px solid #1f2937;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--palette-border);
+  box-shadow: var(--palette-card-shadow-soft);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  color: var(--palette-text);
+  align-self: flex-start;
+}
+
+[data-theme="light"] .recent-users {
+  border-color: var(--palette-border);
+  box-shadow: var(--palette-card-shadow);
 }
 
 .recent-header {
@@ -426,6 +560,10 @@
   font-size: 16px;
   font-weight: 600;
   color: #f9fafb;
+}
+
+[data-theme="light"] .recent-header h3 {
+  color: var(--palette-text);
 }
 
 .recent-header span {
@@ -448,10 +586,10 @@
 .recent-table th,
 .recent-table td {
   padding: 10px 8px;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--palette-border);
   text-align: left;
   font-size: 13px;
-  color: #e5e7eb;
+  color: var(--palette-text);
 }
 
 .order-items {
@@ -469,11 +607,15 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #9ca3af;
+  color: var(--palette-muted);
 }
 
 .recent-table tr:hover td {
-  background-color: #0b1120;
+  background-color: var(--palette-card-hover);
+}
+
+[data-theme="light"] .recent-table tr:hover td {
+  background-color: var(--palette-input-bg);
 }
 
 .recent-email {

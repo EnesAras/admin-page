@@ -436,32 +436,45 @@
 .role-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--palette-border);
+  background: rgba(15, 23, 42, 0.35);
+  color: var(--palette-muted);
+  box-shadow: var(--palette-card-shadow-soft);
+  transition: transform 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.role-badge:hover {
+  transform: translateY(-1px);
+  color: var(--palette-text);
 }
 
 .role-admin {
-  background: var(--palette-accent-soft);
-  color: var(--palette-accent);
-  border: 1px solid rgba(249, 115, 22, 0.5);
-  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.12);
+  border-color: rgba(249, 115, 22, 0.5);
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
 }
 
-.role-user {
-  background: var(--palette-panel-soft);
-  color: var(--palette-muted);
-  border: 1px solid var(--palette-border);
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+.role-owner {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
 }
 
 .role-moderator {
-  background: rgba(79, 70, 229, 0.15);
-  color: #4c1d95;
-  border: 1px solid rgba(79, 70, 229, 0.4);
-  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+  border-color: rgba(168, 85, 247, 0.6);
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+}
+
+.role-user {
+  border-color: var(--palette-border);
+  background: rgba(15, 23, 42, 0.2);
+  color: var(--palette-muted);
 }
 
 /* =============== STATUS BADGES =============== */
@@ -469,34 +482,38 @@
 .status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  justify-content: center;
+  padding: 4px 12px;
   border-radius: 999px;
+  border: 1px solid var(--palette-border);
+  background: rgba(15, 23, 42, 0.25);
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--palette-muted);
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease,
+    transform 0.12s ease;
 }
 
 .status-active {
-  background: rgba(34, 197, 94, 0.18);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.55);
+  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
 }
 
 .status-inactive {
-  background: rgba(239, 68, 68, 0.18);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.55);
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.12);
+  color: #f97373;
 }
 
 .status-badge.clickable {
   cursor: pointer;
-  opacity: 0.9;
-  transition: 0.15s ease;
 }
 
 .status-badge.clickable:hover {
-  opacity: 1;
-  transform: scale(1.05) translateY(-1px);
+  transform: translateY(-1px);
 }
 
 /* =============== USER CELL (AVATAR + NAME) =============== */

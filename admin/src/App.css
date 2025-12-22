@@ -40,6 +40,10 @@ body {
   box-shadow: 0 0 0 1px transparent;
 }
 
+.sidebar.sidebar-collapsed {
+  width: 220px;
+}
+
 .logo {
   font-size: 1.3rem;
   font-weight: 700;
@@ -98,6 +102,9 @@ body {
   border-bottom: 1px solid var(--palette-border);
   background: var(--palette-card-strong);
   box-shadow: 0 2px 18px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 30;
 }
 
 .topbar-right {
@@ -130,6 +137,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  z-index: 35;
 }
 
 .topbar-user-info {
@@ -150,20 +158,31 @@ body {
   color: var(--palette-muted);
 }
 
+.topbar-user-email {
+  font-size: 11px;
+  color: var(--palette-muted);
+}
 
-.topbar-avatar-btn {
+
+.topbar-user-button {
   border: none;
   background: transparent;
-  padding: 2px;
+  padding: 6px 10px;
   border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   cursor: pointer;
+  color: inherit;
   box-shadow: 0 0 0 1px transparent;
   transition: box-shadow 0.15s ease, transform 0.1s ease;
 }
 
-.topbar-avatar-btn:hover {
+.topbar-user-button:hover,
+.topbar-user-button:focus-visible {
   box-shadow: 0 0 0 1px var(--palette-border);
   transform: translateY(-1px);
+  outline: none;
 }
 
 .topbar-avatar-initials {
@@ -189,7 +208,7 @@ body {
   padding: 6px;
   min-width: 180px;
   box-shadow: var(--palette-shadow-mid);
-  z-index: 20;
+  z-index: 40;
   opacity: 0;
   transform: translateY(-4px) scale(0.98);
   animation: userMenuFadeIn 160ms ease-out forwards;
@@ -245,24 +264,27 @@ body {
 
 .toast-portal {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: 70px;
+  right: 24px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 999;
+  z-index: 18;
+  pointer-events: none;
 }
 
 .toast {
   padding: 10px 16px;
   border-radius: 12px;
   min-width: 220px;
-  background: rgba(2, 6, 23, 0.92);
-  color: #f1f5f9;
+  background: var(--palette-card);
+  color: var(--palette-text);
   font-size: 13px;
-  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.35);
+  border: 1px solid var(--palette-border);
+  box-shadow: var(--palette-card-shadow);
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  pointer-events: auto;
 }
 
 .toast:hover {
@@ -275,8 +297,13 @@ body {
 }
 
 .toast-error {
-  border: 1px solid rgba(239, 68, 68, 0.7);
-  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(239, 68, 68, 0.7);
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.toast-success {
+  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(34, 197, 94, 0.12);
 }
 
 .access-denied {
@@ -369,6 +396,12 @@ body {
 .role-admin {
   background-color: rgba(249, 115, 22, 0.18);
   color: #f97316;
+}
+
+.role-owner {
+  background-color: rgba(250, 204, 21, 0.18);
+  color: #facc15;
+  border-color: rgba(250, 204, 21, 0.5);
 }
 
 .role-user {

@@ -246,6 +246,7 @@ function SettingsPage() {
   const currentLang = settings.language || "en";
   const t = translations[currentLang] || translations.en;
 
+  const showSystemNote = settings.theme === "system";
   const triggerSaved = () => {
     setShowSaved(true);
     setTimeout(() => setShowSaved(false), 1500);
@@ -390,25 +391,23 @@ function SettingsPage() {
                   {t.themeOptionSystem}
                 </button>
               </div>
-              <div
-                className={`settings-theme-note${
-                  settings.theme === "system" ? " active" : ""
-                }`}
-              >
-                <span>{t.themeSystemHint}</span>
-                <span className="settings-theme-status">
-                  {osPrefersDark
-                    ? t.themeSystemStatusDark
-                    : t.themeSystemStatusLight}
-                </span>
-                <button
-                  type="button"
-                  className="settings-theme-sync"
-                  onClick={handleSystemSync}
-                >
-                  {t.themeSystemAction}
-                </button>
-              </div>
+              {showSystemNote && (
+                <div className="settings-theme-note">
+                  <span>{t.themeSystemHint}</span>
+                  <span className="settings-theme-status">
+                    {osPrefersDark
+                      ? t.themeSystemStatusDark
+                      : t.themeSystemStatusLight}
+                  </span>
+                  <button
+                    type="button"
+                    className="settings-theme-sync"
+                    onClick={handleSystemSync}
+                  >
+                    {t.themeSystemAction}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="settings-field">

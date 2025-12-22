@@ -5,6 +5,8 @@ const {
   updateOrder,
   deleteOrder,
 } = require("../data/store");
+const { logAuditEvent } = require("../data/auditLog");
+const { getActorFromHeaders } = require("../utils/actor");
 
 const router = express.Router();
 
@@ -30,9 +32,24 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    const updated = await updateOrder(req.params.id, req.body || {});
+    const patch = req.body || {};
+    const updated = await updateOrder(req.params.id, patch);
     if (!updated) {
       return res.status(404).json({ error: "OrderNotFound" });
+    }
+
+    if (patch.status) {
+      try {
+        logAuditEvent({
+          actor: getActorFromHeaders(req),
+          action: "ORDER_STATUS_CHANGED",
+          entityType: "order",
+          entityId: updated.id,
+          meta: { status: updated.status },
+        });
+      } catch (error) {
+        console.warn("Audit log error (order status):", error);
+      }
     }
     res.json(updated);
   } catch (err) {

@@ -7,7 +7,7 @@ import {
   useState,
   useCallback,
 } from "react";
-import { apiFetch } from "../lib/api";
+import { apiFetch, emitApiToast } from "../lib/api";
 
 const STORAGE_KEYS = {
   auth: "admin_isAuthenticated",
@@ -130,14 +130,25 @@ export function AuthProvider({ children }) {
       setIsAuthenticated(true);
       setCurrentUser(resolvedUser);
 
+      emitApiToast({
+        message: `Signed in as ${
+          resolvedUser.name || resolvedUser.email || "user"
+        }`,
+        type: "success",
+      });
+
       return resolvedUser;
     } catch (err) {
       console.error("LOGIN ERROR:", err);
+      emitApiToast({
+        message: err?.message || "Login failed",
+        type: "error",
+      });
       throw err;
     }
   };
 
-  const updateCurrentUser = (partial) => {
+  const updateCurrentUser = useCallback((partial) => {
     setCurrentUser((prev) => {
       if (!prev) return null;
       const next = { ...prev, ...partial };
@@ -148,13 +159,19 @@ export function AuthProvider({ children }) {
       local?.setItem(STORAGE_KEYS.user, JSON.stringify(next));
       return next;
     });
-  };
+  }, []);
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    clearAuthPersistence();
-  };
+  const logout = useCallback(async () => {
+    try {
+      await apiFetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.warn("Logout API failed:", err);
+    } finally {
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      clearAuthPersistence();
+    }
+  }, []);
 
   const hasRole = useCallback(
     (allowedRoles) => {
@@ -180,7 +197,7 @@ export function AuthProvider({ children }) {
       hasRole,
       updateCurrentUser,
     }),
-    [isAuthenticated, currentUser, hasRole]
+    [isAuthenticated, currentUser, hasRole, login, logout, updateCurrentUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

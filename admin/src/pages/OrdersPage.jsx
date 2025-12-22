@@ -40,10 +40,27 @@ function normalizeStatusValue(value) {
     .join(" ");
 }
 
+function normalizeMonetaryValue(value) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+  if (typeof value === "string") {
+    const cleaned = value.replace(/[^\d.-]+/g, "");
+    const parsed = parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function formatMoney(value) {
+  return normalizeMonetaryValue(value).toFixed(2);
+}
+
 function normalizeOrder(order) {
   return {
     ...order,
     status: normalizeStatusValue(order.status),
+    total: normalizeMonetaryValue(order.total ?? order.amount ?? order.price ?? 0),
   };
 }
 
@@ -104,7 +121,7 @@ function OrdersPage({ language }) {
   };
 
   // ==== STATE ====
-  const [orders, setOrders] = useState(ordersMock);
+  const [orders, setOrders] = useState(() => ordersMock.map(normalizeOrder));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -340,7 +357,11 @@ function OrdersPage({ language }) {
   };
 
   const totalAmount = useMemo(
-    () => orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0),
+    () =>
+      orders.reduce(
+        (sum, o) => sum + normalizeMonetaryValue(o.total ?? o.amount ?? o.price ?? 0),
+        0
+      ),
     [orders]
   );
   const pendingCount = useMemo(() => orders.filter((o) => o.status === "Pending").length, [orders]);
@@ -352,6 +373,17 @@ function OrdersPage({ language }) {
 
   const selectedOrder =
     selectedOrderId != null ? orders.find((o) => o.id === selectedOrderId) || null : null;
+
+  useEffect(() => {
+    if (!selectedOrder) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setSelectedOrderId(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedOrder]);
 
   const resultsTemplate = t("orders.resultsSummary", "Showing {current} of {total} orders");
   const resultsText = resultsTemplate
@@ -433,7 +465,7 @@ function OrdersPage({ language }) {
         </div>
         <div className="orders-summary-card">
           <span className="summary-label">{t("orders.summaryTotalRevenue", "Total Revenue")}</span>
-          <span className="summary-value summary-revenue">€{totalAmount.toFixed(2)}</span>
+          <span className="summary-value summary-revenue">€{formatMoney(totalAmount)}</span>
         </div>
       </div>
 
@@ -447,7 +479,7 @@ function OrdersPage({ language }) {
         </button>
       </div>
 
-      <div className={`orders-main-card ${selectedOrder ? "has-details" : "no-details"}`}>
+      <div className="orders-main-card">
         <table className="orders-table">
           <thead>
             <tr>
@@ -468,7 +500,12 @@ function OrdersPage({ language }) {
                 <span>{t("orders.thTotal", "Total")}</span>
                 <span className="sort-indicator">{renderSortIndicator("total")}</span>
               </th>
-              <th>{t("orders.thStatusClickable", "Status (click to change)")}</th>
+              <th
+                className="orders-th-status"
+                title={t("orders.statusHint", "Click to change")}
+              >
+                {t("orders.thStatus", "Status")}
+              </th>
               <th>{t("orders.thPayment", "Payment")}</th>
             </tr>
           </thead>
@@ -495,7 +532,7 @@ function OrdersPage({ language }) {
                     <td>{order.customer}</td>
                     <td className="orders-email">{order.email}</td>
                     <td>{formatDate(order.date)}</td>
-                    <td>€{Number(order.total || 0).toFixed(2)}</td>
+                    <td>€{formatMoney(order.total)}</td>
                     <td>
                       <span
                         className={`order-status order-status-${statusClass}`}
@@ -540,48 +577,85 @@ function OrdersPage({ language }) {
           </button>
         </div>
 
-        {selectedOrder && (
+      </div>
+
+      {selectedOrder && (
+        <div
+          className="order-details-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("orders.detailsTitle", "Order details")}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setSelectedOrderId(null);
+            }
+          }}
+        >
           <div className="order-details-panel">
             <div className="order-details-header">
               <h3>{t("orders.detailsTitle", "Order details")}</h3>
-              <button type="button" className="order-details-close" onClick={() => setSelectedOrderId(null)}>
+              <button
+                type="button"
+                className="order-details-close"
+                onClick={() => setSelectedOrderId(null)}
+              >
                 {t("orders.detailsClose", "Close")}
               </button>
             </div>
 
             <div className="order-details-grid">
               <div className="order-details-item">
-                <span className="details-label">{t("orders.detailsOrderId", "Order ID")}</span>
+                <span className="details-label">
+                  {t("orders.detailsOrderId", "Order ID")}
+                </span>
                 <span className="details-value">#{selectedOrder.id}</span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t("orders.detailsCustomer", "Customer")}</span>
+                <span className="details-label">
+                  {t("orders.detailsCustomer", "Customer")}
+                </span>
                 <span className="details-value">{selectedOrder.customer}</span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t("orders.detailsEmail", "Email")}</span>
+                <span className="details-label">
+                  {t("orders.detailsEmail", "Email")}
+                </span>
                 <span className="details-value">{selectedOrder.email}</span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t("orders.detailsDate", "Date")}</span>
-                <span className="details-value">{formatDate(selectedOrder.date)}</span>
+                <span className="details-label">
+                  {t("orders.detailsDate", "Date")}
+                </span>
+                <span className="details-value">
+                  {formatDate(selectedOrder.date)}
+                </span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t("orders.detailsTotal", "Total amount")}</span>
-                <span className="details-value">€{Number(selectedOrder.total || 0).toFixed(2)}</span>
+                <span className="details-label">
+                  {t("orders.detailsTotal", "Total amount")}
+                </span>
+                <span className="details-value">
+                  €{formatMoney(selectedOrder.total)}
+                </span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t("orders.detailsStatus", "Status")}</span>
-                <span className="details-value">{statusLabel(selectedOrder.status)}</span>
+                <span className="details-label">
+                  {t("orders.detailsStatus", "Status")}
+                </span>
+                <span className="details-value">
+                  {statusLabel(selectedOrder.status)}
+                </span>
               </div>
               <div className="order-details-item">
-                <span className="details-label">{t("orders.detailsPayment", "Payment method")}</span>
+                <span className="details-label">
+                  {t("orders.detailsPayment", "Payment method")}
+                </span>
                 <span className="details-value">{selectedOrder.method}</span>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

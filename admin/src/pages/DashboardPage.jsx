@@ -14,7 +14,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { apiFetch } from "../lib/api";
+import { apiFetch, emitApiToast } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
@@ -101,6 +101,23 @@ const normalizeOrder = (order) => ({
   total: normalizeTotal(order.total ?? order.amount ?? order.price ?? 0),
   status: order.status || "Pending",
 });
+
+const computeUserStats = (usersList = []) => {
+  const entries = Array.isArray(usersList) ? usersList : [];
+  const totalUsers = entries.length;
+  const activeUsers = entries.filter(
+    (user) => String(user?.status ?? "").toLowerCase() === "active"
+  ).length;
+  const adminCount = entries.filter((user) =>
+    ["admin", "owner"].includes(String(user?.role ?? "").toLowerCase())
+  ).length;
+  return {
+    totalUsers,
+    activeUsers,
+    inactiveUsers: Math.max(0, totalUsers - activeUsers),
+    adminCount,
+  };
+};
 
 const buildStatusCounts = (ordersList) => {
   const counts = ordersList.reduce((acc, order) => {
@@ -222,7 +239,7 @@ const fetchDashboardSnapshot = async () => {
 function DashboardPage() {
   const { t, language, colorMode } = useSettings();
   const { currentUser } = useAuth();
-  const { lastNotification, notificationHistory, addToast } = useToast();
+  const { lastNotification, notificationHistory } = useToast();
   const locale = language || "en";
   const isLightTheme = colorMode === "light";
   const axisColor = isLightTheme ? "#6b7280" : "#e5e7eb";
@@ -241,6 +258,27 @@ function DashboardPage() {
   const fallbackDashboard = useMemo(
     () => buildDashboardState(fallbackOrders, fallbackUsers),
     []
+  );
+
+  const initialHealthMessage = t(
+    "apiHealthIdle",
+    "No API notifications yet."
+  );
+  const [apiHealth, setApiHealth] = useState({
+    status: "idle",
+    message: initialHealthMessage,
+    updatedAt: Date.now(),
+  });
+  const updateApiHealth = (status, message) => {
+    setApiHealth({
+      status,
+      message,
+      updatedAt: Date.now(),
+    });
+  };
+
+  const [userStats, setUserStats] = useState(() =>
+    computeUserStats(fallbackUsers)
   );
 
   const capabilityLabelMap = useMemo(
@@ -275,22 +313,25 @@ function DashboardPage() {
     }).format(new Date(value));
   };
 
-  const getActivityLabel = (count) => {
-    const template = t(
-      "apiHealthEvents",
-      "{count} recent notifications"
-    );
-    return template.replace("{count}", String(count));
-  };
-
   const [dashboardData, setDashboardData] = useState(fallbackDashboard);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [auditEvents, setAuditEvents] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [auditError, setAuditError] = useState("");
 
   useEffect(() => {
     let mounted = true;
 
     const loadDashboard = async () => {
       setDashboardLoading(true);
+      const successMessage = t(
+        "api.toast.dashboardRefreshed",
+        "Dashboard data refreshed"
+      );
+      const failureMessage = t(
+        "api.health.error",
+        "API encountered an issue"
+      );
       try {
         const data = await fetchDashboardSnapshot();
         if (!mounted || !data) return;
@@ -302,7 +343,19 @@ function DashboardPage() {
           recentOrders: data.recentOrders || prev.recentOrders,
           recentUsers: data.recentUsers || prev.recentUsers,
         }));
+        emitApiToast({
+          message: successMessage,
+          type: "success",
+          dedupeKey: "dashboard-sync",
+        });
+        updateApiHealth(
+          "healthy",
+          t("api.health.operational", "All systems operational")
+        );
       } catch (err) {
+        const errMessage = err?.message || failureMessage;
+        emitApiToast({ message: errMessage, type: "error" });
+        updateApiHealth("error", errMessage);
         console.warn("Failed to load dashboard data:", err);
       } finally {
         if (mounted) {
@@ -316,13 +369,79 @@ function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [language, t]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadUsers = async () => {
+      const successMessage = t("api.toast.userSynced", "User data synced");
+      const failureMessage = t(
+        "api.health.error",
+        "API encountered an issue"
+      );
+      try {
+        const users = await apiFetch("/api/users");
+        if (!mounted) return;
+        setUserStats(computeUserStats(users));
+        emitApiToast({
+          message: successMessage,
+          type: "success",
+          dedupeKey: "users-sync",
+        });
+        updateApiHealth(
+          "healthy",
+          t("api.health.operational", "All systems operational")
+        );
+      } catch (err) {
+        if (!mounted) return;
+        const errMessage = err?.message || failureMessage;
+        emitApiToast({
+          message: errMessage,
+          type: "error",
+        });
+        updateApiHealth("error", errMessage);
+      }
+    };
+
+    loadUsers();
+
+    return () => {
+      mounted = false;
+    };
+  }, [language, t]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAudit = async () => {
+      setAuditLoading(true);
+      setAuditError("");
+      try {
+        const payload = await apiFetch("/api/audit?limit=10");
+        if (!mounted) return;
+        const events = Array.isArray(payload?.events) ? payload.events : [];
+        setAuditEvents(events);
+      } catch (err) {
+        if (!mounted) return;
+        setAuditError(
+          t("activity.fetchError", "Unable to load activity feed.")
+        );
+      } finally {
+        if (mounted) {
+          setAuditLoading(false);
+        }
+      }
+    };
+
+    loadAudit();
+
+    return () => {
+      mounted = false;
+    };
+  }, [language, t]);
 
   const {
-    totalUsers,
-    activeUsers,
-    inactiveUsers,
-    adminCount,
     totalOrders,
     totalRevenue,
     statusCounts: statusCountsData = {},
@@ -330,9 +449,15 @@ function DashboardPage() {
     recentOrders: recentOrdersData = [],
     recentUsers: recentUsersData = [],
   } = dashboardData;
+  const { totalUsers, activeUsers, inactiveUsers, adminCount } = userStats;
 
   const activeRate =
     totalUsers === 0 ? 0 : Math.round((activeUsers / totalUsers) * 100);
+
+  const apiHealthStatusLabel =
+    apiHealth.status === "error"
+      ? t("api.status.error", "ERROR")
+      : t("api.status.success", "SUCCESS");
 
   const formatStatusLabel = useCallback(
     (key) => {
@@ -351,6 +476,54 @@ function DashboardPage() {
         .join(" ");
     },
     [t]
+  );
+
+  const resolveActivityActor = (actor) => {
+    if (!actor) return t("activity.unknownActor", "Unknown actor");
+    return (
+      actor.name ||
+      actor.email ||
+      actor.role ||
+      t("activity.unknownActor", "Unknown actor")
+    );
+  };
+
+  const formatActivityMessage = useCallback(
+    (entry) => {
+      if (!entry) return "";
+      const { action, entityId, meta } = entry;
+      switch (action) {
+        case "LOGIN_SUCCESS":
+          return t("activity.loginSuccess", "Signed in");
+        case "LOGIN_FAILED": {
+          const reason = meta?.reason ? ` (${meta.reason})` : "";
+          return (
+            t("activity.loginFailed", "Failed sign-in attempt") + reason
+          );
+        }
+        case "LOGOUT":
+          return t("activity.logout", "Signed out");
+        case "ORDER_STATUS_CHANGED": {
+          const template = t(
+            "activity.orderStatusChanged",
+            "Order #{orderId} marked {status}"
+          );
+          const statusLabel =
+            meta?.status && meta.status !== ""
+              ? formatStatusLabel(meta.status)
+              : t("orders.thStatus", "Status");
+          const orderId = entityId || meta?.orderId || "?";
+          return template
+            .replace("{orderId}", String(orderId))
+            .replace("{status}", statusLabel);
+        }
+        default:
+          return String(action)
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+    },
+    [formatStatusLabel, t]
   );
 
   const statusCounts = useMemo(
@@ -507,10 +680,12 @@ function DashboardPage() {
 
       <div className="dashboard-card dashboard-api-card">
         <p className="card-label">{t("apiHealthTitle", "API health")}</p>
-        <p className="card-number">
-          {notificationHistory.length > 0
-            ? getActivityLabel(notificationHistory.length)
-            : t("apiHealthIdle", "No API notifications yet.")}
+        <p
+          className={`card-number api-health-status api-health-status-${apiHealth.status}`}
+        >
+          <span className="api-health-dot" aria-hidden />
+          <span className="api-health-label">{apiHealthStatusLabel}</span>
+          <span>{apiHealth.message}</span>
         </p>
         <ul className="api-event-list">
           {notificationHistory.length === 0 ? (
@@ -542,50 +717,49 @@ function DashboardPage() {
         </ul>
       </div>
 
-      <div className="dashboard-card dashboard-toast-log">
-        <div className="toast-log-header">
-          <p>{t("apiToastLogTitle", "Recent API toasts")}</p>
-          <span className="toast-log-subtitle">
-            {t("apiToastLogSubtitle", "Tap an entry to replay the message.")}
+      <div className="dashboard-card dashboard-activity-card">
+        <div className="activity-header">
+          <p className="card-label">
+            {t("dashboardActivityTitle", "Activity")}
+          </p>
+          <span className="activity-subtitle">
+            {t("dashboardActivitySubtitle", "Recent audit log entries")}
           </span>
         </div>
-        <div className="toast-log-list">
-          {notificationHistory.length === 0 && (
-            <p className="toast-log-empty">
-              {t("apiToastLogEmpty", "No toast history yet.")}
+        <div className="activity-list">
+          {auditLoading ? (
+            <p className="activity-placeholder">
+              {t("activity.loading", "Loading activity...")}
             </p>
-          )}
-          {notificationHistory.map((event) => (
-            <button
-              key={`${event.timestamp}-${event.message}`}
-              type="button"
-              className="toast-log-item"
-              onClick={() =>
-                addToast({
-                  message: event.message,
-                  type: event.type,
-                  duration: 2200,
-                })
-              }
-            >
-              <span
-                className={`toast-log-type toast-log-${
-                  event.type || "info"
-                }`}
+          ) : auditError ? (
+            <p className="activity-error">{auditError}</p>
+          ) : auditEvents.length === 0 ? (
+            <p className="activity-placeholder">
+              {t("dashboardActivityEmpty", "No activity yet.")}
+            </p>
+          ) : (
+            auditEvents.map((event) => (
+              <article
+                key={event.id ?? `${event.ts}-${event.action}`}
+                className="activity-entry"
               >
-                {t(
-                  `apiEventType${(event.type || "info")
-                    .toString()
-                    .toUpperCase()}`,
-                  event.type || "info"
-                )}
-              </span>
-              <div>
-                <p>{event.message}</p>
-                <small>{formatTimestamp(event.timestamp)}</small>
-              </div>
-            </button>
-          ))}
+                <div className="activity-entry-body">
+                  <p>{formatActivityMessage(event)}</p>
+                  <span className="activity-entry-actor">
+                    {resolveActivityActor(event.actor)}
+                  </span>
+                </div>
+                <div className="activity-entry-meta">
+                  <span>{formatTimestamp(event.ts)}</span>
+                  {event.meta?.reason && (
+                    <small className="activity-reason">
+                      {event.meta.reason}
+                    </small>
+                  )}
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </div>
 

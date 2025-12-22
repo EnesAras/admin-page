@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const usersRoutes = require("./routes/usersRoutes");
 const ordersRoutes = require("./routes/ordersRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const auditRoutes = require("./routes/auditRoutes");
 const { initStore } = require("./data/store");
 
 dotenv.config();
@@ -48,9 +49,15 @@ console.log(
 const corsOptions = {
   origin: (origin, callback) => {
     console.log("CORS origin:", origin);
+
+    if (NODE_ENV !== "production") {
+      return callback(null, true);
+    }
+
     if (!origin) {
       return callback(null, true);
     }
+
     const normalizedOrigin =
       typeof origin === "string" ? origin.trim() : origin;
 
@@ -83,6 +90,7 @@ app.use("/api/users", usersRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/audit", auditRoutes);
 
 app.use((err, req, res, next) => {
   if (err?.message === "CORS_NOT_ALLOWED") {

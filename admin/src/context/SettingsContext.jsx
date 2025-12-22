@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useAuth } from "./AuthContext";
 import translations from "../i18n/translations";
+import { applyDocumentTheme } from "../utils/themeUtils";
 
 const defaultSettings = {
   displayName: "Admin User",
@@ -88,18 +89,7 @@ export function SettingsProvider({ children }) {
   }, [settings.theme, prefersDark]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const applyTheme = (theme) => {
-      document.body.classList.remove("theme-light", "theme-dark");
-      document.body.classList.add(`theme-${theme}`);
-      document.documentElement.setAttribute("data-theme", theme);
-      document.documentElement.classList.remove("app-light", "app-dark");
-      document.documentElement.classList.add(`app-${theme}`);
-      document.body.dataset.userTheme = settings.theme || "dark";
-    };
-
-    applyTheme(effectiveTheme);
+    applyDocumentTheme(effectiveTheme, settings.theme || "dark");
   }, [effectiveTheme, settings.theme]);
 
   // 💾 Her değişiklikte localStorage'a kaydet

@@ -16,6 +16,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ProductsPage from "./pages/ProductsPage";
 
 import { useSettings } from "./context/SettingsContext";
+import { useLayout } from "./context/LayoutContext";
 import translations from "./i18n/translations";
 import LoginPage from "./pages/LoginPage";
 import { useAuth } from "./context/AuthContext";
@@ -38,11 +39,18 @@ function App() {
   const navigate = useNavigate();
 
   const { colorMode = "dark", language = "en", theme } = useSettings();
+  const { sidebarCollapsed } = useLayout();
   const { isAuthenticated, logout, currentUser, hasRole } = useAuth();
 
   const dict = translations[language] || translations.en;
-  const displayName = currentUser?.name || "Guest User";
-  const displayRole = currentUser?.role || "Admin";
+  const displayName = currentUser?.name || currentUser?.email || "Guest User";
+  const displayEmail =
+    currentUser?.name && currentUser?.email ? currentUser.email : null;
+  const displayRole = currentUser?.role
+    ? `${currentUser.role.charAt(0).toUpperCase()}${currentUser.role
+        .slice(1)
+        .toLowerCase()}`
+    : "Guest";
 
   const initials = displayName
     .split(" ")
@@ -147,10 +155,15 @@ useEffect(() => {
 
   const isLoginPage = location.pathname === "/login";
 
-  const handleLogout = () => {
-    setIsUserMenuOpen(false);  // menüyü kapat
-    logout();                  // auth state reset
-    navigate("/login", { replace: true });
+  const handleLogout = async () => {
+    setIsUserMenuOpen(false);
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      navigate("/login", { replace: true });
+    }
   };
 
 
@@ -164,7 +177,7 @@ useEffect(() => {
     <div className={themeClasses.join(" ")}>
       {/* Sidebar sadece login olunmuşsa */}
       {!isLoginPage && isAuthenticated && (
-        <aside className="sidebar">
+        <aside className={`sidebar${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
           <div className="logo">{t("nav.logo", "My Admin")}</div>
 
           <nav className="menu">
@@ -230,16 +243,20 @@ useEffect(() => {
 
             <div className="topbar-right">
               <div className="topbar-user" ref={menuRef}>
-                <div className="topbar-user-info">
-                  <span className="topbar-user-name">{displayName}</span>
-                  <span className="topbar-user-role">{displayRole}</span>
-                </div>
-
                 <button
                   type="button"
-                  className="topbar-avatar-btn"
+                  className="topbar-user-button"
                   onClick={() => setIsUserMenuOpen((open) => !open)}
+                  aria-haspopup="true"
+                  aria-expanded={isUserMenuOpen}
                 >
+                  <div className="topbar-user-info">
+                    <span className="topbar-user-name">{displayName}</span>
+                    {displayEmail && (
+                      <span className="topbar-user-email">{displayEmail}</span>
+                    )}
+                    <span className="topbar-user-role">{displayRole}</span>
+                  </div>
                   <span className="topbar-avatar-initials">{initials}</span>
                 </button>
 

@@ -164,8 +164,8 @@
 
 .settings-field input,
 .settings-field select {
-  padding: 9px 11px;
-  border-radius: 11px;
+  padding: 9px 12px;
+  border-radius: 12px;
   border: 1px solid var(--palette-border);
   background: var(--palette-input-bg);
   color: var(--palette-text);
@@ -173,8 +173,8 @@
   transition:
     border-color 0.16s ease,
     box-shadow 0.16s ease,
-    background-color 0.16s ease,
-    transform 0.08s ease;
+    background-color 0.16s ease;
+  appearance: none;
 }
 
 .settings-field input::placeholder,
@@ -186,19 +186,7 @@
 .settings-field select:focus {
   outline: none;
   border-color: var(--palette-accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
-}
-
-.settings-field input::placeholder {
-  color: #6b7280;
-}
-
-.settings-field input:focus,
-.settings-field select:focus {
-  outline: none;
-  border-color: #f97316;
-  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.7);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px var(--palette-accent-soft);
 }
 
 /* =============== PREFERENCES TWO COLS =============== */
@@ -220,20 +208,15 @@
 .settings-theme-note {
   margin-top: 8px;
   font-size: 12px;
-  color: #cbd5f5;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   text-transform: none;
   letter-spacing: normal;
-  background: rgba(59, 130, 246, 0.08);
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-
-.settings-theme-note.active {
-  color: #facc15;
-  background: rgba(249, 115, 22, 0.12);
+  background: var(--palette-card);
+  border: 1px solid var(--palette-border);
+  border-radius: 12px;
+  padding: 12px 14px;
 }
 
 .settings-theme-sync {
@@ -241,9 +224,9 @@
   padding: 4px 10px;
   font-size: 11px;
   border-radius: 8px;
-  border: 1px solid rgba(248, 113, 113, 0.7);
+  border: 1px solid var(--palette-border);
   background: transparent;
-  color: #facc15;
+  color: var(--palette-text);
   cursor: pointer;
   transition:
     border-color 0.2s ease,
@@ -252,22 +235,22 @@
 }
 
 .settings-theme-sync:hover {
-  border-color: rgba(249, 115, 22, 0.9);
-  color: #fee2e2;
-  background: rgba(249, 115, 22, 0.12);
+  border-color: var(--palette-accent);
+  color: var(--palette-text);
+  background: var(--palette-card-hover);
 }
 
 .settings-theme-status {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--palette-muted);
 }
 
 .settings-chip {
   padding: 7px 13px;
   border-radius: 999px;
-  border: 1px solid #1f2937;
-  background: #020617;
-  color: #9ca3af;
+  border: 1px solid var(--palette-border);
+  background: var(--palette-card);
+  color: var(--palette-text);
   font-size: 12px;
   cursor: pointer;
   transition:
@@ -279,22 +262,15 @@
 }
 
 .settings-chip:hover {
-  background: #111827;
-  color: #e5e7eb;
   transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(2, 6, 23, 0.25);
 }
 
 .settings-chip.active {
-  border-color: rgba(249, 115, 22, 0.95);
-  background: linear-gradient(120deg, #f97316, #facc15);
-  color: #0b1120;
-  box-shadow: 0 16px 34px rgba(249, 115, 22, 0.6);
-}
-
-/* select için hafif farklı arka plan */
-
-.settings-field select {
-  background: radial-gradient(circle at top left, #020617, #020617);
+  border-color: var(--palette-accent);
+  background: var(--palette-accent-soft);
+  color: var(--palette-text);
+  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.35);
 }
 
 /* =============== NOTIFICATION TOGGLES =============== */
@@ -316,10 +292,13 @@
   padding: 8px 10px;
   border-radius: 12px;
   transition: background-color 0.16s ease, transform 0.08s ease;
+  background: var(--palette-card);
+  border: 1px solid var(--palette-border);
+  color: var(--palette-text);
 }
 
 .settings-toggle:hover {
-  background: rgba(15, 23, 42, 0.9);
+  background: var(--palette-card-hover);
   transform: translateY(-1px);
 }
 
@@ -344,9 +323,9 @@
   width: 14px;
   height: 14px;
   border-radius: 999px;
-  border: 1px solid #4b5563;
-  background: #020617;
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--palette-border);
+  background: var(--palette-card);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12);
   transition:
     background-color 0.16s ease,
     border-color 0.16s ease,
@@ -358,20 +337,20 @@
 .settings-toggle input:checked + .settings-toggle-text::before {
   background: linear-gradient(135deg, #f97316, #facc15);
   border-color: transparent;
-  box-shadow: 0 0 10px rgba(249, 115, 22, 0.9);
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.6);
 }
 
 .settings-toggle-text span {
   display: block;
   font-size: 13px;
-  color: #e5e7eb;
+  color: var(--palette-text);
   font-weight: 500;
 }
 
 .settings-toggle-text small {
   display: block;
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--palette-muted);
 }
 
 /* =============== RESPONSIVE =============== */
