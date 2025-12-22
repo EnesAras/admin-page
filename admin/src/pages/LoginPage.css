@@ -128,6 +128,22 @@
   color: var(--login-highlight-value, #e5e7eb);
 }
 
+.highlight-card.latency-card {
+  min-width: 160px;
+}
+
+.highlight-value.latency-value {
+  font-size: 22px;
+}
+
+.highlight-value.latency-value.offline {
+  color: #fcd34d;
+}
+
+.highlight-value.latency-value.measuring {
+  color: var(--login-highlight-value, #9ca3af);
+}
+
 .highlight-trend {
   margin-top: 4px;
   font-size: 11px;

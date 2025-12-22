@@ -650,7 +650,7 @@ function DashboardPage() {
 
 
       {/* USER CARDS */}
-      <div className="dashboard-grid">
+      <div className="dashboard-grid dashboard-summary-grid">
         <div className="dashboard-card">
           <p className="card-label">{t("cardTotalUsers")}</p>
           <p className="card-number">{totalUsers}</p>
@@ -764,7 +764,7 @@ function DashboardPage() {
       </div>
 
       {/* ORDER CARDS */}
-      <div className="dashboard-grid">
+      <div className="dashboard-grid dashboard-order-grid">
         <div className="dashboard-card">
         <p className="card-label">{t("totalOrders")}</p>
         <p className="card-number">{totalOrders}</p>
@@ -907,10 +907,11 @@ function DashboardPage() {
           {recentUsers.length === 0 ? (
             <p className="recent-empty">{t("recentEmpty")}</p>
           ) : (
-            <table className="recent-table">
-              <thead>
-                <tr>
-                  <th>{t("thName")}</th>
+            <div className="recent-table-wrapper">
+              <table className="recent-table">
+                <thead>
+                  <tr>
+                    <th>{t("thName")}</th>
                   <th>{t("thEmail")}</th>
                   <th>{t("thRole")}</th>
                   <th>{t("thStatus")}</th>
@@ -959,7 +960,8 @@ function DashboardPage() {
                   );
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
           )}
         </div>
 
@@ -979,10 +981,11 @@ function DashboardPage() {
               {t("recentOrdersEmpty")}
             </p>
           ) : (
-            <table className="recent-table">
-              <thead>
-                <tr>
-                  <th>{t("thId")}</th>
+            <div className="recent-table-wrapper">
+              <table className="recent-table">
+                <thead>
+                  <tr>
+                    <th>{t("thId")}</th>
                   <th>{t("thCustomer")}</th>
                   <th>{t("orders.thPayment")}</th>
                   <th>{t("orders.thShipping", "Shipping")}</th>
@@ -1025,7 +1028,8 @@ function DashboardPage() {
                   );
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
           )}
         </div>
       </div>

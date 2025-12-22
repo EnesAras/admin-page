@@ -480,8 +480,9 @@ function OrdersPage({ language }) {
       </div>
 
       <div className="orders-main-card">
-        <table className="orders-table">
-          <thead>
+        <div className="orders-table-wrapper">
+          <table className="orders-table">
+            <thead>
             <tr>
               <th className="orders-th-sortable" onClick={() => handleSort("id")}>
                 <span>{t("orders.thId", "ID")}</span>
@@ -559,6 +560,7 @@ function OrdersPage({ language }) {
             )}
           </tbody>
         </table>
+        </div>
 
         <div className="orders-pagination">
           <button disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>

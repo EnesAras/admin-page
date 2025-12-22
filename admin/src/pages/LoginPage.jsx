@@ -1,5 +1,5 @@
 import "./LoginPage.css";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
@@ -27,6 +27,19 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  const [latencyMs, setLatencyMs] = useState(null);
+  const [latencyStatus, setLatencyStatus] = useState("idle"); // idle | measuring | success | offline
+  const [activeUsers, setActiveUsers] = useState(null);
+  const [activeUsersStatus, setActiveUsersStatus] = useState("idle"); // idle | loading | success | error
+  const measurementsRef = useRef([]);
+  const latencyTimerRef = useRef(null);
+  const isMountedRef = useRef(true);
+
+  const LATENCY_ENDPOINT = "/api/health";
+  const LATENCY_WINDOW = 10;
+  const LATENCY_INTERVAL = 45000;
+  const LATENCY_TIMEOUT = 4500;
+  const ACTIVE_USERS_ENDPOINT = "/api/dashboard";
 
   // Saat'e göre selamlama
   const hour = new Date().getHours();
@@ -137,6 +150,123 @@ function LoginPage() {
     setMouseOffset({ x, y });
   };
 
+  const getLatencyDisplay = () => {
+    if (latencyStatus === "measuring" || latencyStatus === "idle") {
+      return t("login.cardLatencyMeasuring", "Measuring…");
+    }
+    if (latencyStatus === "offline") {
+      return t("login.cardLatencyOffline", "Offline");
+    }
+    return latencyMs != null ? `${latencyMs}ms` : t("login.cardLatencyMeasuring", "Measuring…");
+  };
+
+  const getLatencyMeta = () => {
+    if (latencyStatus === "success") {
+      return t("login.cardRealtime", "real-time analytics");
+    }
+    if (latencyStatus === "offline") {
+      return t("login.cardLatencyOfflineMeta", "Waiting for backend");
+    }
+    return t("login.cardLatencyMeasuring", "Measuring…");
+  };
+
+  const getActiveUsersDisplay = () => {
+    if (activeUsersStatus === "idle" || activeUsersStatus === "loading") {
+      return t("login.cardActiveUsersLoading", "Loading…");
+    }
+    if (activeUsersStatus === "error") {
+      return t("login.cardActiveUsersUnavailable", "Unavailable");
+    }
+    return activeUsers != null
+      ? activeUsers
+      : t("login.cardActiveUsersUnavailable", "Unavailable");
+  };
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    const runLatencyCheck = async () => {
+      if (!isMountedRef.current) return;
+      setLatencyStatus("measuring");
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), LATENCY_TIMEOUT);
+      const start = performance.now();
+
+      try {
+        await fetch(LATENCY_ENDPOINT, {
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
+        const elapsed = Math.max(1, Math.round(performance.now() - start));
+        measurementsRef.current = [elapsed, ...measurementsRef.current].slice(
+          0,
+          LATENCY_WINDOW
+        );
+        const avg =
+          Math.round(
+            measurementsRef.current.reduce((acc, value) => acc + value, 0) /
+              measurementsRef.current.length
+          ) || elapsed;
+        if (!isMountedRef.current) return;
+        setLatencyMs(avg);
+        setLatencyStatus("success");
+      } catch (err) {
+        if (!isMountedRef.current) return;
+        setLatencyStatus("offline");
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    runLatencyCheck();
+    latencyTimerRef.current = setInterval(runLatencyCheck, LATENCY_INTERVAL);
+
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(latencyTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchActiveUsers = async () => {
+      if (!isMountedRef.current) return;
+      setActiveUsersStatus("loading");
+      try {
+        const response = await fetch(ACTIVE_USERS_ENDPOINT, {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error("ActiveUsersFetchFailed");
+        }
+        const payload = await response.json();
+        if (!isMountedRef.current) return;
+        const count =
+          typeof payload.activeUsers === "number"
+            ? payload.activeUsers
+            : null;
+        if (count != null) {
+          setActiveUsers(count);
+          setActiveUsersStatus("success");
+        } else {
+          setActiveUsers(null);
+          setActiveUsersStatus("error");
+        }
+      } catch (err) {
+        if (!isMountedRef.current) return;
+        setActiveUsers(null);
+        setActiveUsersStatus("error");
+      }
+    };
+
+    fetchActiveUsers();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
   return (
     <div className="login-page" style={dynamicStyles} onMouseMove={handleMouseMove}>
       <div className="login-shell">
@@ -167,18 +297,22 @@ function LoginPage() {
               <div className="highlight-label">
                 {t("login.cardUsers", "Active users")}
               </div>
-              <div className="highlight-value">1,248</div>
-              <div className="highlight-trend">
-                +18% {t("login.cardVsLast", "vs last week")}
+              <div className="highlight-value">
+                {getActiveUsersDisplay()}
+              </div>
+              <div className="highlight-trend neutral">
+                {t("login.cardActiveUsersTrend", "—")}
               </div>
             </div>
-            <div className="highlight-card">
+            <div className="highlight-card latency-card">
               <div className="highlight-label">
                 {t("login.cardLatency", "Avg. response")}
               </div>
-              <div className="highlight-value">98ms</div>
+              <div className={`highlight-value latency-value ${latencyStatus}`}>
+                {getLatencyDisplay()}
+              </div>
               <div className="highlight-trend neutral">
-                {t("login.cardRealtime", "real-time analytics")}
+                {getLatencyMeta()}
               </div>
             </div>
           </div>

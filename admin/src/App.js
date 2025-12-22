@@ -20,7 +20,6 @@ import { useLayout } from "./context/LayoutContext";
 import translations from "./i18n/translations";
 import LoginPage from "./pages/LoginPage";
 import { useAuth } from "./context/AuthContext";
-import { useState, useEffect, useRef } from "react"; 
 
 
 
@@ -33,13 +32,11 @@ const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.OWNER, ROLES.MODERATOR];
 const ADMIN_OWNER_ROLES = [ROLES.ADMIN, ROLES.OWNER];
 
 function App() {
-  const menuRef = useRef(null);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   const { colorMode = "dark", language = "en", theme } = useSettings();
-  const { sidebarCollapsed } = useLayout();
+  const { sidebarCollapsed, toggleSidebar } = useLayout();
   const { isAuthenticated, logout, currentUser, hasRole } = useAuth();
 
   const dict = translations[language] || translations.en;
@@ -59,35 +56,7 @@ function App() {
     .slice(0, 2)
     .join("") || "GU";
 
-useEffect(() => {
-  setIsUserMenuOpen(false);
-}, [location.pathname]);
-
-useEffect(() => {
-  if (!isUserMenuOpen) return;
-
-  const handleClickOutside = (e) => {
-    if (menuRef.current && !menuRef.current.contains(e.target)) {
-      setIsUserMenuOpen(false);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") {
-      setIsUserMenuOpen(false);
-    }
-  };
-
-  document.addEventListener("mousedown", handleClickOutside);
-  document.addEventListener("keydown", handleKeyDown);
-
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-    document.removeEventListener("keydown", handleKeyDown);
-  };
-}, [isUserMenuOpen]);
-
-
+ 
 
   const t = (key, fallback) => {
     if (dict && dict[key] !== undefined) return dict[key];
@@ -156,7 +125,6 @@ useEffect(() => {
   const isLoginPage = location.pathname === "/login";
 
   const handleLogout = async () => {
-    setIsUserMenuOpen(false);
     try {
       await logout();
     } catch (error) {
@@ -173,10 +141,14 @@ useEffect(() => {
     themeClasses.push("app-system");
   }
 
+  const sidebarToggleLabel = sidebarCollapsed
+    ? t("nav.expandSidebar", "Expand sidebar")
+    : t("nav.collapseSidebar", "Collapse sidebar");
+
   return (
     <div className={themeClasses.join(" ")}>
-      {/* Sidebar sadece login olunmuşsa */}
-      {!isLoginPage && isAuthenticated && (
+      {/* Sidebar sadece login olunmuşsa and expanded */}
+      {!isLoginPage && isAuthenticated && !sidebarCollapsed && (
         <aside className={`sidebar${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
           <div className="logo">{t("nav.logo", "My Admin")}</div>
 
@@ -231,56 +203,49 @@ useEffect(() => {
 
       <div
         className={`main ${
-          isLoginPage || !isAuthenticated ? "main-full" : ""
+          isLoginPage || !isAuthenticated || sidebarCollapsed
+            ? "main-full"
+            : ""
         }`}
       >
                 {!isLoginPage && isAuthenticated && (
           <header className="topbar">
             <div className="topbar-left">
-              <h1>{getPageTitle(location.pathname)}</h1>
-              <p>{t("nav.welcome", "Welcome back")}</p>
+              <button
+                type="button"
+                className="sidebar-toggle"
+                onClick={toggleSidebar}
+                aria-label={sidebarToggleLabel}
+                title={sidebarToggleLabel}
+                aria-pressed={sidebarCollapsed}
+              >
+                <span aria-hidden="true">
+                  {sidebarCollapsed ? "▸" : "◂"}
+                </span>
+              </button>
+              <div className="topbar-left-text">
+                <h1>{getPageTitle(location.pathname)}</h1>
+                <p>{t("nav.welcome", "Welcome back")}</p>
+              </div>
             </div>
 
             <div className="topbar-right">
-              <div className="topbar-user" ref={menuRef}>
+              <div className="topbar-user">
+                <div className="topbar-user-info">
+                  <span className="topbar-user-name">{displayName}</span>
+                  {displayEmail && (
+                    <span className="topbar-user-email">{displayEmail}</span>
+                  )}
+                  <span className="topbar-user-role">{displayRole}</span>
+                </div>
+                <span className="topbar-avatar-initials">{initials}</span>
                 <button
                   type="button"
-                  className="topbar-user-button"
-                  onClick={() => setIsUserMenuOpen((open) => !open)}
-                  aria-haspopup="true"
-                  aria-expanded={isUserMenuOpen}
+                  className="topbar-logout-inline"
+                  onClick={handleLogout}
                 >
-                  <div className="topbar-user-info">
-                    <span className="topbar-user-name">{displayName}</span>
-                    {displayEmail && (
-                      <span className="topbar-user-email">{displayEmail}</span>
-                    )}
-                    <span className="topbar-user-role">{displayRole}</span>
-                  </div>
-                  <span className="topbar-avatar-initials">{initials}</span>
+                  {t("nav.logout", "Logout")}
                 </button>
-
-                {isUserMenuOpen && (
-                  <div className="topbar-user-menu">
-                    <button
-                      type="button"
-                      className="topbar-user-menu-item"
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        navigate("/settings");
-                      }}
-                    >
-                      {t("nav.profileSettings", "Profile & Settings")}
-                    </button>
-                    <button
-                      type="button"
-                      className="topbar-user-menu-item logout"
-                      onClick={handleLogout}
-                    >
-                      {t("nav.logout", "Logout")}
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </header>
