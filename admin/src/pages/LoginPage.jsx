@@ -29,8 +29,13 @@ function LoginPage() {
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
   const [latencyMs, setLatencyMs] = useState(null);
   const [latencyStatus, setLatencyStatus] = useState("idle"); // idle | measuring | success | offline
-  const [activeUsers, setActiveUsers] = useState(null);
-  const [activeUsersStatus, setActiveUsersStatus] = useState("idle"); // idle | loading | success | error
+  const [dashboardMetrics, setDashboardMetrics] = useState({
+    totalUsers: null,
+    activeUsers: null,
+    inactiveUsers: null,
+    adminUsers: null,
+  });
+  const [metricsStatus, setMetricsStatus] = useState("idle"); // idle | loading | success | error
   const measurementsRef = useRef([]);
   const latencyTimerRef = useRef(null);
   const isMountedRef = useRef(true);
@@ -39,7 +44,7 @@ function LoginPage() {
   const LATENCY_WINDOW = 10;
   const LATENCY_INTERVAL = 45000;
   const LATENCY_TIMEOUT = 4500;
-  const ACTIVE_USERS_ENDPOINT = "/api/dashboard";
+  const DASHBOARD_ENDPOINT = "/api/dashboard";
 
   // Saat'e göre selamlama
   const hour = new Date().getHours();
@@ -170,16 +175,35 @@ function LoginPage() {
     return t("login.cardLatencyMeasuring", "Measuring…");
   };
 
-  const getActiveUsersDisplay = () => {
-    if (activeUsersStatus === "idle" || activeUsersStatus === "loading") {
-      return t("login.cardActiveUsersLoading", "Loading…");
+  const metricCards = [
+    {
+      label: t("login.metricsTotalLabel", "Total users"),
+      value: dashboardMetrics.totalUsers,
+    },
+    {
+      label: t("login.metricsActiveLabel", "Active users"),
+      value: dashboardMetrics.activeUsers,
+    },
+    {
+      label: t("login.metricsInactiveLabel", "Inactive users"),
+      value: dashboardMetrics.inactiveUsers,
+    },
+    {
+      label: t("login.metricsAdminLabel", "Admins"),
+      value: dashboardMetrics.adminUsers,
+    },
+  ];
+
+  const getMetricDisplay = (value) => {
+    if (metricsStatus === "idle" || metricsStatus === "loading") {
+      return t("login.metricsLoading", "Loading…");
     }
-    if (activeUsersStatus === "error") {
-      return t("login.cardActiveUsersUnavailable", "Unavailable");
+    if (metricsStatus === "error") {
+      return t("login.metricsUnavailable", "Unavailable");
     }
-    return activeUsers != null
-      ? activeUsers
-      : t("login.cardActiveUsersUnavailable", "Unavailable");
+    return value != null
+      ? value
+      : t("login.metricsUnavailable", "Unavailable");
   };
 
   useEffect(() => {
@@ -226,41 +250,40 @@ function LoginPage() {
       clearInterval(latencyTimerRef.current);
     };
   }, []);
-
+ 
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchActiveUsers = async () => {
+    const fetchMetrics = async () => {
       if (!isMountedRef.current) return;
-      setActiveUsersStatus("loading");
+      setMetricsStatus("loading");
       try {
-        const response = await fetch(ACTIVE_USERS_ENDPOINT, {
+        const response = await fetch(DASHBOARD_ENDPOINT, {
           signal: controller.signal,
         });
         if (!response.ok) {
-          throw new Error("ActiveUsersFetchFailed");
+          throw new Error("DashboardFetchFailed");
         }
         const payload = await response.json();
         if (!isMountedRef.current) return;
-        const count =
-          typeof payload.activeUsers === "number"
-            ? payload.activeUsers
-            : null;
-        if (count != null) {
-          setActiveUsers(count);
-          setActiveUsersStatus("success");
-        } else {
-          setActiveUsers(null);
-          setActiveUsersStatus("error");
-        }
+        setDashboardMetrics({
+          totalUsers:
+            typeof payload.totalUsers === "number" ? payload.totalUsers : null,
+          activeUsers:
+            typeof payload.activeUsers === "number" ? payload.activeUsers : null,
+          inactiveUsers:
+            typeof payload.inactiveUsers === "number" ? payload.inactiveUsers : null,
+          adminUsers:
+            typeof payload.adminCount === "number" ? payload.adminCount : null,
+        });
+        setMetricsStatus("success");
       } catch (err) {
         if (!isMountedRef.current) return;
-        setActiveUsers(null);
-        setActiveUsersStatus("error");
+        setMetricsStatus("error");
       }
     };
 
-    fetchActiveUsers();
+    fetchMetrics();
 
     return () => {
       controller.abort();
@@ -293,17 +316,17 @@ function LoginPage() {
           </p>
 
           <div className="login-highlight-cards">
-            <div className="highlight-card">
-              <div className="highlight-label">
-                {t("login.cardUsers", "Active users")}
+            {metricCards.map((card) => (
+              <div className="highlight-card" key={card.label}>
+                <div className="highlight-label">{card.label}</div>
+                <div className="highlight-value">
+                  {getMetricDisplay(card.value)}
+                </div>
+                <div className="highlight-trend neutral">
+                  {t("login.metricsTrend", "—")}
+                </div>
               </div>
-              <div className="highlight-value">
-                {getActiveUsersDisplay()}
-              </div>
-              <div className="highlight-trend neutral">
-                {t("login.cardActiveUsersTrend", "—")}
-              </div>
-            </div>
+            ))}
             <div className="highlight-card latency-card">
               <div className="highlight-label">
                 {t("login.cardLatency", "Avg. response")}

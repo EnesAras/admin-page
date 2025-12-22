@@ -140,6 +140,9 @@ function App() {
   if (theme === "system") {
     themeClasses.push("app-system");
   }
+  if (sidebarCollapsed) {
+    themeClasses.push("app-sidebar-collapsed");
+  }
 
   const sidebarToggleLabel = sidebarCollapsed
     ? t("nav.expandSidebar", "Expand sidebar")
@@ -148,7 +151,7 @@ function App() {
   return (
     <div className={themeClasses.join(" ")}>
       {/* Sidebar sadece login olunmuşsa and expanded */}
-      {!isLoginPage && isAuthenticated && !sidebarCollapsed && (
+      {!isLoginPage && isAuthenticated && (
         <aside className={`sidebar${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
           <div className="logo">{t("nav.logo", "My Admin")}</div>
 
