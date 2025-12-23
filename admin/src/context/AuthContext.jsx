@@ -7,7 +7,7 @@ import {
   useState,
   useCallback,
 } from "react";
-import { apiFetch, emitApiToast } from "../lib/api";
+import { apiFetch, emitApiToast, setActor, clearActor } from "../lib/api";
 
 const STORAGE_KEYS = {
   auth: "admin_isAuthenticated",
@@ -42,6 +42,7 @@ const clearAuthPersistence = () => {
     session?.removeItem(key);
     local?.removeItem(key);
   });
+  clearActor();
 };
 
 const readCurrentUser = () => {
@@ -127,6 +128,7 @@ export function AuthProvider({ children }) {
       const local = getLocalStorage();
       local?.setItem(STORAGE_KEYS.user, serializedUser);
 
+      setActor(resolvedUser);
       setIsAuthenticated(true);
       setCurrentUser(resolvedUser);
 

@@ -38,20 +38,33 @@ router.post("/", requireAdminRole, async (req, res) => {
   try {
     const { name, email } = req.body || {};
     if (!name || !email) {
-      return res.status(400).json({ error: "NameEmailRequired" });
+      return res
+        .status(400)
+        .json({ error: "Name and email are required." });
     }
 
     const password = String(req.body.password || "").trim();
     if (password.length < 8) {
-      return res.status(400).json({ error: "PasswordLength" });
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 8 characters." });
     }
 
     const existing = await findUserByEmail(String(email).toLowerCase());
     if (existing) {
-      return res.status(409).json({ error: "EmailExists" });
+      return res
+        .status(409)
+        .json({ error: "This email is already registered." });
     }
 
     const payload = { ...(req.body || {}), password };
+    console.log("CREATE USER payload:", {
+      name: payload.name,
+      email: payload.email,
+      role: payload.role,
+      status: payload.status,
+      passwordLength: password.length,
+    });
     const created = await addUser(payload);
     res.status(201).json(created);
   } catch (err) {
@@ -62,18 +75,56 @@ router.post("/", requireAdminRole, async (req, res) => {
 
 router.put("/:id", requireAdminRole, async (req, res) => {
   try {
-    const payload = { ...req.body };
-    const password = String(payload.password || "").trim();
-    if (payload.password && password.length < 8) {
-      return res.status(400).json({ error: "PasswordLength" });
-    }
-    if (payload.password) {
-      payload.password = password;
-    } else {
-      delete payload.password;
+    const userId = Number(req.params.id);
+    const name = req.body?.name ? String(req.body.name).trim() : null;
+    const email = req.body?.email
+      ? String(req.body.email).trim().toLowerCase()
+      : null;
+    const role = req.body?.role || "user";
+    const status = req.body?.status || "Active";
+    const passwordRaw = req.body?.password
+      ? String(req.body.password).trim()
+      : "";
+
+    if (!name || !email) {
+      return res
+        .status(400)
+        .json({ error: "Name and email are required." });
     }
 
-    const updated = await updateUser(Number(req.params.id), payload);
+    if (passwordRaw && passwordRaw.length < 8) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 8 characters." });
+    }
+
+    const existing = await findUserByEmail(email);
+    if (existing && existing.id !== userId) {
+      return res
+        .status(409)
+        .json({ error: "This email is already registered." });
+    }
+
+    const payload = {
+      name,
+      email,
+      role,
+      status,
+    };
+    if (passwordRaw) {
+      payload.password = passwordRaw;
+    }
+
+    console.log("UPDATE USER payload:", {
+      id: userId,
+      name: payload.name,
+      email: payload.email,
+      role: payload.role,
+      status: payload.status,
+      passwordLength: passwordRaw ? passwordRaw.length : 0,
+    });
+
+    const updated = await updateUser(userId, payload);
     if (!updated) {
       return res.status(404).json({ error: "UserNotFound" });
     }

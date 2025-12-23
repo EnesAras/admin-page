@@ -19,7 +19,10 @@ const readStoredUser = () => {
   }
 };
 
-const buildActorHeaders = (user) => {
+let currentActor = readStoredUser();
+
+const buildActorHeaders = () => {
+  const user = currentActor || readStoredUser();
   if (!user || typeof user !== "object") return {};
   const headers = {};
   if (user.id !== undefined && user.id !== null) {
@@ -36,6 +39,14 @@ const buildActorHeaders = (user) => {
   }
   return headers;
 };
+
+export function setActor(actor) {
+  currentActor = actor;
+}
+
+export function clearActor() {
+  currentActor = null;
+}
 
 export async function apiFetch(path, options = {}) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -72,7 +83,10 @@ export async function apiFetch(path, options = {}) {
       res.status,
       data ?? text ?? "no body"
     );
-    throw new Error(data?.error || data?.message || "Request failed");
+    const error = new Error(data?.error || data?.message || "Request failed");
+    error.status = res.status;
+    error.data = data;
+    throw error;
   }
 
   return data;

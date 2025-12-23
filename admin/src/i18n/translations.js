@@ -197,6 +197,22 @@ const translations = {
     "users.notAuthorized": "Not authorized",
     "users.forbiddenAction":
       "This action is restricted to admins and owners.",
+    "users.createFailed":
+      "Unable to create user. Please try again.",
+    "users.createSuccess": "User created",
+    "users.createFailedStatus":
+      "Unable to create user ({status}): {message}",
+    "users.updateSuccess": "User updated",
+    "users.updateFailed":
+      "There was a problem updating this user. Please try again.",
+    "users.updateFailedStatus":
+      "Unable to update user ({status}): {message}",
+    "users.saveChanges": "Save changes",
+    "users.cancel": "Cancel",
+    "users.resetPasswordTitle": "Reset password",
+    "users.newPassword": "New password",
+    "users.showPassword": "Show password",
+    "users.hidePassword": "Hide password",
     "users.error.passwordLength": "Password must be at least 8 characters.",
     "users.error.passwordMatch": "Passwords must match.",
     // PRODUCTS
@@ -473,6 +489,22 @@ const translations = {
     "users.notAuthorized": "Yetkiniz yok",
     "users.forbiddenAction":
       "Bu işlem sadece admin ve owner yetkisi gerektirir.",
+    "users.createFailed":
+      "Kullanıcı oluşturulurken bir sorun oluştu. Lütfen tekrar deneyin.",
+    "users.createSuccess": "Kullanıcı oluşturuldu",
+    "users.createFailedStatus":
+      "Kullanıcı oluşturulamadı ({status}): {message}",
+    "users.updateSuccess": "Kullanıcı güncellendi",
+    "users.updateFailed":
+      "Kullanıcı güncellenirken bir sorun oluştu. Lütfen tekrar deneyin.",
+    "users.updateFailedStatus":
+      "Kullanıcı güncellenemedi ({status}): {message}",
+    "users.saveChanges": "Değişiklikleri kaydet",
+    "users.cancel": "İptal",
+    "users.resetPasswordTitle": "Şifre sıfırla",
+    "users.newPassword": "Yeni şifre",
+    "users.showPassword": "Şifreyi göster",
+    "users.hidePassword": "Şifreyi gizle",
     "users.error.passwordLength": "Şifre en az 8 karakter olmalı.",
     "users.error.passwordMatch": "Şifreler eşleşmelidir.",
         // PRODUCTS

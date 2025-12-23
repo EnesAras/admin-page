@@ -93,38 +93,64 @@ function UsersPage({ language }) {
   const [fetchError, setFetchError] = useState("");
 
   // İlk açılışta backend'ten çek, hata olursa usersData'ya düş
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        setLoading(true);
-        setFetchError("");
-        const data = await apiFetch("/api/users");
-        const normalized = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.users)
-            ? data.users
-            : [];
-        setUsers(normalized.length > 0 ? normalized : usersData);
-      } catch (err) {
-        console.error(err);
-        setFetchError(
-          t(
-            "users.fetchError",
-            "There was a problem loading users. Showing local data."
-          )
-        );
-        setUsers(usersData);
-      } finally {
-        setLoading(false);
-      }
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setFetchError("");
+      const data = await apiFetch("/api/users");
+      const normalized = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.users)
+          ? data.users
+          : [];
+      setUsers(normalized.length > 0 ? normalized : usersData);
+    } catch (err) {
+      console.error(err);
+      setFetchError(
+        t(
+          "users.fetchError",
+          "There was a problem loading users. Showing local data."
+        )
+      );
+      setUsers(usersData);
+    } finally {
+      setLoading(false);
     }
-
-    fetchUsers();
   }, [lang, t]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const formatApiError = useCallback(
+    (err, fallbackKey, statusKey, fallbackDefault) => {
+      const status = err?.status;
+      const fallbackText = t(
+        fallbackKey,
+        fallbackDefault || "Unable to complete this action."
+      );
+      const backendMsg =
+        err?.data?.error || err?.message || fallbackText;
+      const toastMessage = status
+        ? t(
+            statusKey,
+            "Unable to complete this action ({status}): {message}"
+          )
+            .replace("{status}", String(status))
+            .replace("{message}", backendMsg)
+        : backendMsg;
+      emitApiToast({
+        type: "error",
+        message: toastMessage,
+      });
+      return backendMsg;
+    },
+    [t]
+  );
 
   const currentRole = (currentUser?.role || "").toLowerCase();
   const canCreateUser = hasRole(["admin", "owner"]);
-  const canEditUsers = currentRole === "admin";
+  const canEditUsers = hasRole(["admin", "owner"]);
   const canToggleStatus = ["admin", "owner", "moderator"].includes(
     currentRole
   );
@@ -136,6 +162,8 @@ function UsersPage({ language }) {
   const [newUserStatus, setNewUserStatus] = useState("Active");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserPasswordConfirm, setNewUserPasswordConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [addError, setAddError] = useState("");
 
   const resetAddForm = useCallback(() => {
@@ -145,6 +173,20 @@ function UsersPage({ language }) {
     setNewUserStatus("Active");
     setNewUserPassword("");
     setNewUserPasswordConfirm("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  }, []);
+
+  const resetEditForm = useCallback(() => {
+    setEditUserName("");
+    setEditUserEmail("");
+    setEditUserRole("user");
+    setEditUserStatus("Active");
+    setEditNewPassword("");
+    setEditConfirmPassword("");
+    setShowEditPassword(false);
+    setShowEditConfirmPassword(false);
+    setEditError("");
   }, []);
 
   useEffect(() => {
@@ -161,6 +203,11 @@ function UsersPage({ language }) {
   const [editUserEmail, setEditUserEmail] = useState("");
   const [editUserRole, setEditUserRole] = useState("user");
   const [editUserStatus, setEditUserStatus] = useState("Active");
+  const [editNewPassword, setEditNewPassword] = useState("");
+  const [editConfirmPassword, setEditConfirmPassword] = useState("");
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [showEditConfirmPassword, setShowEditConfirmPassword] = useState(false);
+  const [editError, setEditError] = useState("");
 
   const openAddPanel = useCallback(() => {
     resetAddForm();
@@ -168,6 +215,21 @@ function UsersPage({ language }) {
     setIsEditing(false);
     setIsAdding(true);
   }, [resetAddForm]);
+
+  const openEditPanel = useCallback((user) => {
+    setIsAdding(false);
+    setIsEditing(true);
+    setEditingUserId(user.id);
+    setEditUserName(user.name || "");
+    setEditUserEmail(user.email || "");
+    setEditUserRole(user.role || "user");
+    setEditUserStatus(user.status || "Active");
+    setEditNewPassword("");
+    setEditConfirmPassword("");
+    setShowEditPassword(false);
+    setShowEditConfirmPassword(false);
+    setEditError("");
+  }, []);
 
   // Sıralama state'i
   const [sortBy, setSortBy] = useState("id"); // "id" | "name" | "email" | "role" | "status"
@@ -209,6 +271,109 @@ function UsersPage({ language }) {
     isNewEmailDuplicate ||
     isPasswordTooShort ||
     isPasswordMismatch;
+
+  const validationMessages = [];
+  if (!newUserName.trim()) {
+    validationMessages.push(
+      t("users.error.nameRequired", "Name and email are required.")
+    );
+  }
+  if (!newUserEmail.trim() || isNewEmailInvalid) {
+    validationMessages.push(
+      t("users.error.emailInvalid", "Please enter a valid email address.")
+    );
+  }
+  if (isNewEmailDuplicate) {
+    validationMessages.push(
+      t("users.error.emailExists", "This email is already registered.")
+    );
+  }
+  if (isNewNameInvalid) {
+    validationMessages.push(
+      t(
+        "users.error.nameLettersOnly",
+        "Name can only contain letters and spaces."
+      )
+    );
+  }
+  if (isPasswordTooShort) {
+    validationMessages.push(
+      t(
+        "users.passwordTooShort",
+        "Password must be at least 8 characters."
+      )
+    );
+  }
+  if (isPasswordMismatch) {
+    validationMessages.push(
+      t("users.passwordMismatch", "Passwords must match.")
+    );
+  }
+
+  const isEditNameInvalid =
+    editUserName.trim() !== "" && !isValidName(editUserName);
+  const isEditEmailInvalid =
+    editUserEmail.trim() !== "" && !isValidEmail(editUserEmail);
+  const isEditEmailDuplicate =
+    editUserEmail.trim() !== "" &&
+    users.some(
+      (u) =>
+        u.id !== editingUserId &&
+        u.email.toLowerCase() === editUserEmail.trim().toLowerCase()
+    );
+  const isEditPasswordTooShort =
+    editNewPassword.trim() !== "" && editNewPassword.length < 8;
+  const isEditPasswordMismatch =
+    editNewPassword &&
+    editConfirmPassword &&
+    editNewPassword !== editConfirmPassword;
+
+  const isEditFormInvalid =
+    !editUserName.trim() ||
+    !editUserEmail.trim() ||
+    isEditNameInvalid ||
+    isEditEmailInvalid ||
+    isEditEmailDuplicate ||
+    isEditPasswordTooShort ||
+    isEditPasswordMismatch;
+
+  const editValidationMessages = [];
+  if (!editUserName.trim()) {
+    editValidationMessages.push(
+      t("users.error.nameRequired", "Name and email are required.")
+    );
+  }
+  if (!editUserEmail.trim() || isEditEmailInvalid) {
+    editValidationMessages.push(
+      t("users.error.emailInvalid", "Please enter a valid email address.")
+    );
+  }
+  if (isEditEmailDuplicate) {
+    editValidationMessages.push(
+      t("users.error.emailUsed", "This email is already registered for another user.")
+    );
+  }
+  if (isEditNameInvalid) {
+    editValidationMessages.push(
+      t(
+        "users.error.nameLettersOnly",
+        "Name can only contain letters and spaces."
+      )
+    );
+  }
+  if (isEditPasswordTooShort) {
+    editValidationMessages.push(
+      t(
+        "users.passwordTooShort",
+        "Password must be at least 8 characters."
+      )
+    );
+  }
+  if (isEditPasswordMismatch) {
+    editValidationMessages.push(
+      t("users.passwordMismatch", "Passwords must match.")
+    );
+  }
 
   // ========== ADD USER (backend + state) ==========
   const handleAddUser = async () => {
@@ -285,74 +450,54 @@ function UsersPage({ language }) {
       role: newUserRole,
       status: newUserStatus,
       password: newUserPassword.trim(),
-      // country'yi istemiyorsan backend default "Unknown" kullanıyor zaten
     };
 
+    console.log("Creating user payload:", {
+      name: payload.name,
+      email: payload.email,
+      role: payload.role,
+      status: payload.status,
+      passwordLength: payload.password.length,
+    });
+
     try {
-      const created = await apiFetch("/api/users", {
+      await apiFetch("/api/users", {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
-      setUsers((prevUsers) => [...prevUsers, created]);
+      emitApiToast({
+        type: "success",
+        message: t("users.createSuccess", "User created"),
+      });
 
+      await fetchUsers();
+
+      setAddError("");
       resetAddForm();
       setIsAdding(false);
     } catch (err) {
       console.error(err);
-      setAddError(
-        t(
-          "users.saveError",
-          "There was a problem saving this user. Please try again."
-        )
+      const backendMsg = formatApiError(
+        err,
+        "users.createFailed",
+        "users.createFailedStatus",
+        "There was a problem saving this user. Please try again."
       );
+      setAddError(backendMsg);
     }
   };
 
   // ========== UPDATE USER (backend + state) ==========
   const handleUpdateUser = async () => {
-    if (!editUserName.trim() || !editUserEmail.trim()) {
-      alert(
-        t("users.error.nameRequired", "Name and email are required.")
-      );
+    if (!canEditUsers) return;
+
+    if (isEditFormInvalid) {
+      setEditError(editValidationMessages[0] || "");
       return;
     }
 
-    if (!isValidName(editUserName)) {
-      alert(
-        t(
-          "users.error.nameLettersOnly",
-          "Name can only contain letters and spaces."
-        )
-      );
-      return;
-    }
-
-    if (!isValidEmail(editUserEmail)) {
-      alert(
-        t(
-          "users.error.emailInvalid",
-          "Please enter a valid email address."
-        )
-      );
-      return;
-    }
-
-    const emailTaken = users.some(
-      (u) =>
-        u.id !== editingUserId &&
-        u.email.toLowerCase() === editUserEmail.trim().toLowerCase()
-    );
-
-    if (emailTaken) {
-      alert(
-        t(
-          "users.error.emailUsed",
-          "This email is already registered for another user."
-        )
-      );
-      return;
-    }
+    if (!editingUserId) return;
 
     const payload = {
       name: editUserName.trim(),
@@ -360,50 +505,44 @@ function UsersPage({ language }) {
       role: editUserRole,
       status: editUserStatus,
     };
+    if (editNewPassword.trim()) {
+      payload.password = editNewPassword.trim();
+    }
 
     try {
-      const updated = await apiFetch(`/api/users/${editingUserId}`, {
+      await apiFetch(`/api/users/${editingUserId}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
 
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === updated.id ? updated : user
-        )
-      );
+      emitApiToast({
+        type: "success",
+        message: t("users.updateSuccess", "User updated"),
+      });
+
+      await fetchUsers();
 
       setIsEditing(false);
       setEditingUserId(null);
-      setEditUserName("");
-      setEditUserEmail("");
-      setEditUserRole("user");
-      setEditUserStatus("Active");
+      resetEditForm();
     } catch (err) {
       console.error(err);
-      alert(
-        t(
-          "users.saveError",
-          "There was a problem saving this user. Please try again."
-        )
+      const backendMsg = formatApiError(
+        err,
+        "users.updateFailed",
+        "users.updateFailedStatus",
+        "There was a problem updating this user. Please try again."
       );
+      setEditError(backendMsg);
     }
   };
 
   const handleEditClick = useCallback(
     (user) => {
       if (!canEditUsers) return;
-
-      setIsAdding(false);
-      setIsEditing(true);
-
-      setEditingUserId(user.id);
-      setEditUserName(user.name);
-      setEditUserEmail(user.email);
-      setEditUserRole(user.role);
-      setEditUserStatus(user.status);
+      openEditPanel(user);
     },
-    [canEditUsers]
+    [canEditUsers, openEditPanel]
   );
 
   // ========== TOGGLE STATUS (backend + state) ==========
@@ -795,22 +934,50 @@ function UsersPage({ language }) {
 
             {canCreateUser && (
               <>
-                <input
-                  type="password"
-                  placeholder={t("users.password", "Password")}
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                  className={isPasswordTooShort ? "input-error" : ""}
-                  minLength={8}
-                />
-                <input
-                  type="password"
-                  placeholder={t("users.confirmPassword", "Confirm password")}
-                  value={newUserPasswordConfirm}
-                  onChange={(e) => setNewUserPasswordConfirm(e.target.value)}
-                  className={isPasswordMismatch ? "input-error" : ""}
-                  minLength={8}
-                />
+                <div className="password-field">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder={t("users.password", "Password")}
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    className={isPasswordTooShort ? "input-error" : ""}
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    aria-label={
+                      showPassword
+                        ? t("users.hidePassword", "Hide password")
+                        : t("users.showPassword", "Show password")
+                    }
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+                <div className="password-field">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder={t("users.confirmPassword", "Confirm password")}
+                    value={newUserPasswordConfirm}
+                    onChange={(e) => setNewUserPasswordConfirm(e.target.value)}
+                    className={isPasswordMismatch ? "input-error" : ""}
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    aria-label={
+                      showConfirmPassword
+                        ? t("users.hidePassword", "Hide password")
+                        : t("users.showPassword", "Show password")
+                    }
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  >
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </>
             )}
 
@@ -838,7 +1005,18 @@ function UsersPage({ language }) {
             </select>
           </div>
 
-          {addError && <p className="add-user-error">{addError}</p>}
+          {(addError || (isAddFormInvalid && validationMessages.length > 0)) && (
+            <div className="add-user-error">
+              {addError && <p>{addError}</p>}
+              {isAddFormInvalid && validationMessages.length > 0 && (
+                <ul className="validation-list">
+                  {validationMessages.map((message, index) => (
+                    <li key={`validation-${index}`}>{message}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           <div className="add-user-actions">
             <button
@@ -899,15 +1077,15 @@ function UsersPage({ language }) {
               onChange={(e) => setEditUserEmail(e.target.value)}
             />
 
-<select
-  value={editUserRole}
-  onChange={(e) => setEditUserRole(e.target.value)}
->
-  <option value="user">{roleLabel("user")}</option>
-  <option value="admin">{roleLabel("admin")}</option>
-  <option value="manager">{roleLabel("manager")}</option>
-  <option value="owner">{roleLabel("owner")}</option>
-</select>
+            <select
+              value={editUserRole}
+              onChange={(e) => setEditUserRole(e.target.value)}
+            >
+              <option value="user">{roleLabel("user")}</option>
+              <option value="admin">{roleLabel("admin")}</option>
+              <option value="manager">{roleLabel("manager")}</option>
+              <option value="owner">{roleLabel("owner")}</option>
+            </select>
 
             <select
               value={editUserStatus}
@@ -920,24 +1098,94 @@ function UsersPage({ language }) {
                 {statusLabel("Inactive")}
               </option>
             </select>
+
+            <div className="reset-password-block">
+              <span className="reset-password-title">
+                {t("users.resetPasswordTitle", "Reset password")}
+              </span>
+              <div className="password-field">
+                <input
+                  type={showEditPassword ? "text" : "password"}
+                  placeholder={t("users.newPassword", "New password")}
+                  value={editNewPassword}
+                  onChange={(e) => setEditNewPassword(e.target.value)}
+                  className={
+                    isEditPasswordTooShort ? "input-error" : ""
+                  }
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  aria-label={
+                    showEditPassword
+                      ? t("users.hidePassword", "Hide password")
+                      : t("users.showPassword", "Show password")
+                  }
+                  onClick={() => setShowEditPassword((prev) => !prev)}
+                >
+                  {showEditPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+              <div className="password-field">
+                <input
+                  type={showEditConfirmPassword ? "text" : "password"}
+                  placeholder={t("users.confirmPassword", "Confirm password")}
+                  value={editConfirmPassword}
+                  onChange={(e) => setEditConfirmPassword(e.target.value)}
+                  className={isEditPasswordMismatch ? "input-error" : ""}
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  aria-label={
+                    showEditConfirmPassword
+                      ? t("users.hidePassword", "Hide password")
+                      : t("users.showPassword", "Show password")
+                  }
+                  onClick={() =>
+                    setShowEditConfirmPassword((prev) => !prev)
+                  }
+                >
+                  {showEditConfirmPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
           </div>
 
+          {(editError ||
+            (isEditFormInvalid && editValidationMessages.length > 0)) && (
+            <div className="add-user-error">
+              {editError && <p>{editError}</p>}
+              {isEditFormInvalid && editValidationMessages.length > 0 && (
+                <ul className="validation-list">
+                  {editValidationMessages.map((message, index) => (
+                    <li key={`edit-validation-${index}`}>{message}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           <div className="add-user-actions">
-            <button className="btn-primary" onClick={handleUpdateUser}>
-              {t("common.save", "Save changes")}
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={handleUpdateUser}
+            >
+              {t("users.saveChanges", "Save changes")}
             </button>
             <button
               className="btn-ghost"
+              type="button"
               onClick={() => {
                 setIsEditing(false);
                 setEditingUserId(null);
-                setEditUserName("");
-                setEditUserEmail("");
-                setEditUserRole("User");
-                setEditUserStatus("Active");
+                resetEditForm();
               }}
             >
-              {t("common.cancel", "Cancel")}
+              {t("users.cancel", "Cancel")}
             </button>
           </div>
         </div>

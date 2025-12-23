@@ -23,13 +23,13 @@ import { useAuth } from "./context/AuthContext";
 
 
 
-const ROLES = {
-  ADMIN: "admin",
-  OWNER: "owner",
-  MODERATOR: "moderator",
+const PAGE_ROLE_REQUIREMENTS = {
+  DASHBOARD: [],
+  USERS: [],
+  PRODUCTS: [],
+  ORDERS: [],
+  SETTINGS: [],
 };
-const FULL_ACCESS_ROLES = [ROLES.ADMIN, ROLES.OWNER, ROLES.MODERATOR];
-const ADMIN_OWNER_ROLES = [ROLES.ADMIN, ROLES.OWNER];
 
 function App() {
   const location = useLocation();
@@ -267,7 +267,7 @@ function App() {
             <Route
               path="/"
               element={
-                <PrivateRoute allowedRoles={FULL_ACCESS_ROLES}>
+                <PrivateRoute allowedRoles={PAGE_ROLE_REQUIREMENTS.DASHBOARD}>
                   <DashboardPage language={language} />
                 </PrivateRoute>
               }
@@ -275,7 +275,7 @@ function App() {
             <Route
               path="/users"
               element={
-                <PrivateRoute allowedRoles={ADMIN_OWNER_ROLES}>
+                <PrivateRoute allowedRoles={PAGE_ROLE_REQUIREMENTS.USERS}>
                   <UsersPage language={language} />
                 </PrivateRoute>
               }
@@ -283,7 +283,7 @@ function App() {
             <Route
               path="/products"
               element={
-                <PrivateRoute allowedRoles={ADMIN_OWNER_ROLES}>
+                <PrivateRoute allowedRoles={PAGE_ROLE_REQUIREMENTS.PRODUCTS}>
                   <ProductsPage language={language} />
                 </PrivateRoute>
               }
@@ -291,7 +291,7 @@ function App() {
             <Route
               path="/orders"
               element={
-                <PrivateRoute allowedRoles={FULL_ACCESS_ROLES}>
+                <PrivateRoute allowedRoles={PAGE_ROLE_REQUIREMENTS.ORDERS}>
                   <OrdersPage language={language} />
                 </PrivateRoute>
               }
@@ -299,7 +299,7 @@ function App() {
             <Route
               path="/settings"
               element={
-                <PrivateRoute allowedRoles={FULL_ACCESS_ROLES}>
+                <PrivateRoute allowedRoles={PAGE_ROLE_REQUIREMENTS.SETTINGS}>
                   <SettingsPage language={language} />
                 </PrivateRoute>
               }
