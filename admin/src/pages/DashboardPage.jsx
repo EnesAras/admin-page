@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.jsx
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import "./DashboardPage.css";
 import { useSettings } from "../context/SettingsContext";
 import {
@@ -215,7 +215,14 @@ const formatPresenceTooltipTime = (value) => {
 };
 
 const buildPresenceTooltip = (presence, t) => {
-  if (!presence) return "";
+  if (!presence) {
+    return t("presence.tooltipUnknown", "{status} • {noSessionYet}")
+      .replace("{status}", t("presence.unknown", "Unknown"))
+      .replace(
+        "{noSessionYet}",
+        t("presence.noSessionYet", "No session recorded yet")
+      );
+  }
   const statusLabel = presence?.online
     ? t("presence.online", "Online")
     : t("presence.offline", "Offline");
@@ -254,6 +261,33 @@ const buildPresenceTooltip = (presence, t) => {
   }
   return parts.join(" • ");
 };
+
+const DashboardCardState = ({
+  variant,
+  title,
+  message,
+  actionLabel,
+  onAction,
+}) => (
+  <div className={`dashboard-card-state dashboard-card-state-${variant}`}>
+    {variant === "loading" && (
+      <span className="dashboard-card-state-spinner" aria-hidden="true" />
+    )}
+    {title && <p className="dashboard-card-state-title">{title}</p>}
+    {message && (
+      <p className="dashboard-card-state-message">{message}</p>
+    )}
+    {onAction && (
+      <button
+        type="button"
+        className="dashboard-card-state-action"
+        onClick={onAction}
+      >
+        {actionLabel}
+      </button>
+    )}
+  </div>
+);
 
 const DASHBOARD_CACHE_TTL = 45 * 1000;
 let dashboardCache = null;
@@ -348,13 +382,13 @@ function DashboardPage() {
     message: initialHealthMessage,
     updatedAt: Date.now(),
   });
-  const updateApiHealth = (status, message) => {
+  const updateApiHealth = useCallback((status, message) => {
     setApiHealth({
       status,
       message,
       updatedAt: Date.now(),
     });
-  };
+  }, []);
 
   const [userStats, setUserStats] = useState(() =>
     computeUserStats(fallbackUsers)
@@ -394,61 +428,68 @@ function DashboardPage() {
 
   const [dashboardData, setDashboardData] = useState(fallbackDashboard);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState("");
   const [auditEvents, setAuditEvents] = useState([]);
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditError, setAuditError] = useState("");
 
-  useEffect(() => {
-    let mounted = true;
-
-    const loadDashboard = async () => {
-      setDashboardLoading(true);
-      const successMessage = t(
-        "api.toast.dashboardRefreshed",
-        "Dashboard data refreshed"
+  const dashboardMountedRef = useRef(true);
+  const loadDashboardData = useCallback(async () => {
+    setDashboardLoading(true);
+    setDashboardError("");
+    const successMessage = t(
+      "api.toast.dashboardRefreshed",
+      "Dashboard data refreshed"
+    );
+    const failureMessage = t(
+      "api.health.error",
+      "API encountered an issue"
+    );
+    try {
+      const data = await fetchDashboardSnapshot();
+      if (!dashboardMountedRef.current || !data) return;
+      setDashboardData((prev) => ({
+        ...prev,
+        ...data,
+        statusCounts: { ...prev.statusCounts, ...(data.statusCounts || {}) },
+        monthlyRevenue: data.monthlyRevenue || prev.monthlyRevenue,
+        recentOrders: data.recentOrders || prev.recentOrders,
+        recentUsers: data.recentUsers || prev.recentUsers,
+      }));
+      emitApiToast({
+        message: successMessage,
+        type: "success",
+        dedupeKey: "dashboard-sync",
+      });
+      updateApiHealth(
+        "healthy",
+        t("api.health.operational", "All systems operational")
       );
-      const failureMessage = t(
-        "api.health.error",
-        "API encountered an issue"
-      );
-      try {
-        const data = await fetchDashboardSnapshot();
-        if (!mounted || !data) return;
-        setDashboardData((prev) => ({
-          ...prev,
-          ...data,
-          statusCounts: { ...prev.statusCounts, ...(data.statusCounts || {}) },
-          monthlyRevenue: data.monthlyRevenue || prev.monthlyRevenue,
-          recentOrders: data.recentOrders || prev.recentOrders,
-          recentUsers: data.recentUsers || prev.recentUsers,
-        }));
-        emitApiToast({
-          message: successMessage,
-          type: "success",
-          dedupeKey: "dashboard-sync",
-        });
-        updateApiHealth(
-          "healthy",
-          t("api.health.operational", "All systems operational")
-        );
-      } catch (err) {
-        const errMessage = err?.message || failureMessage;
-        emitApiToast({ message: errMessage, type: "error" });
-        updateApiHealth("error", errMessage);
-        console.warn("Failed to load dashboard data:", err);
-      } finally {
-        if (mounted) {
-          setDashboardLoading(false);
-        }
+    } catch (err) {
+      if (!dashboardMountedRef.current) return;
+      const errMessage = err?.message || failureMessage;
+      setDashboardError(errMessage);
+      emitApiToast({ message: errMessage, type: "error" });
+      updateApiHealth("error", errMessage);
+      console.warn("Failed to load dashboard data:", err);
+    } finally {
+      if (dashboardMountedRef.current) {
+        setDashboardLoading(false);
       }
-    };
+    }
+  }, [t, updateApiHealth]);
 
-    loadDashboard();
-
+  useEffect(() => {
+    dashboardMountedRef.current = true;
+    loadDashboardData();
     return () => {
-      mounted = false;
+      dashboardMountedRef.current = false;
     };
-  }, [language, t]);
+  }, [loadDashboardData]);
+
+  const handleRetryDashboard = useCallback(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   useEffect(() => {
     let mounted = true;
@@ -532,6 +573,29 @@ function DashboardPage() {
 
   const activeRate =
     totalUsers === 0 ? 0 : Math.round((activeUsers / totalUsers) * 100);
+  const isDashboardReady = !dashboardLoading && !dashboardError;
+  const metricTooltip = t("dashboard.dataUnavailableTooltip", "Data unavailable");
+  const formatMetricValue = (value, formatter) => {
+    const ready = isDashboardReady && value !== undefined && value !== null;
+    const display = ready
+      ? formatter
+        ? formatter(value)
+        : value
+      : "—";
+    return {
+      display,
+      ready,
+    };
+  };
+  const totalUsersMetric = formatMetricValue(totalUsers);
+  const activeUsersMetric = formatMetricValue(activeUsers);
+  const inactiveUsersMetric = formatMetricValue(inactiveUsers);
+  const adminCountMetric = formatMetricValue(adminCount);
+  const totalOrdersMetric = formatMetricValue(totalOrders);
+  const totalRevenueMetric = formatMetricValue(totalRevenue, (value) =>
+    `€${formatMoney(value)}`
+  );
+  const activeRateDisplay = isDashboardReady ? `${activeRate}%` : "—";
 
   const apiHealthStatusLabel =
     apiHealth.status === "error"
@@ -723,7 +787,10 @@ function DashboardPage() {
       {/* ORDERS FETCH DURUMU */}
       {dashboardLoading && (
         <div className="dashboard-loading">
-          {t("dashboardLoading") || "Loading latest orders from server..."}
+          {t(
+            "dashboard.loading",
+            "Loading latest orders from server..."
+          )}
         </div>
       )}
 
@@ -732,27 +799,52 @@ function DashboardPage() {
       <div className="dashboard-grid dashboard-summary-grid">
         <div className="dashboard-card">
           <p className="card-label">{t("cardTotalUsers")}</p>
-          <p className="card-number">{totalUsers}</p>
+          <p
+            className="card-number"
+            title={
+              totalUsersMetric.ready ? undefined : metricTooltip
+            }
+          >
+            {totalUsersMetric.display}
+          </p>
           <p className="card-foot">
-            {t("cardFootActiveRate")} <span>{activeRate}%</span>
+            {t("cardFootActiveRate")}{" "}
+            <span title={!isDashboardReady ? metricTooltip : undefined}>
+              {activeRateDisplay}
+            </span>
           </p>
         </div>
 
         <div className="dashboard-card">
           <p className="card-label">{t("cardActiveUsers")}</p>
-          <p className="card-number text-green">{activeUsers}</p>
+          <p
+            className="card-number text-green"
+            title={activeUsersMetric.ready ? undefined : metricTooltip}
+          >
+            {activeUsersMetric.display}
+          </p>
           <p className="card-foot subtle">{t("cardFootActiveUsers")}</p>
         </div>
 
         <div className="dashboard-card">
           <p className="card-label">{t("cardInactiveUsers")}</p>
-          <p className="card-number text-amber">{inactiveUsers}</p>
+          <p
+            className="card-number text-amber"
+            title={inactiveUsersMetric.ready ? undefined : metricTooltip}
+          >
+            {inactiveUsersMetric.display}
+          </p>
           <p className="card-foot subtle">{t("cardFootInactiveUsers")}</p>
         </div>
 
         <div className="dashboard-card">
           <p className="card-label">{t("cardAdmins")}</p>
-          <p className="card-number text-sky">{adminCount}</p>
+          <p
+            className="card-number text-sky"
+            title={adminCountMetric.ready ? undefined : metricTooltip}
+          >
+            {adminCountMetric.display}
+          </p>
           <p className="card-foot subtle">{t("cardFootAdmins")}</p>
         </div>
       </div>
@@ -844,18 +936,29 @@ function DashboardPage() {
 
       {/* ORDER CARDS */}
       <div className="dashboard-grid dashboard-order-grid">
-        <div className="dashboard-card">
+      <div className="dashboard-card">
         <p className="card-label">{t("totalOrders")}</p>
-        <p className="card-number">{totalOrders}</p>
+        <p
+          className="card-number"
+          title={totalOrdersMetric.ready ? undefined : metricTooltip}
+        >
+          {totalOrdersMetric.display}
+        </p>
       </div>
 
       {orderedStatusKeys.map((key) => {
         const count = statusCounts[key] || 0;
         if (count === 0) return null;
+        const countMetric = formatMetricValue(count);
         return (
           <div className="dashboard-card" key={key}>
             <p className="card-label">{formatStatusLabel(key)}</p>
-            <p className={`card-number ${statusTextClass(key)}`}>{count}</p>
+            <p
+              className={`card-number ${statusTextClass(key)}`}
+              title={countMetric.ready ? undefined : metricTooltip}
+            >
+              {countMetric.display}
+            </p>
             <p className="card-foot subtle">
               {t("ordersLabel")}
             </p>
@@ -863,13 +966,18 @@ function DashboardPage() {
         );
       })}
 
-      <div className="dashboard-card">
-        <p className="card-label">{t("totalRevenue")}</p>
-        <p className="card-number text-green">
-          €{formatMoney(totalRevenue)}
-        </p>
-        <p className="card-foot subtle">{getCardFootText("cardFootTotalRevenue")}</p>
-      </div>
+        <div className="dashboard-card">
+          <p className="card-label">{t("totalRevenue")}</p>
+          <p
+            className="card-number text-green"
+            title={totalRevenueMetric.ready ? undefined : metricTooltip}
+          >
+            {totalRevenueMetric.display}
+          </p>
+          <p className="card-foot subtle">
+            {getCardFootText("cardFootTotalRevenue")}
+          </p>
+        </div>
       </div>
 
       {/* REVENUE LINE CHART */}
@@ -883,8 +991,35 @@ function DashboardPage() {
         </div>
 
         <div className="chart-wrapper">
-          {revenueData.length === 0 ? (
-            <p className="chart-empty">{t("revenueOverviewEmpty")}</p>
+          {dashboardLoading ? (
+            <DashboardCardState
+              variant="loading"
+              title={t("dashboard.loading", "Loading…")}
+              message={t(
+                "dashboard.loadingBodyRevenue",
+                "Fetching revenue data…"
+              )}
+            />
+          ) : dashboardError ? (
+            <DashboardCardState
+              variant="error"
+              title={t(
+                "dashboard.errorTitle",
+                "Unable to load revenue data"
+              )}
+              message={dashboardError}
+              actionLabel={t("dashboard.retry", "Retry")}
+              onAction={handleRetryDashboard}
+            />
+          ) : revenueData.length === 0 ? (
+            <DashboardCardState
+              variant="empty"
+              title={t("dashboard.emptyTitle", "No revenue yet")}
+              message={t(
+                "dashboard.emptyBody",
+                "No revenue data is available at the moment."
+              )}
+            />
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <LineChart
@@ -928,10 +1063,35 @@ function DashboardPage() {
         </div>
 
         <div className="chart-wrapper">
-          {!hasStatusData ? (
-            <p className="chart-empty">
-              {t("orderStatusDistributionEmpty")}
-            </p>
+          {dashboardLoading ? (
+            <DashboardCardState
+              variant="loading"
+              title={t("dashboard.loading", "Loading…")}
+              message={t(
+                "dashboard.loadingBodyStatus",
+                "Gathering status breakdown…"
+              )}
+            />
+          ) : dashboardError ? (
+            <DashboardCardState
+              variant="error"
+              title={t(
+                "dashboard.errorTitle",
+                "Unable to load status data"
+              )}
+              message={dashboardError}
+              actionLabel={t("dashboard.retry", "Retry")}
+              onAction={handleRetryDashboard}
+            />
+          ) : !hasStatusData ? (
+            <DashboardCardState
+              variant="empty"
+              title={t("dashboard.emptyTitle", "No status data")}
+              message={t(
+                "dashboard.emptyBodyStatus",
+                "No order status events are available yet."
+              )}
+            />
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
@@ -946,10 +1106,10 @@ function DashboardPage() {
                   paddingAngle={4}
                 >
                   {statusChartData.map((entry) => (
-                  <Cell
-                    key={entry.key}
-                    fill={statusColorMap[entry.key] || "#6b7280"}
-                  />
+                    <Cell
+                      key={entry.key}
+                      fill={statusColorMap[entry.key] || "#6b7280"}
+                    />
                   ))}
                 </Pie>
 

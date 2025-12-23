@@ -801,7 +801,17 @@ function UsersPage({ language }) {
   };
 
   const buildPresenceTooltip = (presence) => {
-    if (!presence) return "";
+    if (!presence) {
+      return t(
+        "presence.tooltipUnknown",
+        "{status} • {noSessionYet}"
+      )
+        .replace("{status}", t("presence.unknown", "Unknown"))
+        .replace(
+          "{noSessionYet}",
+          t("presence.noSessionYet", "No session recorded yet")
+        );
+    }
     const statusLabel = presence?.online
       ? t("presence.online", "Online")
       : t("presence.offline", "Offline");
@@ -844,10 +854,21 @@ function UsersPage({ language }) {
   return (
     <div className="users-container">
       {/* HEADER */}
-      <div className="users-header">
-        <div className="users-header-top">
-          <h2>{t("users.title", "Users")}</h2>
+      <div className="users-page-header">
+        <div className="users-page-title">
+          <span className="users-page-icon" aria-hidden="true">
+            👥
+          </span>
+          <div>
+            <p className="users-page-subtitle">
+              {t("users.title", "Users")}
+            </p>
+            <span className="users-page-caption">
+              {t("users.pageCaption", "Manage team access and roles")}
+            </span>
+          </div>
         </div>
+      </div>
 
         <div className="users-toolbar">
           <div className="users-toolbar-row users-toolbar-row-top">
@@ -966,7 +987,6 @@ function UsersPage({ language }) {
             </div>
           </div>
         </div>
-      </div>
 
       {/* LOADING / ERROR */}
       {fetchError && !loading && (

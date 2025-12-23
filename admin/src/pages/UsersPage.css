@@ -92,17 +92,44 @@
 
 /* =============== HEADER + SEARCH + FILTERS =============== */
 
-.users-header {
-  display: flex;
-  flex-direction: column; /* başlık üstte, alt bar altta */
-  gap: 10px;
+.users-page-header {
   margin-bottom: 12px;
-  transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
-  background: var(--palette-panel-soft);
+  padding: 14px 18px;
+  border-radius: 18px;
   border: 1px solid var(--palette-border);
-  border-radius: 20px;
-  padding: 18px 22px;
-  box-shadow: var(--palette-card-shadow-soft);
+  background: var(--palette-panel-soft);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.users-page-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.users-page-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: var(--palette-card);
+  border: 1px solid var(--palette-border);
+  font-size: 24px;
+}
+
+.users-page-subtitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--palette-text);
+}
+
+.users-page-caption {
+  font-size: 13px;
+  color: var(--palette-muted);
+  letter-spacing: 0.01em;
 }
 
 /* üst satır: başlık + küçük istatistikler */

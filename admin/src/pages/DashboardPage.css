@@ -369,14 +369,14 @@
 
 .dashboard-api-card {
   grid-column: span 4;
-  background: linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%);
+  background: var(--palette-card);
   border-radius: 16px;
-  border: 1px solid #1e2937;
+  border: 1px solid var(--palette-border);
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--palette-shadow-sm);
 }
 
 .dashboard-api-card .card-number {
@@ -510,7 +510,7 @@
   border-radius: 14px;
   padding: 12px 14px;
   border: 1px solid var(--palette-card-border);
-  box-shadow: var(--palette-card-shadow-soft);
+  box-shadow: var(--palette-shadow-sm);
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -525,7 +525,7 @@
   border-radius: 18px;
   border: 1px solid var(--palette-card-border);
   padding: 16px;
-  box-shadow: var(--palette-card-shadow-soft);
+  box-shadow: var(--palette-shadow-sm);
   width: 100%;
   box-sizing: border-box;
   margin-bottom: 0;
@@ -556,6 +556,61 @@
   min-height: 260px;
 }
 
+.dashboard-card-state {
+  width: 100%;
+  min-height: 260px;
+  border-radius: 12px;
+  border: 1px dashed var(--palette-border);
+  background: var(--palette-panel-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  color: var(--palette-muted);
+  text-align: center;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-card-state-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(148, 163, 184, 0.4);
+  border-top-color: var(--palette-accent);
+  border-radius: 50%;
+  animation: dashboard-spin 1s linear infinite;
+}
+
+.dashboard-card-state-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--palette-text);
+}
+
+.dashboard-card-state-message {
+  margin: 0;
+  font-size: 13px;
+  color: var(--palette-muted);
+}
+
+.dashboard-card-state-action {
+  margin-top: 4px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--palette-accent);
+  background: transparent;
+  color: var(--palette-accent);
+  font-size: 12px;
+}
+
+@keyframes dashboard-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .chart-badge {
   display: inline-flex;
   align-items: center;
@@ -571,7 +626,7 @@
 .dashboard-card:hover {
   border-color: var(--palette-accent);
   transform: translateY(-1px);
-  box-shadow: var(--palette-card-shadow);
+  box-shadow: var(--palette-shadow-md);
 }
 
 .dashboard-order-grid {
@@ -770,8 +825,8 @@
 
 [data-theme="light"] .recent-table .order-items,
 [data-theme="light"] .recent-table .order-shipping {
-  color: var(--palette-muted);
-  opacity: 0.9;
+  color: var(--palette-text);
+  opacity: 1;
 }
 
 .recent-table thead th {
