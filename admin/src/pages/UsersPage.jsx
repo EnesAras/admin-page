@@ -4,6 +4,10 @@ import "./UsersPage.css";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
 import { apiFetch } from "../lib/api";
+import EmptyState from "../components/EmptyState";
+import Skeleton from "../components/Skeleton";
+
+const normalize = (value) => String(value ?? "").toLowerCase().trim();
 
 const usersData = [
   {
@@ -78,6 +82,8 @@ function UsersPage({ language }) {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // BACKEND USERS + loading/error
   const [users, setUsers] = useState([]);
@@ -392,61 +398,77 @@ function UsersPage({ language }) {
   );
 
   const filteredUsers = useMemo(() => {
-    const term = searchTerm.toLowerCase();
+    const query = normalize(searchTerm);
 
     return users.filter((user) => {
-      const matchesSearch =
-        user.name.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term);
-
       const matchesStatus =
-        statusFilter === "all" || user.status === statusFilter;
+        statusFilter === "all" ||
+        normalize(user.status) === normalize(statusFilter);
 
-      return matchesSearch && matchesStatus;
+      const matchesSearch =
+        !query ||
+        [user.name, user.email, user.role, user.status].some((field) =>
+          normalize(field).includes(query)
+        );
+
+      return matchesStatus && matchesSearch;
     });
   }, [users, searchTerm, statusFilter]);
 
   const sortedUsers = useMemo(() => {
+    const resolveValue = (user) => {
+      switch (sortBy) {
+        case "name":
+          return normalize(user.name);
+        case "email":
+          return normalize(user.email);
+        case "role":
+          return normalize(user.role);
+        case "status":
+          return normalize(user.status);
+        case "createdAt": {
+          const timestamp = new Date(
+            user.createdAt || user.created_at || ""
+          ).getTime();
+          return Number.isNaN(timestamp) ? 0 : timestamp;
+        }
+        default:
+          return Number.isFinite(Number(user.id)) ? Number(user.id) : 0;
+      }
+    };
+
     return [...filteredUsers].sort((a, b) => {
-      let valA;
-      let valB;
+      const valA = resolveValue(a);
+      const valB = resolveValue(b);
 
-    switch (sortBy) {
-      case "name":
-        valA = a.name.toLowerCase();
-        valB = b.name.toLowerCase();
-        break;
-      case "email":
-        valA = a.email.toLowerCase();
-        valB = b.email.toLowerCase();
-        break;
-      case "role":
-        valA = a.role.toLowerCase();
-        valB = b.role.toLowerCase();
-        break;
-      case "status":
-        valA = a.status.toLowerCase();
-        valB = b.status.toLowerCase();
-        break;
-      case "id":
-      default:
-        valA = a.id;
-        valB = b.id;
-        break;
-    }
+      if (typeof valA === "string" && typeof valB === "string") {
+        const cmp = valA.localeCompare(valB);
+        return sortDirection === "asc" ? cmp : -cmp;
+      }
 
-    if (typeof valA === "string" && typeof valB === "string") {
-      const cmp = valA.localeCompare(valB);
-      return sortDirection === "asc" ? cmp : -cmp;
-    }
-
-    if (valA < valB) return sortDirection === "asc" ? -1 : 1;
-    if (valA > valB) return sortDirection === "asc" ? 1 : -1;
-    return 0;
+      if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+      if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
     });
   }, [filteredUsers, sortBy, sortDirection]);
 
+  const totalItems = filteredUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  useEffect(() => {
+    setPage((current) => {
+      const next = Math.min(Math.max(current, 1), totalPages);
+      return next;
+    });
+  }, [totalPages]);
+
+  const paginatedUsers = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedUsers.slice(start, start + pageSize);
+  }, [sortedUsers, page, pageSize]);
+
   const handleSort = useCallback((column) => {
+    setPage(1);
     setSortBy((prevSortBy) => {
       if (prevSortBy === column) {
         setSortDirection((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
@@ -466,6 +488,57 @@ function UsersPage({ language }) {
     );
   };
 
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (value) => {
+    setStatusFilter(value);
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setPage(1);
+  };
+
+  const handlePrevPage = () => {
+    setPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setPage((prev) => Math.min(totalPages, prev + 1));
+  };
+
+  const rangeStart =
+    totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd =
+    totalItems === 0 ? 0 : Math.min(totalItems, page * pageSize);
+
+  const showingText = t(
+    "users.showingRange",
+    "Showing {start}-{end} of {total}"
+  )
+    .replace("{start}", String(rangeStart))
+    .replace("{end}", String(rangeEnd))
+    .replace("{total}", String(totalItems));
+
+  const pageIndicator = `${t("users.pageIndicator", "Page")} ${page} ${t(
+    "common.of",
+    "of"
+  )} ${totalPages}`;
+
+  const skeletonRows = Math.min(pageSize, 8);
+  const emptyTitle = t(
+    "users.emptyState",
+    "No users found for this filter."
+  );
+  const emptyDescription = t(
+    "users.emptyStateDesc",
+    "Try changing search or filters."
+  );
+
   // Canlı istatistikler
   const totalCount = users.length;
   const activeCount = users.filter((u) => u.status === "Active").length;
@@ -478,100 +551,144 @@ function UsersPage({ language }) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  const formatDate = (value) => {
+    if (!value) return "-";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "-";
+    return parsed.toLocaleDateString();
+  };
+
   return (
     <div className="users-container">
       {/* HEADER */}
       <div className="users-header">
         <div className="users-header-top">
           <h2>{t("users.title", "Users")}</h2>
-
-          {/* Canlı küçük istatistikler */}
-          <div className="users-stats">
-            <div className="users-stat-pill">
-              <span className="label">
-                {t("users.stats.total", "Total")}
-              </span>
-              <span className="value">{totalCount}</span>
-            </div>
-            <div className="users-stat-pill users-stat-active">
-              <span className="label">
-                {t("users.stats.active", "Active")}
-              </span>
-              <span className="value">{activeCount}</span>
-            </div>
-            <div className="users-stat-pill users-stat-inactive">
-              <span className="label">
-                {t("users.stats.inactive", "Inactive")}
-              </span>
-              <span className="value">{inactiveCount}</span>
-            </div>
-          </div>
         </div>
 
-        <div className="users-header-bottom">
-          <div className="filters">
-            <button
-              className={`filter-btn ${
-                statusFilter === "all" ? "active" : ""
-              }`}
-              onClick={() => setStatusFilter("all")}
-            >
-              {t("users.filter.all", "All")}
-            </button>
+        <div className="users-toolbar">
+          <div className="users-toolbar-row users-toolbar-row-top">
+            <div className="users-toolbar-row-left">
+              <div className="filters">
+                <button
+                  className={`filter-btn ${
+                    statusFilter === "all" ? "active" : ""
+                  }`}
+                  onClick={() => handleStatusFilterChange("all")}
+                >
+                  {t("users.filter.all", "All")}
+                </button>
 
-            <button
-              className={`filter-btn ${
-                statusFilter === "Active" ? "active" : ""
-              }`}
-              onClick={() => setStatusFilter("Active")}
-            >
-              {statusLabel("Active")}
-            </button>
+                <button
+                  className={`filter-btn ${
+                    statusFilter === "Active" ? "active" : ""
+                  }`}
+                  onClick={() => handleStatusFilterChange("Active")}
+                >
+                  {statusLabel("Active")}
+                </button>
 
-            <button
-              className={`filter-btn ${
-                statusFilter === "Inactive" ? "active" : ""
-              }`}
-              onClick={() => setStatusFilter("Inactive")}
-            >
-              {statusLabel("Inactive")}
-            </button>
+                <button
+                  className={`filter-btn ${
+                    statusFilter === "Inactive" ? "active" : ""
+                  }`}
+                  onClick={() => handleStatusFilterChange("Inactive")}
+                >
+                  {statusLabel("Inactive")}
+                </button>
+              </div>
+              <div className="users-search">
+                <input
+                  type="text"
+                  placeholder={t("users.searchPlaceholder", "Search users...")}
+                  value={searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+            </div>
+
+            <div className="users-toolbar-row-right">
+              <div className="users-stats">
+                <div className="users-stat-pill">
+                  <span className="label">
+                    {t("users.stats.total", "Total")}
+                  </span>
+                  <span className="value">{totalCount}</span>
+                </div>
+                <div className="users-stat-pill users-stat-active">
+                  <span className="label">
+                    {t("users.stats.active", "Active")}
+                  </span>
+                  <span className="value">{activeCount}</span>
+                </div>
+                <div className="users-stat-pill users-stat-inactive">
+                  <span className="label">
+                    {t("users.stats.inactive", "Inactive")}
+                  </span>
+                  <span className="value">{inactiveCount}</span>
+                </div>
+              </div>
+              <button
+                className="add-user-btn secondary"
+                onClick={() => {
+                  setIsAdding(true);
+                  setIsEditing(false);
+                  setAddError("");
+                  setNewUserName("");
+                  setNewUserEmail("");
+                }}
+              >
+                + {t("users.addUser", "Add user")}
+              </button>
+            </div>
           </div>
 
-          <div className="users-header-right">
-            <input
-              type="text"
-              placeholder={t(
-                "users.searchPlaceholder",
-                "Search user..."
-              )}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+          <div className="users-toolbar-row users-toolbar-row-bottom">
+            <div className="users-pageSize">
+              <label htmlFor="users-page-size">
+                {t("users.pageSizeLabel", "Rows")}
+              </label>
+              <select
+                id="users-page-size"
+                value={pageSize}
+                onChange={(e) =>
+                  handlePageSizeChange(Number(e.target.value))
+                }
+              >
+                {[10, 20, 50].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <button
-              className="add-user-btn"
-              onClick={() => {
-                setIsAdding(true);
-                setIsEditing(false);
-                setAddError("");
-                setNewUserName("");
-                setNewUserEmail("");
-              }}
-            >
-              + {t("users.addUser", "Add user")}
-            </button>
+            <div className="users-toolbar-row-bottom-right">
+              <div className="users-pagination">
+                <button
+                  type="button"
+                  onClick={handlePrevPage}
+                  disabled={page <= 1}
+                >
+                  Prev
+                </button>
+                <span>{pageIndicator}</span>
+                <button
+                  type="button"
+                  onClick={handleNextPage}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </button>
+              </div>
+              <div className="users-pagination-info">{showingText}</div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* LOADING / ERROR */}
-      {loading && (
-        <div className="users-loading">
-          {t("users.loading", "Loading users...")}
-        </div>
-      )}
       {fetchError && !loading && (
         <div className="users-error-fetch">{fetchError}</div>
       )}
@@ -760,33 +877,27 @@ function UsersPage({ language }) {
               {t("users.role", "Role")} {renderSortIndicator("role")}
             </th>
             <th onClick={() => handleSort("status")} className="sortable">
-              {t("common.status", "Status")}{" "}
-              {renderSortIndicator("status")}
+              {t("common.status", "Status")} {renderSortIndicator("status")}
+            </th>
+            <th onClick={() => handleSort("createdAt")} className="sortable">
+              {t("users.createdAt", "Created")}{" "}
+              {renderSortIndicator("createdAt")}
             </th>
             <th>{t("common.actions", "Actions")}</th>
           </tr>
         </thead>
 
         <tbody>
-          {sortedUsers.length === 0 && !loading ? (
-            <tr>
-              <td colSpan={6} className="empty-state">
-                {t(
-                  "users.emptyState",
-                  "No users found for this filter."
-                )}
-              </td>
-            </tr>
+          {loading ? (
+            <Skeleton rows={skeletonRows} columns={7} />
           ) : (
-            sortedUsers.map((user) => (
+            paginatedUsers.map((user) => (
               <tr key={user.id}>
                 <td>{user.id}</td>
 
                 <td>
                   <div className="user-cell">
-                    <div className="user-avatar">
-                      {getInitials(user.name)}
-                    </div>
+                    <div className="user-avatar">{getInitials(user.name)}</div>
                     <span className="user-name">{user.name}</span>
                   </div>
                 </td>
@@ -795,7 +906,7 @@ function UsersPage({ language }) {
 
                 <td>
                   <span
-                    className={`role-badge role-${user.role.toLowerCase()}`}
+                    className={`role-badge role-${normalize(user.role)}`}
                   >
                     {roleLabel(user.role)}
                   </span>
@@ -803,14 +914,16 @@ function UsersPage({ language }) {
 
                 <td>
                   <span
-                    className={`status-badge status-${user.status.toLowerCase()} ${
-                      canToggleStatus ? "clickable" : ""
-                    }`}
+                    className={`status-badge status-${normalize(
+                      user.status
+                    )} ${canToggleStatus ? "clickable" : ""}`}
                     onClick={() => handleToggleStatus(user.id)}
                   >
                     {statusLabel(user.status)}
                   </span>
                 </td>
+
+                <td>{formatDate(user.createdAt || user.created_at)}</td>
 
                 <td>
                   {canEditUsers && (
@@ -834,6 +947,10 @@ function UsersPage({ language }) {
           )}
         </tbody>
       </table>
+
+      {!loading && totalItems === 0 && (
+        <EmptyState title={emptyTitle} description={emptyDescription} />
+      )}
     </div>
   );
 }

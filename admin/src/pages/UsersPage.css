@@ -86,25 +86,51 @@
   color: var(--palette-text);
 }
 
-/* alt satır: filtreler + search + add user */
-.users-header-bottom {
+/* toolbar row: filters, search, pagination, page size, add button */
+.users-toolbar {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--palette-border);
+  padding-top: 10px;
+  margin-top: 8px;
+}
+
+.users-toolbar-row {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  width: 100%;
-  align-items: center;
-  border-top: 1px solid var(--palette-border);
-  margin-top: 8px;
-  padding-top: 10px;
 }
 
-/* sağ taraf: search + add button */
-.users-header-right {
+.users-toolbar-row-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
+}
+
+.users-toolbar-row-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.users-toolbar-row-bottom {
+  justify-content: space-between;
+}
+
+.users-toolbar-row-bottom-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 /* =============== STATS PILL'LERİ =============== */
@@ -172,6 +198,59 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
 }
 
+.users-search {
+  min-width: 220px;
+  flex: 1;
+}
+
+.users-pageSize {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--palette-muted);
+}
+
+.users-pageSize select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--palette-border);
+  background: var(--palette-input-bg);
+  color: var(--palette-text);
+}
+
+.users-pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.users-pagination button {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--palette-border);
+  background: var(--palette-card);
+  color: var(--palette-text);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.users-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.users-pagination span {
+  font-weight: 500;
+  color: var(--palette-muted);
+}
+
+.users-pagination-info {
+  font-size: 12px;
+  color: var(--palette-muted);
+}
+
 @media (max-width: 600px) {
   .users-header {
     align-items: stretch;
@@ -181,12 +260,12 @@
     align-items: flex-start;
   }
 
-  .users-header-bottom {
+  .users-toolbar {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .users-header-right {
+  .users-toolbar-right {
     width: 100%;
     justify-content: space-between;
   }
@@ -285,10 +364,24 @@
   transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
 }
 
+.add-user-btn.secondary {
+  background: transparent;
+  color: var(--palette-text);
+  border: 1px solid var(--palette-border);
+  box-shadow: none;
+}
+
 .add-user-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 14px 26px rgba(249, 115, 22, 0.4);
   opacity: 0.95;
+}
+
+.add-user-btn.secondary:hover {
+  background: var(--palette-accent);
+  border-color: var(--palette-accent);
+  color: #fff;
+  box-shadow: 0 14px 26px rgba(249, 115, 22, 0.4);
 }
 
 .add-user-placeholder {
@@ -315,6 +408,57 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.empty-state-panel {
+  margin-top: 20px;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px dashed var(--palette-border);
+  background: var(--palette-panel-soft);
+  text-align: center;
+  color: var(--palette-muted);
+}
+
+.empty-state-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--palette-text);
+}
+
+.empty-state-description {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.sk td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--palette-border);
+}
+
+.sk-line {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.15),
+    rgba(148, 163, 184, 0.35),
+    rgba(148, 163, 184, 0.15)
+  );
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
 }
 
 .add-user-header h3 {
