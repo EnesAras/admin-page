@@ -51,6 +51,41 @@
   background: var(--palette-card-hover);
 }
 
+.presence-cell {
+  white-space: nowrap;
+}
+
+.presence-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--palette-border);
+  background: var(--palette-panel-soft);
+  color: var(--palette-muted);
+}
+
+.presence-badge.online {
+  border-color: var(--palette-accent);
+  background: rgba(249, 115, 22, 0.1);
+  color: var(--palette-accent);
+}
+
+.presence-badge.offline {
+  border-color: var(--palette-border);
+  background: transparent;
+  color: var(--palette-muted);
+}
+
+.presence-badge.unknown {
+  border-color: var(--palette-border);
+  background: var(--palette-panel-soft);
+  color: var(--palette-muted);
+}
+
 .users-table tr:hover td {
   background: var(--palette-card-hover);
 }

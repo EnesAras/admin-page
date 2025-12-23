@@ -8,6 +8,8 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { apiFetch } from "./lib/api";
 
 import UsersPage from "./pages/UsersPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -30,6 +32,8 @@ const PAGE_ROLE_REQUIREMENTS = {
   ORDERS: [],
   SETTINGS: [],
 };
+
+const PAGE_VIEW_DEBOUNCE_MS = 5000;
 
 function App() {
   const location = useLocation();
@@ -123,6 +127,33 @@ function App() {
 
 
   const isLoginPage = location.pathname === "/login";
+
+  const lastLoggedRouteRef = useRef(null);
+  const lastLoggedAtRef = useRef(0);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const route = location.pathname;
+    const now = Date.now();
+    const lastRoute = lastLoggedRouteRef.current;
+    const lastAt = lastLoggedAtRef.current || 0;
+    const routeChanged = route !== lastRoute;
+    const elapsed = now - lastAt;
+    if (!routeChanged && elapsed <= PAGE_VIEW_DEBOUNCE_MS) {
+      return;
+    }
+    lastLoggedRouteRef.current = route;
+    lastLoggedAtRef.current = now;
+    apiFetch("/api/audit", {
+      method: "POST",
+      body: {
+        type: "PAGE_VIEW",
+        route,
+      },
+    }).catch((err) => {
+      console.warn("Audit log failed:", err);
+    });
+  }, [isAuthenticated, location.pathname]);
 
   const handleLogout = async () => {
     try {

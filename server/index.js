@@ -8,6 +8,7 @@ const usersRoutes = require("./routes/usersRoutes");
 const ordersRoutes = require("./routes/ordersRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const auditRoutes = require("./routes/auditRoutes");
+const presenceRoutes = require("./routes/presenceRoutes");
 const { initStore } = require("./data/store");
 
 dotenv.config();
@@ -91,6 +92,7 @@ app.use("/api/orders", ordersRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/presence", presenceRoutes);
 
 app.use((err, req, res, next) => {
   if (err?.message === "CORS_NOT_ALLOWED") {

@@ -717,15 +717,61 @@
   color: var(--palette-text);
 }
 
+.recent-presence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recent-presence-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--palette-border);
+  border: 1px solid var(--palette-border);
+}
+
+.recent-presence-indicator.presence-online {
+  background: var(--palette-accent);
+  border-color: var(--palette-accent);
+}
+
+.recent-presence-indicator.presence-offline {
+  background: transparent;
+  border-color: var(--palette-border);
+}
+
+.recent-presence-indicator.presence-unknown {
+  background: var(--palette-panel-soft);
+  border-color: var(--palette-border);
+}
+
+.recent-presence-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--palette-muted);
+}
+
+.recent-presence-cell {
+  white-space: nowrap;
+}
+
 .order-items {
   margin-top: 4px;
   font-size: 11px;
-  color: rgba(229, 231, 235, 0.75);
+  color: rgba(229, 231, 235, 0.85);
 }
 
 .order-shipping {
   font-size: 12px;
   color: #cbd5f5;
+}
+
+[data-theme="light"] .recent-table .order-items,
+[data-theme="light"] .recent-table .order-shipping {
+  color: var(--palette-muted);
+  opacity: 0.9;
 }
 
 .recent-table thead th {

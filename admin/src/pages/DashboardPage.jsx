@@ -202,6 +202,59 @@ const CARD_FOOT_FALLBACKS = {
   cardFootTotalRevenue: "totalRevenue",
 };
 
+const formatPresenceTimestamp = (value) => {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleString();
+};
+
+const formatPresenceTooltipTime = (value) => {
+  const formatted = formatPresenceTimestamp(value);
+  return formatted && formatted !== "-" ? formatted : null;
+};
+
+const buildPresenceTooltip = (presence, t) => {
+  if (!presence) return "";
+  const statusLabel = presence?.online
+    ? t("presence.online", "Online")
+    : t("presence.offline", "Offline");
+  const parts = [statusLabel];
+
+  if (presence?.online) {
+    const loggedIn = formatPresenceTooltipTime(presence.lastLoginAt);
+    if (loggedIn) {
+      parts.push(
+        t("presence.loggedInAt", "Logged in at {time}").replace(
+          "{time}",
+          loggedIn
+        )
+      );
+    }
+    const lastSeen =
+      formatPresenceTooltipTime(presence.lastSeenAt || presence.lastLoginAt);
+    if (lastSeen) {
+      parts.push(
+        t("presence.lastSeen", "Last seen {time}").replace(
+          "{time}",
+          lastSeen
+        )
+      );
+    }
+  } else {
+    const lastLogout = formatPresenceTooltipTime(presence.lastLogoutAt);
+    if (lastLogout) {
+      parts.push(
+        t("presence.lastLogout", "Last logout: {time}").replace(
+          "{time}",
+          lastLogout
+        )
+      );
+    }
+  }
+  return parts.join(" • ");
+};
+
 const DASHBOARD_CACHE_TTL = 45 * 1000;
 let dashboardCache = null;
 let dashboardCacheTimestamp = 0;
@@ -238,8 +291,34 @@ const fetchDashboardSnapshot = async () => {
 
 function DashboardPage() {
   const { t, language, colorMode } = useSettings();
-  const { currentUser } = useAuth();
+  const { currentUser, hasRole } = useAuth();
   const { lastNotification, notificationHistory } = useToast();
+  const canViewPresence = hasRole(["admin", "owner"]);
+  const [presenceMap, setPresenceMap] = useState(new Map());
+  const loadPresenceData = useCallback(async () => {
+    if (!canViewPresence) {
+      setPresenceMap(new Map());
+      return;
+    }
+
+    try {
+      const response = await apiFetch("/api/presence/users");
+      const map = new Map();
+      (response?.users || []).forEach((user) => {
+        const userId = Number(user?.id);
+        if (Number.isFinite(userId)) {
+          map.set(userId, user.presence || null);
+        }
+      });
+      setPresenceMap(map);
+    } catch (err) {
+      console.error("Presence fetch failed:", err);
+    }
+  }, [canViewPresence]);
+
+  useEffect(() => {
+    loadPresenceData();
+  }, [loadPresenceData]);
   const locale = language || "en";
   const isLightTheme = colorMode === "light";
   const axisColor = isLightTheme ? "#6b7280" : "#e5e7eb";
@@ -915,6 +994,7 @@ function DashboardPage() {
                   <th>{t("thEmail")}</th>
                   <th>{t("thRole")}</th>
                   <th>{t("thStatus")}</th>
+                  {canViewPresence && <th>{t("presence.column", "Presence")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -933,6 +1013,20 @@ function DashboardPage() {
                     user.status === "Active"
                       ? "statusActive"
                       : "statusInactive";
+
+                  const userPresenceId = Number(user.id);
+                  const presence = Number.isFinite(userPresenceId)
+                    ? presenceMap.get(userPresenceId)
+                    : null;
+                  const hasPresenceRecord = presence != null;
+                  const presenceLabel = hasPresenceRecord
+                    ? presence?.online
+                      ? t("presence.online", "Online")
+                      : t("presence.offline", "Offline")
+                    : t("presence.unknown", "Unknown");
+                  const presenceTooltip = hasPresenceRecord
+                    ? buildPresenceTooltip(presence, t)
+                    : "";
 
                   return (
                     <tr key={user.id}>
@@ -956,6 +1050,25 @@ function DashboardPage() {
                           {t(statusKey)}
                         </span>
                       </td>
+                      {canViewPresence && (
+                        <td className="recent-presence-cell">
+                          <div className="recent-presence">
+                            <span
+                              className={`recent-presence-indicator ${
+                                presence?.online
+                                  ? "presence-online"
+                                  : hasPresenceRecord
+                                  ? "presence-offline"
+                                  : "presence-unknown"
+                              }`}
+                              title={presenceTooltip || undefined}
+                            />
+                            <span className="recent-presence-label">
+                              {presenceLabel}
+                            </span>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

@@ -16,6 +16,64 @@ const normalizePassword = (value = "") => {
 const hashPassword = async (password = "") =>
   bcrypt.hash(normalizePassword(password), HASH_ROUNDS);
 
+const presenceByUserId = new Map();
+const createPresenceEntry = (userId, initial = {}) => ({
+  userId,
+  online: false,
+  lastLoginAt: null,
+  lastLogoutAt: null,
+  sessionStartedAt: null,
+  sessionEndedAt: null,
+  lastSessionDurationSeconds: null,
+  lastSeenAt: null,
+  ...initial,
+});
+
+const markUserLogin = (userId) => {
+  if (!userId) return null;
+  const now = new Date().toISOString();
+  const existing = presenceByUserId.get(userId) || createPresenceEntry(userId);
+  const updated = {
+    ...existing,
+    online: true,
+    lastLoginAt: now,
+    sessionStartedAt: now,
+    sessionEndedAt: null,
+    lastSeenAt: now,
+  };
+  presenceByUserId.set(userId, updated);
+  return updated;
+};
+
+const markUserLogout = (userId) => {
+  if (!userId) return null;
+  const now = new Date().toISOString();
+  const existing = presenceByUserId.get(userId) || createPresenceEntry(userId);
+  const sessionStart = existing.sessionStartedAt
+    ? new Date(existing.sessionStartedAt).getTime()
+    : null;
+  const duration =
+    sessionStart != null
+      ? Math.max(0, Math.floor((Date.now() - sessionStart) / 1000))
+      : null;
+  const updated = {
+    ...existing,
+    online: false,
+    lastLogoutAt: now,
+    sessionEndedAt: now,
+    lastSessionDurationSeconds: duration,
+    lastSeenAt: now,
+  };
+  presenceByUserId.set(userId, updated);
+  return updated;
+};
+
+const getPresenceRecords = () => {
+  return Array.from(presenceByUserId.values()).map((record) => ({
+    ...record,
+  }));
+};
+
 const DEFAULT_USERS = [
   {
     name: "Admin User",
@@ -522,4 +580,7 @@ module.exports = {
   updateOrder,
   deleteOrder,
   getDashboardStats,
+  getPresenceRecords,
+  markUserLogin,
+  markUserLogout,
 };

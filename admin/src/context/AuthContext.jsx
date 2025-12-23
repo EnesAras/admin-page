@@ -132,6 +132,16 @@ export function AuthProvider({ children }) {
       setIsAuthenticated(true);
       setCurrentUser(resolvedUser);
 
+      console.log("[presence] login called", resolvedUser?.id);
+      try {
+        await apiFetch("/api/presence/login", {
+          method: "POST",
+          body: { userId: resolvedUser.id },
+        });
+      } catch (presenceErr) {
+        console.warn("Presence login failed:", presenceErr);
+      }
+
       emitApiToast({
         message: `Signed in as ${
           resolvedUser.name || resolvedUser.email || "user"
@@ -164,16 +174,29 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
+    const actorId = currentUser?.id;
     try {
       await apiFetch("/api/auth/logout", { method: "POST" });
     } catch (err) {
       console.warn("Logout API failed:", err);
-    } finally {
-      setIsAuthenticated(false);
-      setCurrentUser(null);
-      clearAuthPersistence();
     }
-  }, []);
+
+    if (actorId) {
+      console.log("[presence] logout called", new Error().stack);
+      try {
+        await apiFetch("/api/presence/logout", {
+          method: "POST",
+          body: { userId: actorId },
+        });
+      } catch (presenceErr) {
+        console.warn("Presence logout failed:", presenceErr);
+      }
+    }
+
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    clearAuthPersistence();
+  }, [currentUser]);
 
   const hasRole = useCallback(
     (allowedRoles) => {
