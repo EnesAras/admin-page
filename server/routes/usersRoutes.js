@@ -15,6 +15,7 @@ const isAdminOrOwner = (role) => {
   return normalized === "admin" || normalized === "owner";
 };
 
+// The frontend sets the actor metadata via x-actor-* headers (see lib/api) so we can trust the role here.
 const requireAdminRole = (req, res, next) => {
   const actorRole = getActorFromHeaders(req).role;
   if (!isAdminOrOwner(actorRole)) {
@@ -34,12 +35,12 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", requireAdminRole, async (req, res) => {
-  requireAdminRole(req, res, () => {});
   try {
     const { name, email } = req.body || {};
     if (!name || !email) {
       return res.status(400).json({ error: "NameEmailRequired" });
     }
+
     const password = String(req.body.password || "").trim();
     if (password.length < 8) {
       return res.status(400).json({ error: "PasswordLength" });
@@ -50,7 +51,8 @@ router.post("/", requireAdminRole, async (req, res) => {
       return res.status(409).json({ error: "EmailExists" });
     }
 
-    const created = await addUser(req.body || {});
+    const payload = { ...(req.body || {}), password };
+    const created = await addUser(payload);
     res.status(201).json(created);
   } catch (err) {
     console.error("USER_CREATE_ERROR:", err);
@@ -59,9 +61,19 @@ router.post("/", requireAdminRole, async (req, res) => {
 });
 
 router.put("/:id", requireAdminRole, async (req, res) => {
-  requireAdminRole(req, res, () => {});
   try {
-    const updated = await updateUser(Number(req.params.id), req.body || {});
+    const payload = { ...req.body };
+    const password = String(payload.password || "").trim();
+    if (payload.password && password.length < 8) {
+      return res.status(400).json({ error: "PasswordLength" });
+    }
+    if (payload.password) {
+      payload.password = password;
+    } else {
+      delete payload.password;
+    }
+
+    const updated = await updateUser(Number(req.params.id), payload);
     if (!updated) {
       return res.status(404).json({ error: "UserNotFound" });
     }

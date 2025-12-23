@@ -284,14 +284,19 @@ const addUser = async (payload) => {
 };
 
 const updateUser = async (id, patch) => {
+  const hashedPassword = patch.password
+    ? await hashPassword(patch.password)
+    : null;
+
   const { rows } = await query(
     `
     UPDATE users
     SET name = COALESCE($1, name),
         email = COALESCE($2, email),
         role = COALESCE($3, role),
-        status = COALESCE($4, status)
-    WHERE id = $5
+        status = COALESCE($4, status),
+        password = COALESCE($5, password)
+    WHERE id = $6
     RETURNING id, name, email, role, status
   `,
     [
@@ -299,6 +304,7 @@ const updateUser = async (id, patch) => {
       patch.email ? patch.email.trim().toLowerCase() : null,
       patch.role,
       patch.status,
+      hashedPassword,
       Number(id),
     ]
   );

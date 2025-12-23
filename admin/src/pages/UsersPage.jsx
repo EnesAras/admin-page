@@ -138,12 +138,36 @@ function UsersPage({ language }) {
   const [newUserPasswordConfirm, setNewUserPasswordConfirm] = useState("");
   const [addError, setAddError] = useState("");
 
+  const resetAddForm = useCallback(() => {
+    setNewUserName("");
+    setNewUserEmail("");
+    setNewUserRole("user");
+    setNewUserStatus("Active");
+    setNewUserPassword("");
+    setNewUserPasswordConfirm("");
+  }, []);
+
+  useEffect(() => {
+    if (!canCreateUser && isAdding) {
+      resetAddForm();
+      setAddError("");
+      setIsAdding(false);
+    }
+  }, [canCreateUser, isAdding, resetAddForm]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserName, setEditUserName] = useState("");
   const [editUserEmail, setEditUserEmail] = useState("");
   const [editUserRole, setEditUserRole] = useState("user");
   const [editUserStatus, setEditUserStatus] = useState("Active");
+
+  const openAddPanel = useCallback(() => {
+    resetAddForm();
+    setAddError("");
+    setIsEditing(false);
+    setIsAdding(true);
+  }, [resetAddForm]);
 
   // Sıralama state'i
   const [sortBy, setSortBy] = useState("id"); // "id" | "name" | "email" | "role" | "status"
@@ -241,7 +265,7 @@ function UsersPage({ language }) {
     if (isPasswordTooShort) {
       setAddError(
         t(
-          "users.error.passwordLength",
+          "users.passwordTooShort",
           "Password must be at least 8 characters."
         )
       );
@@ -250,7 +274,7 @@ function UsersPage({ language }) {
 
     if (isPasswordMismatch) {
       setAddError(
-        t("users.error.passwordMatch", "Passwords must match.")
+        t("users.passwordMismatch", "Passwords must match.")
       );
       return;
     }
@@ -272,13 +296,8 @@ function UsersPage({ language }) {
 
       setUsers((prevUsers) => [...prevUsers, created]);
 
-      setNewUserName("");
-      setNewUserEmail("");
-      setNewUserRole("user");
-      setNewUserStatus("Active");
+      resetAddForm();
       setIsAdding(false);
-      setNewUserPassword("");
-      setNewUserPasswordConfirm("");
     } catch (err) {
       console.error(err);
       setAddError(
@@ -676,13 +695,8 @@ function UsersPage({ language }) {
               {canCreateUser && (
                 <button
                   className="add-user-btn secondary"
-                  onClick={() => {
-                    setIsAdding(true);
-                    setIsEditing(false);
-                    setAddError("");
-                    setNewUserName("");
-                    setNewUserEmail("");
-                  }}
+                  type="button"
+                  onClick={openAddPanel}
                 >
                   + {t("users.addUser", "Add user")}
                 </button>
@@ -740,7 +754,7 @@ function UsersPage({ language }) {
       )}
 
       {/* ADD USER PANEL */}
-      {isAdding && (
+      {isAdding && canCreateUser && (
         <div className="add-user-panel">
           <div className="add-user-header">
             <h3>
@@ -779,22 +793,26 @@ function UsersPage({ language }) {
               required
             />
 
-            <input
-              type="password"
-              placeholder={t("users.password", "Password")}
-              value={newUserPassword}
-              onChange={(e) => setNewUserPassword(e.target.value)}
-              className={isPasswordTooShort ? "input-error" : ""}
-              minLength={8}
-            />
-            <input
-              type="password"
-              placeholder={t("users.passwordConfirm", "Confirm password")}
-              value={newUserPasswordConfirm}
-              onChange={(e) => setNewUserPasswordConfirm(e.target.value)}
-              className={isPasswordMismatch ? "input-error" : ""}
-              minLength={8}
-            />
+            {canCreateUser && (
+              <>
+                <input
+                  type="password"
+                  placeholder={t("users.password", "Password")}
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  className={isPasswordTooShort ? "input-error" : ""}
+                  minLength={8}
+                />
+                <input
+                  type="password"
+                  placeholder={t("users.confirmPassword", "Confirm password")}
+                  value={newUserPasswordConfirm}
+                  onChange={(e) => setNewUserPasswordConfirm(e.target.value)}
+                  className={isPasswordMismatch ? "input-error" : ""}
+                  minLength={8}
+                />
+              </>
+            )}
 
            <select
   value={newUserRole}
@@ -832,7 +850,9 @@ function UsersPage({ language }) {
             </button>
             <button
               className="btn-ghost"
+              type="button"
               onClick={() => {
+                resetAddForm();
                 setIsAdding(false);
                 setAddError("");
               }}

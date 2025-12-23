@@ -191,8 +191,12 @@ const translations = {
     "users.editUserSubtitle":
       "Update the user information and save changes.",
     "users.password": "Password",
-    "users.passwordConfirm": "Confirm password",
+    "users.confirmPassword": "Confirm password",
+    "users.passwordTooShort": "Password must be at least 8 characters.",
+    "users.passwordMismatch": "Passwords must match.",
     "users.notAuthorized": "Not authorized",
+    "users.forbiddenAction":
+      "This action is restricted to admins and owners.",
     "users.error.passwordLength": "Password must be at least 8 characters.",
     "users.error.passwordMatch": "Passwords must match.",
     // PRODUCTS
@@ -463,8 +467,12 @@ const translations = {
     "users.editUserSubtitle":
       "Kullanıcı bilgilerini güncelleyip kaydedin.",
     "users.password": "Şifre",
-    "users.passwordConfirm": "Şifre tekrar",
+    "users.confirmPassword": "Şifre tekrar",
+    "users.passwordTooShort": "Şifre en az 8 karakter olmalı.",
+    "users.passwordMismatch": "Şifreler eşleşmelidir.",
     "users.notAuthorized": "Yetkiniz yok",
+    "users.forbiddenAction":
+      "Bu işlem sadece admin ve owner yetkisi gerektirir.",
     "users.error.passwordLength": "Şifre en az 8 karakter olmalı.",
     "users.error.passwordMatch": "Şifreler eşleşmelidir.",
         // PRODUCTS
