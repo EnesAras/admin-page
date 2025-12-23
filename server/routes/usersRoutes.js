@@ -6,8 +6,22 @@ const {
   deleteUser,
   findUserByEmail,
 } = require("../data/store");
+const { getActorFromHeaders } = require("../utils/actor");
 
 const router = express.Router();
+
+const isAdminOrOwner = (role) => {
+  const normalized = String(role || "").toLowerCase();
+  return normalized === "admin" || normalized === "owner";
+};
+
+const requireAdminRole = (req, res, next) => {
+  const actorRole = getActorFromHeaders(req).role;
+  if (!isAdminOrOwner(actorRole)) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  return next();
+};
 
 router.get("/", async (req, res) => {
   try {
@@ -19,11 +33,16 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", requireAdminRole, async (req, res) => {
+  requireAdminRole(req, res, () => {});
   try {
     const { name, email } = req.body || {};
     if (!name || !email) {
       return res.status(400).json({ error: "NameEmailRequired" });
+    }
+    const password = String(req.body.password || "").trim();
+    if (password.length < 8) {
+      return res.status(400).json({ error: "PasswordLength" });
     }
 
     const existing = await findUserByEmail(String(email).toLowerCase());
@@ -39,7 +58,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireAdminRole, async (req, res) => {
+  requireAdminRole(req, res, () => {});
   try {
     const updated = await updateUser(Number(req.params.id), req.body || {});
     if (!updated) {
@@ -52,7 +72,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAdminRole, async (req, res) => {
   try {
     const success = await deleteUser(Number(req.params.id));
     if (!success) return res.status(404).json({ error: "UserNotFound" });

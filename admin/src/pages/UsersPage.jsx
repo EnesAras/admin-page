@@ -3,9 +3,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import "./UsersPage.css";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
-import { apiFetch } from "../lib/api";
+import { apiFetch, emitApiToast } from "../lib/api";
 import EmptyState from "../components/EmptyState";
 import Skeleton from "../components/Skeleton";
+import { useAuth } from "../context/AuthContext";
 
 const normalize = (value) => String(value ?? "").toLowerCase().trim();
 
@@ -35,6 +36,7 @@ const usersData = [
 
 function UsersPage({ language }) {
   const { settings, language: ctxLanguage } = useSettings();
+  const { currentUser, hasRole } = useAuth();
 
   // Dil önceliği: prop > context.language > settings.language > "en"
   const lang = language || ctxLanguage || settings?.language || "en";
@@ -120,16 +122,20 @@ function UsersPage({ language }) {
     fetchUsers();
   }, [lang, t]);
 
-  const CURRENT_USER_ROLE = "Admin";
-  const canEditUsers = CURRENT_USER_ROLE === "Admin";
-  const canToggleStatus =
-    CURRENT_USER_ROLE === "Admin" || CURRENT_USER_ROLE === "Moderator";
+  const currentRole = (currentUser?.role || "").toLowerCase();
+  const canCreateUser = hasRole(["admin", "owner"]);
+  const canEditUsers = currentRole === "admin";
+  const canToggleStatus = ["admin", "owner", "moderator"].includes(
+    currentRole
+  );
 
   const [isAdding, setIsAdding] = useState(false);
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserRole, setNewUserRole] = useState("user");
   const [newUserStatus, setNewUserStatus] = useState("Active");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserPasswordConfirm, setNewUserPasswordConfirm] = useState("");
   const [addError, setAddError] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
@@ -162,17 +168,35 @@ function UsersPage({ language }) {
     users.some(
       (u) => u.email.toLowerCase() === newUserEmail.trim().toLowerCase()
     );
+  const isPasswordTooShort =
+    newUserPassword.trim() !== "" && newUserPassword.length < 8;
+  const isPasswordMismatch =
+    newUserPassword &&
+    newUserPasswordConfirm &&
+    newUserPassword !== newUserPasswordConfirm;
 
   const isAddFormInvalid =
     !newUserName.trim() ||
     !newUserEmail.trim() ||
+    !newUserPassword ||
+    !newUserPasswordConfirm ||
     isNewNameInvalid ||
     isNewEmailInvalid ||
-    isNewEmailDuplicate;
+    isNewEmailDuplicate ||
+    isPasswordTooShort ||
+    isPasswordMismatch;
 
   // ========== ADD USER (backend + state) ==========
   const handleAddUser = async () => {
     setAddError("");
+
+    if (!canCreateUser) {
+      emitApiToast({
+        type: "error",
+        message: t("users.notAuthorized", "Not authorized"),
+      });
+      return;
+    }
 
     if (!newUserName.trim() || !newUserEmail.trim()) {
       setAddError(
@@ -214,11 +238,29 @@ function UsersPage({ language }) {
       return;
     }
 
+    if (isPasswordTooShort) {
+      setAddError(
+        t(
+          "users.error.passwordLength",
+          "Password must be at least 8 characters."
+        )
+      );
+      return;
+    }
+
+    if (isPasswordMismatch) {
+      setAddError(
+        t("users.error.passwordMatch", "Passwords must match.")
+      );
+      return;
+    }
+
     const payload = {
       name: newUserName.trim(),
       email: newUserEmail.trim(),
       role: newUserRole,
       status: newUserStatus,
+      password: newUserPassword.trim(),
       // country'yi istemiyorsan backend default "Unknown" kullanıyor zaten
     };
 
@@ -235,6 +277,8 @@ function UsersPage({ language }) {
       setNewUserRole("user");
       setNewUserStatus("Active");
       setIsAdding(false);
+      setNewUserPassword("");
+      setNewUserPasswordConfirm("");
     } catch (err) {
       console.error(err);
       setAddError(
@@ -608,12 +652,12 @@ function UsersPage({ language }) {
               </div>
             </div>
 
-            <div className="users-toolbar-row-right">
-              <div className="users-stats">
-                <div className="users-stat-pill">
-                  <span className="label">
-                    {t("users.stats.total", "Total")}
-                  </span>
+              <div className="users-toolbar-row-right">
+                <div className="users-stats">
+                  <div className="users-stat-pill">
+                    <span className="label">
+                      {t("users.stats.total", "Total")}
+                    </span>
                   <span className="value">{totalCount}</span>
                 </div>
                 <div className="users-stat-pill users-stat-active">
@@ -629,18 +673,20 @@ function UsersPage({ language }) {
                   <span className="value">{inactiveCount}</span>
                 </div>
               </div>
-              <button
-                className="add-user-btn secondary"
-                onClick={() => {
-                  setIsAdding(true);
-                  setIsEditing(false);
-                  setAddError("");
-                  setNewUserName("");
-                  setNewUserEmail("");
-                }}
-              >
-                + {t("users.addUser", "Add user")}
-              </button>
+              {canCreateUser && (
+                <button
+                  className="add-user-btn secondary"
+                  onClick={() => {
+                    setIsAdding(true);
+                    setIsEditing(false);
+                    setAddError("");
+                    setNewUserName("");
+                    setNewUserEmail("");
+                  }}
+                >
+                  + {t("users.addUser", "Add user")}
+                </button>
+              )}
             </div>
           </div>
 
@@ -731,6 +777,23 @@ function UsersPage({ language }) {
                 isNewEmailInvalid || isNewEmailDuplicate ? "input-error" : ""
               }
               required
+            />
+
+            <input
+              type="password"
+              placeholder={t("users.password", "Password")}
+              value={newUserPassword}
+              onChange={(e) => setNewUserPassword(e.target.value)}
+              className={isPasswordTooShort ? "input-error" : ""}
+              minLength={8}
+            />
+            <input
+              type="password"
+              placeholder={t("users.passwordConfirm", "Confirm password")}
+              value={newUserPasswordConfirm}
+              onChange={(e) => setNewUserPasswordConfirm(e.target.value)}
+              className={isPasswordMismatch ? "input-error" : ""}
+              minLength={8}
             />
 
            <select
