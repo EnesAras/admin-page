@@ -25,6 +25,10 @@
   color: var(--palette-muted);
 }
 
+[data-theme="light"] .dashboard-subtitle {
+  color: rgba(15, 23, 42, 0.6);
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -627,6 +631,20 @@
   border-color: var(--palette-accent);
   transform: translateY(-1px);
   box-shadow: var(--palette-shadow-md);
+}
+
+[data-theme="light"] .dashboard-card {
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .dashboard-card .card-label,
+[data-theme="light"] .dashboard-card .card-foot,
+[data-theme="light"] .dashboard-card .card-number {
+  color: rgba(15, 23, 42, 0.9);
+}
+
+[data-theme="light"] .dashboard-grid {
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .dashboard-order-grid {
