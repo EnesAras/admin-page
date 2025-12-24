@@ -341,10 +341,19 @@ const handleDelete = async (id) => {
     return (
       <div className="products-container">
         {/* HEADER */}
-        <div className="products-header">
-          <div className="products-header-left">
-            <h2>{t("products.title", "Products")}</h2>
-            <p>{t("products.subtitle", "Manage your anime, manga and gaming items.")}</p>
+        <div className="products-header page-header">
+          <div className="page-header-main">
+            <span className="page-header-icon" aria-hidden="true">
+              🛍️
+            </span>
+            <div>
+              <p className="page-header-title">
+                {t("products.title", "Products")}
+              </p>
+              <span className="page-header-caption">
+                {t("products.subtitle", "Manage your anime, manga and gaming items.")}
+              </span>
+            </div>
           </div>
 
           <div className="products-header-right">

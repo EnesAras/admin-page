@@ -746,8 +746,19 @@ function DashboardPage() {
 
   return (
     <div className="dashboard-container">
-      <h2 className="dashboard-title">{t("dashboardTitle")}</h2>
-      <p className="dashboard-subtitle">{t("dashboardSubtitle")}</p>
+      <div className="page-header dashboard-header">
+        <div className="page-header-main">
+          <span className="page-header-icon" aria-hidden="true">
+            📊
+          </span>
+          <div>
+            <p className="page-header-title">{t("dashboardTitle")}</p>
+            <span className="page-header-caption">
+              {t("dashboardSubtitle")}
+            </span>
+          </div>
+        </div>
+      </div>
       {lastNotification && (
         <div
           className={`dashboard-api-banner dashboard-api-banner-${

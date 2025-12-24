@@ -290,10 +290,15 @@ function SettingsPage() {
 
   return (
     <div className="settings-container">
-      <div className="settings-header">
-        <div>
-          <h2>{t.settingsTitle}</h2>
-          <p>{t.settingsSubtitle}</p>
+      <div className="settings-header page-header">
+        <div className="page-header-main">
+          <span className="page-header-icon" aria-hidden="true">
+            ⚙️
+          </span>
+          <div>
+            <p className="page-header-title">{t.settingsTitle}</p>
+            <span className="page-header-caption">{t.settingsSubtitle}</span>
+          </div>
         </div>
 
         {showSaved && (

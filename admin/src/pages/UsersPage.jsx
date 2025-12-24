@@ -854,16 +854,16 @@ function UsersPage({ language }) {
   return (
     <div className="users-container">
       {/* HEADER */}
-      <div className="users-page-header">
-        <div className="users-page-title">
-          <span className="users-page-icon" aria-hidden="true">
+      <div className="users-page-header page-header">
+        <div className="page-header-main">
+          <span className="page-header-icon" aria-hidden="true">
             👥
           </span>
           <div>
-            <p className="users-page-subtitle">
+            <p className="page-header-title">
               {t("users.title", "Users")}
             </p>
-            <span className="users-page-caption">
+            <span className="page-header-caption">
               {t("users.pageCaption", "Manage team access and roles")}
             </span>
           </div>

@@ -392,10 +392,19 @@ function OrdersPage({ language }) {
 
   return (
     <div className="orders-container">
-      <div className="orders-header">
-        <div className="orders-header-left">
-          <h2>{t("orders.title", "Orders")}</h2>
-          <p>{t("orders.subtitle", "Track and manage recent orders.")}</p>
+      <div className="orders-header page-header">
+        <div className="page-header-main">
+          <span className="page-header-icon" aria-hidden="true">
+            📦
+          </span>
+          <div>
+            <p className="page-header-title">
+              {t("orders.title", "Orders")}
+            </p>
+            <span className="page-header-caption">
+              {t("orders.subtitle", "Track and manage recent orders.")}
+            </span>
+          </div>
         </div>
 
         <div className="orders-header-right">
