@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
     }
   }, [currentUser, isAuthenticated]);
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     try {
       console.log("[AuthContext] login called", { email, password });
       const payload = {
@@ -158,7 +158,7 @@ export function AuthProvider({ children }) {
       });
       throw err;
     }
-  };
+  }, []);
 
   const updateCurrentUser = useCallback((partial) => {
     setCurrentUser((prev) => {

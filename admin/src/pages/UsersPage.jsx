@@ -116,7 +116,7 @@ function UsersPage({ language }) {
     } finally {
       setLoading(false);
     }
-  }, [lang, t]);
+  }, [t]);
 
   useEffect(() => {
     fetchUsers();

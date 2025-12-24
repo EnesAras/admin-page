@@ -529,7 +529,7 @@ function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [language, t]);
+  }, [language, t, updateApiHealth]);
 
   useEffect(() => {
     let mounted = true;
