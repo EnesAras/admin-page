@@ -8,6 +8,21 @@ const translations = {
   en: {
     settingsTitle: "Settings",
     settingsSubtitle: "Manage your profile, preferences and notifications.",
+    accountTitle: "Account & Security",
+    accountSubtitle: "View your account details and reset credentials.",
+    previewTitle: "Account preview",
+    previewSubtitle: "Quick summary of your current setup.",
+    previewDisplayName: "Display name",
+    previewLanguage: "Language",
+    previewTheme: "Theme",
+    resetPassword: "Reset password",
+    dangerTitle: "Danger zone",
+    dangerSubtitle: "Use with caution. These actions cannot be undone.",
+    clearLocalData: "Clear cached data",
+    resetPreferences: "Reset preferences",
+    emailLabel: "Email",
+    roleLabel: "Role",
+    settingsOptionSystem: "System",
 
     profileTitle: "Profile",
     profileDesc: "Update how your name appears in the admin panel.",
@@ -40,6 +55,21 @@ const translations = {
   tr: {
     settingsTitle: "Ayarlar",
     settingsSubtitle: "Profilini, tercihlerini ve bildirimlerini yönet.",
+    accountTitle: "Hesap ve Güvenlik",
+    accountSubtitle: "Hesap bilgilerini gör ve kimlik bilgilerini sıfırla.",
+    previewTitle: "Hesap önizlemesi",
+    previewSubtitle: "Güncel ayarlarının hızlı özeti.",
+    previewDisplayName: "Görünen ad",
+    previewLanguage: "Dil",
+    previewTheme: "Tema",
+    resetPassword: "Şifre sıfırla",
+    dangerTitle: "Tehlikeli alan",
+    dangerSubtitle: "Dikkatli ol; bu eylemler geri alınamaz.",
+    clearLocalData: "Önbelleği temizle",
+    resetPreferences: "Tercihleri sıfırla",
+    emailLabel: "E-posta",
+    roleLabel: "Rol",
+    settingsOptionSystem: "Sistem",
 
     profileTitle: "Profil",
     profileDesc: "Panelde görünen adını güncelle.",
@@ -72,6 +102,21 @@ const translations = {
   de: {
     settingsTitle: "Einstellungen",
     settingsSubtitle: "Verwalte Profil, Präferenzen und Benachrichtigungen.",
+    accountTitle: "Konto & Sicherheit",
+    accountSubtitle: "Kontodetails ansehen und Zugangsdaten zurücksetzen.",
+    previewTitle: "Kontoüberblick",
+    previewSubtitle: "Kurzer Überblick über deine aktuellen Einstellungen.",
+    previewDisplayName: "Anzeigename",
+    previewLanguage: "Sprache",
+    previewTheme: "Theme",
+    resetPassword: "Passwort zurücksetzen",
+    dangerTitle: "Gefahrenzone",
+    dangerSubtitle: "Ergebnis: irreversible Aktionen.",
+    clearLocalData: "Cache löschen",
+    resetPreferences: "Einstellungen zurücksetzen",
+    emailLabel: "E-Mail",
+    roleLabel: "Rolle",
+    settingsOptionSystem: "System",
 
     profileTitle: "Profil",
     profileDesc: "Aktualisiere, wie dein Name im Admin-Panel angezeigt wird.",
@@ -104,6 +149,21 @@ const translations = {
   es: {
     settingsTitle: "Configuración",
     settingsSubtitle: "Administra tu perfil, preferencias y notificaciones.",
+    accountTitle: "Cuenta y seguridad",
+    accountSubtitle: "Consulta tus datos y restablece credenciales.",
+    previewTitle: "Resumen de la cuenta",
+    previewSubtitle: "Vista rápida de tus ajustes actuales.",
+    previewDisplayName: "Nombre visible",
+    previewLanguage: "Idioma",
+    previewTheme: "Tema",
+    resetPassword: "Restablecer contraseña",
+    dangerTitle: "Zona de riesgo",
+    dangerSubtitle: "Usa con cuidado, no se puede deshacer.",
+    clearLocalData: "Borrar caché",
+    resetPreferences: "Restablecer preferencias",
+    emailLabel: "Correo",
+    roleLabel: "Rol",
+    settingsOptionSystem: "Sistema",
 
     profileTitle: "Perfil",
     profileDesc: "Actualiza cómo aparece tu nombre en el panel.",
@@ -165,6 +225,21 @@ const translations = {
     moderatorTitle: "Mode d'accès limité",
     moderatorSubtitle:
       "Tu peux uniquement définir le thème et la langue.",
+    accountTitle: "Compte et sécurité",
+    accountSubtitle: "Consulte tes données et réinitialise les identifiants.",
+    previewTitle: "Aperçu du compte",
+    previewSubtitle: "Résumé rapide de tes réglages actuels.",
+    previewDisplayName: "Nom affiché",
+    previewLanguage: "Langue",
+    previewTheme: "Thème",
+    resetPassword: "Réinitialiser le mot de passe",
+    dangerTitle: "Zone dangereuse",
+    dangerSubtitle: "Actions irréversibles, fais attention.",
+    clearLocalData: "Effacer les données locales",
+    resetPreferences: "Réinitialiser les préférences",
+    emailLabel: "Email",
+    roleLabel: "Rôle",
+    settingsOptionSystem: "Système",
   },
   it: {
     settingsTitle: "Impostazioni",
@@ -197,6 +272,21 @@ const translations = {
     savedPill: "Impostazioni salvate",
     moderatorTitle: "Modalità controllo limitata",
     moderatorSubtitle: "Puoi modificare solo tema e lingua.",
+    accountTitle: "Account e sicurezza",
+    accountSubtitle: "Controlla i tuoi dati e reimposta le credenziali.",
+    previewTitle: "Anteprima account",
+    previewSubtitle: "Riepilogo rapido delle tue impostazioni.",
+    previewDisplayName: "Nome visualizzato",
+    previewLanguage: "Lingua",
+    previewTheme: "Tema",
+    resetPassword: "Reimposta password",
+    dangerTitle: "Zona pericolosa",
+    dangerSubtitle: "Usa con cautela, operazioni irreversibili.",
+    clearLocalData: "Cancella dati locali",
+    resetPreferences: "Reimposta preferenze",
+    emailLabel: "Email",
+    roleLabel: "Ruolo",
+    settingsOptionSystem: "Sistema",
   },
   ru: {
     settingsTitle: "Настройки",
@@ -229,6 +319,21 @@ const translations = {
     savedPill: "Настройки сохранены",
     moderatorTitle: "Ограниченный режим",
     moderatorSubtitle: "Можно менять только тему и язык.",
+    accountTitle: "Аккаунт и безопасность",
+    accountSubtitle: "Проверь данные и сбрось доступ.",
+    previewTitle: "Обзор аккаунта",
+    previewSubtitle: "Краткий взгляд на ваши настройки.",
+    previewDisplayName: "Отображаемое имя",
+    previewLanguage: "Язык",
+    previewTheme: "Тема",
+    resetPassword: "Сбросить пароль",
+    dangerTitle: "Опасная зона",
+    dangerSubtitle: "Действия необратимы.",
+    clearLocalData: "Очистить кеш",
+    resetPreferences: "Сбросить настройки",
+    emailLabel: "Электронная почта",
+    roleLabel: "Роль",
+    settingsOptionSystem: "Система",
   },
 };
 
@@ -244,7 +349,13 @@ function SettingsPage() {
     String(currentUser?.role || "").trim().toLowerCase() === "moderator";
 
   const currentLang = settings.language || "en";
-  const t = translations[currentLang] || translations.en;
+  const dict = translations[currentLang] || translations.en;
+  const t = (key, fallback) => {
+    if (dict && dict[key] !== undefined) return dict[key];
+    if (translations.en && translations.en[key] !== undefined) return translations.en[key];
+    if (fallback !== undefined) return fallback;
+    return key;
+  };
 
   const showSystemNote = settings.theme === "system";
   const triggerSaved = () => {
@@ -296,27 +407,35 @@ function SettingsPage() {
             ⚙️
           </span>
           <div>
-            <p className="page-header-title">{t.settingsTitle}</p>
-            <span className="page-header-caption">{t.settingsSubtitle}</span>
+            <p className="page-header-title">
+              {t("settingsTitle", "Settings")}
+            </p>
+            <span className="page-header-caption">
+              {t(
+                "settingsSubtitle",
+                "Manage your profile, preferences and notifications."
+              )}
+            </span>
           </div>
         </div>
 
         {showSaved && (
-          <div className="settings-saved-pill">
-            {t.savedPill}
-          </div>
+        <div className="settings-saved-pill">
+          {t("savedPill", "Settings saved")}
+        </div>
         )}
       </div>
 
       {isModerator && (
         <section className="settings-moderator-note">
           <p className="settings-moderator-title">
-            {t.moderatorTitle ||
-              "Moderators can only update the look & feel."}
+            {t("moderatorTitle", "Limited control mode")}
           </p>
           <p className="settings-moderator-subtitle">
-            {t.moderatorSubtitle ||
-              "Theme and language settings are the only available preferences."}
+            {t(
+              "moderatorSubtitle",
+              "Theme and language settings are the only available preferences."
+            )}
           </p>
         </section>
       )}
@@ -326,20 +445,27 @@ function SettingsPage() {
           <section className="settings-card">
             <div className="settings-card-header">
               <div>
-                <h3>{t.profileTitle}</h3>
-                <p>{t.profileDesc}</p>
+                <h3>{t("profileTitle", "Profile")}</h3>
+                <p>
+                  {t(
+                    "profileDesc",
+                    "Update how your name appears in the admin panel."
+                  )}
+                </p>
               </div>
             </div>
 
             <div className="settings-field">
-              <label htmlFor="displayName">{t.displayNameLabel}</label>
+              <label htmlFor="displayName">
+                {t("displayNameLabel", "Display name")}
+              </label>
               <input
                 id="displayName"
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 onBlur={handleDisplayNameBlur}
-                placeholder={t.displayNamePlaceholder}
+                placeholder={t("displayNamePlaceholder", "Your name")}
               />
             </div>
           </section>
@@ -348,14 +474,14 @@ function SettingsPage() {
         <section className="settings-card">
           <div className="settings-card-header">
             <div>
-              <h3>{t.prefsTitle}</h3>
-              <p>{t.prefsDesc}</p>
+              <h3>{t("prefsTitle", "Preferences")}</h3>
+              <p>{t("prefsDesc", "Choose your visual theme and interface language.")}</p>
             </div>
           </div>
 
           <div className="settings-two-cols">
             <div className="settings-field">
-              <label>{t.themeLabel}</label>
+              <label>{t("themeLabel", "Theme")}</label>
               <div className="settings-theme-options">
                 <button
                   type="button"
@@ -367,7 +493,7 @@ function SettingsPage() {
                     triggerSaved();
                   }}
                 >
-                  {t.themeOptionDark}
+                  {t("themeOptionDark", "Dark")}
                 </button>
                 <button
                   type="button"
@@ -380,7 +506,7 @@ function SettingsPage() {
                     triggerSaved();
                   }}
                 >
-                  {t.themeOptionLight}
+                  {t("themeOptionLight", "Light")}
                 </button>
                 <button
                   type="button"
@@ -393,30 +519,43 @@ function SettingsPage() {
                     triggerSaved();
                   }}
                 >
-                  {t.themeOptionSystem}
+                  {t("themeOptionSystem", "System")}
                 </button>
               </div>
               {showSystemNote && (
                 <div className="settings-theme-note">
-                  <span>{t.themeSystemHint}</span>
+                  <span>
+                    {t(
+                      "themeSystemHint",
+                      "System follows your OS color preference."
+                    )}
+                  </span>
                   <span className="settings-theme-status">
                     {osPrefersDark
-                      ? t.themeSystemStatusDark
-                      : t.themeSystemStatusLight}
+                      ? t(
+                          "themeSystemStatusDark",
+                          "Your OS is currently using dark mode."
+                        )
+                      : t(
+                          "themeSystemStatusLight",
+                          "Your OS is currently using light mode."
+                        )}
                   </span>
                   <button
                     type="button"
                     className="settings-theme-sync"
                     onClick={handleSystemSync}
                   >
-                    {t.themeSystemAction}
+                    {t("themeSystemAction", "Sync with OS")}
                   </button>
                 </div>
               )}
             </div>
 
             <div className="settings-field">
-              <label htmlFor="language">{t.languageLabel}</label>
+              <label htmlFor="language">
+                {t("languageLabel", "Language")}
+              </label>
               <select
                 id="language"
                 value={currentLang}
@@ -438,8 +577,13 @@ function SettingsPage() {
           <section className="settings-card settings-card-full">
             <div className="settings-card-header">
               <div>
-                <h3>{t.notifTitle}</h3>
-                <p>{t.notifDesc}</p>
+                <h3>{t("notifTitle", "Notifications")}</h3>
+                <p>
+                  {t(
+                    "notifDesc",
+                    "Control which email updates you receive about activity."
+                  )}
+                </p>
               </div>
             </div>
 
@@ -451,8 +595,13 @@ function SettingsPage() {
                   onChange={handleMainEmailChange}
                 />
                 <div className="settings-toggle-text">
-                  <span>{t.mainEmailLabel}</span>
-                  <small>{t.mainEmailSub}</small>
+                  <span>{t("mainEmailLabel", "Main email alerts")}</span>
+                  <small>
+                    {t(
+                      "mainEmailSub",
+                      "Order updates, critical account messages."
+                    )}
+                  </small>
                 </div>
               </label>
 
@@ -463,14 +612,92 @@ function SettingsPage() {
                   onChange={handleWeeklyChange}
                 />
                 <div className="settings-toggle-text">
-                  <span>{t.weeklyLabel}</span>
-                  <small>{t.weeklySub}</small>
+                  <span>{t("weeklyLabel", "Weekly summary")}</span>
+                  <small>
+                    {t(
+                      "weeklySub",
+                      "Get a weekly summary of users and orders."
+                    )}
+                  </small>
                 </div>
               </label>
             </div>
           </section>
         )}
       </div>
+
+      <div className="settings-aux-grid">
+        <section className="settings-summary-card">
+          <div className="settings-card-header">
+            <div>
+              <h3>{t("previewTitle", "Account preview")}</h3>
+              <p>
+                {t(
+                  "previewSubtitle",
+                  "Quick summary of your current setup."
+                )}
+              </p>
+            </div>
+          </div>
+          <p>
+            <strong>{t("previewDisplayName", "Display name")}: </strong>
+            {displayName || currentUser?.name || "—"}
+          </p>
+          <p>
+            <strong>{t("previewLanguage", "Language")}: </strong>
+            {(settings.language || "en").toUpperCase()}
+          </p>
+          <p>
+            <strong>{t("previewTheme", "Theme")}: </strong>
+            {settings.theme || t("settingsOptionSystem", "System")}
+          </p>
+        </section>
+
+        <section className="settings-card">
+          <div className="settings-card-header">
+            <div>
+            <h3>{t("accountTitle", "Account & Security")}</h3>
+            <p>
+              {t(
+                "accountSubtitle",
+                "View your account details and reset credentials."
+              )}
+            </p>
+            </div>
+          </div>
+          <div className="settings-field">
+            <label>{t("settings.emailLabel", "Email")}</label>
+            <input value={currentUser?.email || ""} readOnly />
+          </div>
+          <div className="settings-field">
+            <label>{t("settings.roleLabel", "Role")}</label>
+            <input value={currentUser?.role || ""} readOnly />
+          </div>
+          <button type="button" className="settings-secondary-btn">
+            {t("resetPassword", "Reset password")}
+          </button>
+        </section>
+      </div>
+
+      <section className="settings-card settings-danger-card">
+        <div className="settings-card-header">
+          <div>
+            <h3>{t("dangerTitle", "Danger zone")}</h3>
+            <p>
+              {t(
+                "dangerSubtitle",
+                "Use with caution. These actions cannot be undone."
+              )}
+            </p>
+          </div>
+        </div>
+        <button type="button" className="settings-danger-btn">
+          {t("clearLocalData", "Clear cached data")}
+        </button>
+        <button type="button" className="settings-secondary-btn">
+          {t("resetPreferences", "Reset preferences")}
+        </button>
+      </section>
     </div>
   );
 }
