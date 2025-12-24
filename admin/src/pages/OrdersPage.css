@@ -288,6 +288,11 @@
   background: var(--palette-card-hover);
 }
 
+.orders-table tbody tr td:focus-within,
+.orders-table tbody tr:hover td {
+  outline: none;
+}
+
 .orders-row.selected {
   background: rgba(37, 99, 235, 0.12);
 }

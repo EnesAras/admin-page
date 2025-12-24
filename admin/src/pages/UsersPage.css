@@ -90,6 +90,35 @@
   background: var(--palette-card-hover);
 }
 
+.users-table tr:focus-within td {
+  border-color: var(--palette-accent);
+}
+
+.btn-primary,
+.add-user-btn,
+.filter-btn,
+.orders-export-btn,
+.products-select,
+.orders-date-select,
+.orders-search input {
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-primary:hover,
+.add-user-btn:hover,
+.filter-btn:hover {
+  box-shadow: var(--palette-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.btn-primary:focus-visible,
+.add-user-btn:focus-visible,
+.filter-btn:focus-visible,
+.orders-export-btn:focus-visible {
+  outline: 2px solid var(--palette-accent);
+  outline-offset: 2px;
+}
+
 /* =============== HEADER + SEARCH + FILTERS =============== */
 
 [data-theme="light"] .users-toolbar,

@@ -278,6 +278,11 @@
   background: var(--palette-card-hover);
 }
 
+.products-table tr:hover th,
+.products-table tr:hover td {
+  color: var(--palette-text);
+}
+
 .products-th-sortable {
   cursor: pointer;
   user-select: none;
