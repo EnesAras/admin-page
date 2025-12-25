@@ -1,12 +1,13 @@
 const express = require("express");
 const {
-  listUsers,
   getPresenceRecords,
   markUserLogin,
   markUserLogout,
+  safeUser,
 } = require("../data/store");
 const { logAuditEvent } = require("../data/auditLog");
 const { getActorFromHeaders } = require("../utils/actor");
+const User = require("../db/User");
 
 const router = express.Router();
 
@@ -26,8 +27,8 @@ const requireAdminRole = (req, res, next) => {
 router.post("/login", async (req, res) => {
   try {
     const actor = getActorFromHeaders(req);
-    const candidateId = actor.id || Number(req.body?.userId);
-    const userId = Number(candidateId);
+    const candidateId = actor.id || req.body?.userId;
+    const userId = candidateId ? String(candidateId) : null;
     if (!userId) {
       return res.status(400).json({ error: "UserIdRequired" });
     }
@@ -49,8 +50,8 @@ router.post("/login", async (req, res) => {
 router.post("/logout", async (req, res) => {
   try {
     const actor = getActorFromHeaders(req);
-    const candidateId = actor.id || Number(req.body?.userId);
-    const userId = Number(candidateId);
+    const candidateId = actor.id || req.body?.userId;
+    const userId = candidateId ? String(candidateId) : null;
     if (!userId) {
       return res.status(400).json({ error: "UserIdRequired" });
     }
@@ -70,10 +71,10 @@ router.post("/logout", async (req, res) => {
 
 router.get("/users", requireAdminRole, async (req, res) => {
   try {
-    const users = await listUsers();
+    const users = await User.find().sort({ id: 1 }).lean();
     const presenceRecords = getPresenceRecords();
     const presenceMap = new Map(
-      presenceRecords.map((record) => [record.userId, record])
+      presenceRecords.map((record) => [String(record.userId), record])
     );
 
     console.log(
@@ -81,16 +82,18 @@ router.get("/users", requireAdminRole, async (req, res) => {
       Array.from(presenceMap.keys()).map((key) => String(key))
     );
 
-    const enriched = users.map((user) => {
-      const userId = Number(user?.id);
-      const presence = Number.isFinite(userId)
-        ? presenceMap.get(userId) || null
-        : null;
+    const enriched = users
+      .map((user) => {
+      const safe = safeUser(user);
+      if (!safe) return null;
+      const userId = safe.id ? String(safe.id) : null;
+      const presence = userId ? presenceMap.get(userId) || null : null;
       return {
-        ...user,
+        ...safe,
         presence,
       };
-    });
+      })
+      .filter(Boolean);
     res.json({ users: enriched });
   } catch (err) {
     console.error("PRESENCE_USERS_ERROR:", err);

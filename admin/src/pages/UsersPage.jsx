@@ -53,26 +53,34 @@ function UsersPage({ language }) {
     [dict]
   );
 
- const roleLabel = (role) => {
-  if (!role) return "";
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const r = role.toLowerCase();
+  const roleLabel = (role) => {
+    if (!role) return "";
 
-  if (r === "admin") {
-    return t("roleAdmin", "Admin");
-  }
-  if (r === "owner") {
-    return t("roleOwner", "Owner");
-  }
-  if (r === "manager") {
-    return t("roleManager", "Manager");
-  }
-  if (r === "moderator") {
-    return t("roleModerator", "Moderator");
-  }
+    const r = role.toLowerCase();
 
-  return t("roleUser", "User");
-};
+    if (r === "admin") {
+      return t("roleAdmin", "Admin");
+    }
+    if (r === "owner") {
+      return t("roleOwner", "Owner");
+    }
+    if (r === "manager") {
+      return t("roleManager", "Manager");
+    }
+    if (r === "moderator") {
+      return t("roleModerator", "Moderator");
+    }
+
+    return t("roleUser", "User");
+  };
 
 
   const statusLabel = (status) => {
@@ -81,16 +89,6 @@ function UsersPage({ language }) {
     if (status === "Inactive") key = "statusInactive";
     return t(key, status);
   };
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  // BACKEND USERS + loading/error
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState("");
 
   // İlk açılışta backend'ten çek, hata olursa usersData'ya düş
   const fetchUsers = useCallback(async () => {
@@ -1293,131 +1291,170 @@ function UsersPage({ language }) {
       )}
 
       {/* TABLE */}
-      <table className="users-table">
-        <thead>
-            <tr>
-              <th onClick={() => handleSort("id")} className="sortable">
-                ID {renderSortIndicator("id")}
-              </th>
-              <th onClick={() => handleSort("name")} className="sortable">
-                {t("users.name", "Name")} {renderSortIndicator("name")}
-              </th>
-              <th onClick={() => handleSort("email")} className="sortable">
-                {t("users.email", "Email")} {renderSortIndicator("email")}
-              </th>
-              <th onClick={() => handleSort("role")} className="sortable">
-                {t("users.role", "Role")} {renderSortIndicator("role")}
-              </th>
-              <th onClick={() => handleSort("status")} className="sortable">
-                {t("common.status", "Status")} {renderSortIndicator("status")}
-              </th>
-              <th onClick={() => handleSort("createdAt")} className="sortable">
-                {t("users.createdAt", "Created")}{" "}
-                {renderSortIndicator("createdAt")}
-              </th>
-              {canEditUsers && (
-                <th>{t("presence.column", "Presence")}</th>
+      <div className="users-table-wrap">
+        <div className="users-table-scroll">
+          <table className="users-table">
+            <colgroup>
+              <col className="users-col-id" />
+              <col className="users-col-name" />
+              <col className="users-col-email" />
+              <col className="users-col-role" />
+              <col className="users-col-status" />
+              <col className="users-col-created" />
+              {canEditUsers && <col className="users-col-presence" />}
+              <col className="users-col-actions" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th
+                  onClick={() => handleSort("id")}
+                  className="sortable users-th-id"
+                >
+                  ID {renderSortIndicator("id")}
+                </th>
+                <th
+                  onClick={() => handleSort("name")}
+                  className="sortable users-th-name"
+                >
+                  {t("users.name", "Name")} {renderSortIndicator("name")}
+                </th>
+                <th
+                  onClick={() => handleSort("email")}
+                  className="sortable users-th-email"
+                >
+                  {t("users.email", "Email")} {renderSortIndicator("email")}
+                </th>
+                <th
+                  onClick={() => handleSort("role")}
+                  className="sortable users-th-role"
+                >
+                  {t("users.role", "Role")} {renderSortIndicator("role")}
+                </th>
+                <th
+                  onClick={() => handleSort("status")}
+                  className="sortable users-th-status"
+                >
+                  {t("common.status", "Status")} {renderSortIndicator("status")}
+                </th>
+                <th
+                  onClick={() => handleSort("createdAt")}
+                  className="sortable users-th-created"
+                >
+                  {t("users.createdAt", "Created")}{" "}
+                  {renderSortIndicator("createdAt")}
+                </th>
+                {canEditUsers && (
+                  <th className="users-th-presence">
+                    {t("presence.column", "Presence")}
+                  </th>
+                )}
+                <th className="users-th-actions users-col-actions">
+                  {t("common.actions", "Actions")}
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {loading ? (
+                <Skeleton
+                  rows={skeletonRows}
+                  columns={canEditUsers ? 8 : 7}
+                />
+              ) : (
+                paginatedUsers.map((user) => {
+                  const userPresenceId = user?.id ? String(user.id) : "";
+                  const presence =
+                    userPresenceId && presenceMap.has(userPresenceId)
+                      ? presenceMap.get(userPresenceId)
+                      : null;
+                  const hasPresenceRecord = presence != null;
+                  const presenceLabel = hasPresenceRecord
+                    ? presence?.online
+                      ? t("presence.online", "Online")
+                      : t("presence.offline", "Offline")
+                    : t("presence.unknown", "Unknown");
+                  const presenceTooltip = hasPresenceRecord
+                    ? buildPresenceTooltip(presence)
+                    : "";
+
+                  return (
+                    <tr key={user.id}>
+                      <td className="users-td-id">{user.id}</td>
+
+                      <td className="users-td-name">
+                        <div className="user-cell">
+                          <div className="user-avatar">
+                            {getInitials(user.name)}
+                          </div>
+                          <span className="user-name">{user.name}</span>
+                        </div>
+                      </td>
+
+                      <td className="users-td-email">{user.email}</td>
+
+                      <td className="users-td-role">
+                        <span
+                          className={`role-badge role-${normalize(user.role)}`}
+                        >
+                          {roleLabel(user.role)}
+                        </span>
+                      </td>
+
+                      <td className="users-td-status">
+                        <span
+                          className={`status-badge status-${normalize(user.status)} ${
+                            canToggleStatus ? "clickable" : ""
+                          }`}
+                          onClick={() => handleToggleStatus(user.id)}
+                        >
+                          {statusLabel(user.status)}
+                        </span>
+                      </td>
+
+                      <td className="users-td-created">
+                        {formatDate(user.createdAt || user.created_at)}
+                      </td>
+
+                      {canEditUsers && (
+                        <td className="users-td-presence presence-cell">
+                          <span
+                            className={`presence-badge ${
+                              presence?.online
+                                ? "online"
+                                : hasPresenceRecord
+                                ? "offline"
+                                : "unknown"
+                            }`}
+                            title={presenceTooltip || undefined}
+                          >
+                            {presenceLabel}
+                          </span>
+                        </td>
+                      )}
+
+                      <td className="users-td-actions users-col-actions users-actions">
+                        <button
+                          className="edit-btn"
+                          onClick={() => handleEditClick(user)}
+                        >
+                          {t("common.edit", "Edit")}
+                        </button>
+
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDelete(user.id)}
+                        >
+                          {t("common.delete", "Delete")}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
-              <th>{t("common.actions", "Actions")}</th>
-            </tr>
-        </thead>
-
-        <tbody>
-          {loading ? (
-            <Skeleton
-              rows={skeletonRows}
-              columns={canEditUsers ? 8 : 7}
-            />
-          ) : (
-            paginatedUsers.map((user) => {
-              const userPresenceId = Number(user.id);
-              const presence = Number.isFinite(userPresenceId)
-                ? presenceMap.get(userPresenceId)
-                : null;
-              const hasPresenceRecord = presence != null;
-              const presenceLabel = hasPresenceRecord
-                ? presence?.online
-                  ? t("presence.online", "Online")
-                  : t("presence.offline", "Offline")
-                : t("presence.unknown", "Unknown");
-              const presenceTooltip = hasPresenceRecord
-                ? buildPresenceTooltip(presence)
-                : "";
-
-              return (
-                <tr key={user.id}>
-                  <td>{user.id}</td>
-
-                  <td>
-                    <div className="user-cell">
-                      <div className="user-avatar">{getInitials(user.name)}</div>
-                      <span className="user-name">{user.name}</span>
-                    </div>
-                  </td>
-
-                  <td>{user.email}</td>
-
-                  <td>
-                    <span
-                      className={`role-badge role-${normalize(user.role)}`}
-                    >
-                      {roleLabel(user.role)}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span
-                      className={`status-badge status-${normalize(user.status)} ${
-                        canToggleStatus ? "clickable" : ""
-                      }`}
-                      onClick={() => handleToggleStatus(user.id)}
-                    >
-                      {statusLabel(user.status)}
-                    </span>
-                  </td>
-
-                  <td>{formatDate(user.createdAt || user.created_at)}</td>
-
-                  {canEditUsers && (
-                    <td className="presence-cell">
-                      <span
-                        className={`presence-badge ${
-                          presence?.online
-                            ? "online"
-                            : hasPresenceRecord
-                            ? "offline"
-                            : "unknown"
-                        }`}
-                        title={presenceTooltip || undefined}
-                      >
-                        {presenceLabel}
-                      </span>
-                    </td>
-                  )}
-
-                  <td>
-                    {canEditUsers && (
-                      <button
-                        className="edit-btn"
-                        onClick={() => handleEditClick(user)}
-                      >
-                        {t("common.edit", "Edit")}
-                      </button>
-                    )}
-
-                    <button
-                      className="delete-btn"
-                      onClick={() => handleDelete(user.id)}
-                    >
-                      {t("common.delete", "Delete")}
-                    </button>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {!loading && totalItems === 0 && (
         <EmptyState title={emptyTitle} description={emptyDescription} />

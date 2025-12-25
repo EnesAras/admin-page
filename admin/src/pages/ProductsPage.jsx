@@ -172,10 +172,11 @@
         let valB;
 
         switch (sortBy) {
-          case "id":
-            valA = Number(a?.id ?? 0);
-            valB = Number(b?.id ?? 0);
+          case "id": {
+            valA = String(a?.id ?? "");
+            valB = String(b?.id ?? "");
             break;
+          }
           case "name":
             valA = String(a?.name ?? "").toLowerCase();
             valB = String(b?.name ?? "").toLowerCase();
@@ -287,7 +288,7 @@ const handleSave = async () => {
     try {
       const isEdit = editingId != null;
       const baseUrl = "/api/products";
-      const url = isEdit ? `${baseUrl}/${Number(editingId)}` : baseUrl;
+      const url = isEdit ? `${baseUrl}/${editingId}` : baseUrl;
 
       const saved = await apiFetch(url, {
         method: isEdit ? "PUT" : "POST",
@@ -296,12 +297,12 @@ const handleSave = async () => {
 
       if (isEdit) {
         setProducts((prev) =>
-          prev.map((p) => (Number(p?.id) === Number(editingId) ? saved : p))
+          prev.map((p) => (p?.id === saved?.id ? saved : p))
         );
-        setSelectedId(Number(editingId));
+        setSelectedId(saved?.id ?? null);
       } else {
         setProducts((prev) => [saved, ...prev]);
-        setSelectedId(Number(saved?.id));
+        setSelectedId(saved?.id ?? null);
       }
 
       closePanel();
@@ -316,16 +317,15 @@ const handleSave = async () => {
 
 
 const handleDelete = async (id) => {
-  const safeId = Number(id);
-  if (!Number.isFinite(safeId)) return;
+  if (!id) return;
 
   try {
-    await apiFetch(`/api/products/${safeId}`, {
+    await apiFetch(`/api/products/${id}`, {
       method: "DELETE",
     });
 
-    setProducts((prev) => prev.filter((p) => Number(p?.id) !== safeId));
-    if (Number(selectedId) === safeId) setSelectedId(null);
+    setProducts((prev) => prev.filter((p) => p?.id !== id));
+    if (selectedId === id) setSelectedId(null);
   } catch (err) {
     console.error(err);
   }

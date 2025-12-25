@@ -1,12 +1,8 @@
 const express = require("express");
-const {
-  listUsers,
-  addUser,
-  updateUser,
-  deleteUser,
-  findUserByEmail,
-} = require("../data/store");
+const { safeUser, hashPassword } = require("../data/store");
 const { getActorFromHeaders } = require("../utils/actor");
+const mongoose = require("mongoose");
+const User = require("../db/User");
 
 const router = express.Router();
 
@@ -26,21 +22,19 @@ const requireAdminRole = (req, res, next) => {
 
 router.get("/", async (req, res) => {
   try {
-    const users = await listUsers();
-    res.json(users);
+    const users = await User.find().sort({ createdAt: -1 }).lean();
+    return res.json(users.map((user) => safeUser(user)));
   } catch (err) {
     console.error("USER_FETCH_ERROR:", err);
-    res.status(500).json({ error: "UserFetchError" });
+    return res.status(500).json({ error: "UserFetchError" });
   }
 });
 
 router.post("/", requireAdminRole, async (req, res) => {
   try {
-    const { name, email } = req.body || {};
+    const { name, email, role = "user", status = "Active" } = req.body || {};
     if (!name || !email) {
-      return res
-        .status(400)
-        .json({ error: "Name and email are required." });
+      return res.status(400).json({ error: "Name and email are required." });
     }
 
     const password = String(req.body.password || "").trim();
@@ -50,46 +44,64 @@ router.post("/", requireAdminRole, async (req, res) => {
         .json({ error: "Password must be at least 8 characters." });
     }
 
-    const existing = await findUserByEmail(String(email).toLowerCase());
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await User.findOne({ email: normalizedEmail }).lean();
     if (existing) {
       return res
         .status(409)
         .json({ error: "This email is already registered." });
     }
+    const passwordHash = await hashPassword(password);
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: passwordHash,
+      role,
+      status,
+    });
 
-    const payload = { ...(req.body || {}), password };
     console.log("CREATE USER payload:", {
-      name: payload.name,
-      email: payload.email,
-      role: payload.role,
-      status: payload.status,
+      name,
+      email: normalizedEmail,
+      role,
+      status,
       passwordLength: password.length,
     });
-    const created = await addUser(payload);
-    res.status(201).json(created);
+
+    return res.status(201).json(safeUser(user));
   } catch (err) {
     console.error("USER_CREATE_ERROR:", err);
-    res.status(500).json({ error: "UserCreateError" });
+    return res.status(500).json({ error: "UserCreateError" });
   }
 });
 
 router.put("/:id", requireAdminRole, async (req, res) => {
   try {
-    const userId = Number(req.params.id);
-    const name = req.body?.name ? String(req.body.name).trim() : null;
-    const email = req.body?.email
-      ? String(req.body.email).trim().toLowerCase()
-      : null;
-    const role = req.body?.role || "user";
-    const status = req.body?.status || "Active";
+    const userId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "InvalidUserId" });
+    }
+
+    const {
+      name,
+      email,
+      role,
+      status,
+    } = req.body || {};
     const passwordRaw = req.body?.password
       ? String(req.body.password).trim()
       : "";
 
-    if (!name || !email) {
+    if (name !== undefined && !String(name).trim()) {
       return res
         .status(400)
-        .json({ error: "Name and email are required." });
+        .json({ error: "Name cannot be empty." });
+    }
+
+    if (email !== undefined && !String(email).trim()) {
+      return res
+        .status(400)
+        .json({ error: "Email cannot be empty." });
     }
 
     if (passwordRaw && passwordRaw.length < 8) {
@@ -98,51 +110,73 @@ router.put("/:id", requireAdminRole, async (req, res) => {
         .json({ error: "Password must be at least 8 characters." });
     }
 
-    const existing = await findUserByEmail(email);
-    if (existing && existing.id !== userId) {
-      return res
-        .status(409)
-        .json({ error: "This email is already registered." });
+    let normalizedEmail = null;
+    if (email !== undefined) {
+      normalizedEmail = String(email).trim().toLowerCase();
+      const existing = await User.findOne({ email: normalizedEmail }).lean();
+      if (existing && String(existing._id) !== userId) {
+        return res
+          .status(409)
+          .json({ error: "This email is already registered." });
+      }
     }
 
-    const payload = {
-      name,
-      email,
-      role,
-      status,
-    };
+    const updates = {};
+    if (name !== undefined) {
+      updates.name = String(name).trim();
+    }
+    if (normalizedEmail) {
+      updates.email = normalizedEmail;
+    }
+    if (role !== undefined) {
+      updates.role = role;
+    }
+    if (status !== undefined) {
+      updates.status = status;
+    }
     if (passwordRaw) {
-      payload.password = passwordRaw;
+      updates.password = await hashPassword(passwordRaw);
+    }
+
+    if (!Object.keys(updates).length) {
+      return res
+        .status(400)
+        .json({ error: "No fields provided to update." });
     }
 
     console.log("UPDATE USER payload:", {
       id: userId,
-      name: payload.name,
-      email: payload.email,
-      role: payload.role,
-      status: payload.status,
+      ...updates,
       passwordLength: passwordRaw ? passwordRaw.length : 0,
     });
 
-    const updated = await updateUser(userId, payload);
+    const updated = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+    }).lean();
     if (!updated) {
       return res.status(404).json({ error: "UserNotFound" });
     }
-    res.json(updated);
+    return res.json(safeUser(updated));
   } catch (err) {
     console.error("USER_UPDATE_ERROR:", err);
-    res.status(500).json({ error: "UserUpdateError" });
+    return res.status(500).json({ error: "UserUpdateError" });
   }
 });
 
 router.delete("/:id", requireAdminRole, async (req, res) => {
   try {
-    const success = await deleteUser(Number(req.params.id));
-    if (!success) return res.status(404).json({ error: "UserNotFound" });
-    res.json({ ok: true, id: Number(req.params.id) });
+    const userId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "InvalidUserId" });
+    }
+    const deleted = await User.findByIdAndDelete(userId).lean();
+    if (!deleted) {
+      return res.status(404).json({ error: "UserNotFound" });
+    }
+    return res.json({ ok: true, id: req.params.id });
   } catch (err) {
     console.error("USER_DELETE_ERROR:", err);
-    res.status(500).json({ error: "UserDeleteError" });
+    return res.status(500).json({ error: "UserDeleteError" });
   }
 });
 

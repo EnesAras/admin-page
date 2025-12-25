@@ -2,9 +2,10 @@
 const crypto = require("crypto");
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const { findUserByEmail, safeUser } = require("../data/store");
+const { safeUser } = require("../data/store");
 const { logAuditEvent } = require("../data/auditLog");
 const { getActorFromHeaders } = require("../utils/actor");
+const User = require("../db/User");
 
 const ROLE_CAPABILITIES = {
   admin: {
@@ -81,7 +82,7 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    const user = await findUserByEmail(email);
+    const user = await User.findOne({ email }).lean();
     if (!user) {
       logLoginFailure("InvalidCredentials");
       return res.status(401).json({ error: "InvalidCredentials" });

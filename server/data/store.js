@@ -3,6 +3,8 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const { query } = require("../db");
 const rawProducts = require("./products");
+const Product = require("../db/Product");
+const User = require("../db/User");
 
 const HASH_ROUNDS = 10;
 
@@ -127,6 +129,16 @@ const ORDER_ITEMS = [
   "LED Desk Lamp",
 ];
 
+const PRODUCT_STATUS_VALUES = ["Active", "Hidden", "OutOfStock"];
+const sanitizeProductStatus = (value) => {
+  const normalized =
+    typeof value === "string" ? value.trim() : "";
+  if (PRODUCT_STATUS_VALUES.includes(normalized)) {
+    return normalized;
+  }
+  return "Active";
+};
+
 const randomFrom = (arr, idx) => arr[idx % arr.length];
 const randomTotal = (base, variance = 0.2) => {
   const delta = base * variance;
@@ -170,59 +182,35 @@ const createPastOrder = (seed) => {
   };
 };
 
+const toPlainObject = (entity) => {
+  if (!entity) return null;
+  if (typeof entity.toObject === "function") {
+    return entity.toObject();
+  }
+  return { ...entity };
+};
+
 const safeUser = (user) => {
   if (!user) return null;
-  const { password, ...rest } = user;
-  return rest;
+  const entity = toPlainObject(user);
+  if (!entity) return null;
+  const { password, __v, _id, ...rest } = entity;
+  const id = _id ? String(_id) : rest.id ? String(rest.id) : undefined;
+  return { ...rest, id };
+};
+
+const safeProduct = (product) => {
+  if (!product) return null;
+  const entity = toPlainObject(product);
+  if (!entity) return null;
+  const { __v, _id, ...rest } = entity;
+  return { ...rest, id: _id ? String(_id) : undefined };
 };
 
 const ensureSchema = async () => {
   const schemaPath = path.join(__dirname, "../db/schema.sql");
   const schemaSql = await fs.readFile(schemaPath, "utf8");
   await query(schemaSql);
-};
-
-const seedUsers = async () => {
-  if (!(await shouldSeedTable("users"))) return;
-  for (const user of DEFAULT_USERS) {
-    const hashedPassword = await hashPassword(user.password);
-    await query(
-      `
-      INSERT INTO users (name, email, password, role, status)
-      VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (email) DO NOTHING
-    `,
-      [user.name, user.email, hashedPassword, user.role, user.status]
-    );
-  }
-  await query(
-    "SELECT setval('users_id_seq', (SELECT COALESCE(MAX(id), 0) FROM users))"
-  );
-};
-
-const seedProducts = async () => {
-  if (!(await shouldSeedTable("products"))) return;
-  for (const product of rawProducts) {
-    await query(
-      `
-      INSERT INTO products (id, name, category, fandom, price, stock, status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      ON CONFLICT (id) DO NOTHING
-    `,
-      [
-        product.id,
-        product.name,
-        product.category,
-        product.fandom,
-        product.price,
-        product.stock,
-        product.status,
-      ]
-    );
-  }
-  await query(
-    "SELECT setval('products_id_seq', (SELECT COALESCE(MAX(id), 0) FROM products))"
-  );
 };
 
 const seedOrders = async () => {
@@ -253,10 +241,53 @@ const seedOrders = async () => {
   );
 };
 
+const seedMongoUsers = async () => {
+  const existingUsers = await User.countDocuments();
+  if (existingUsers > 0) return;
+
+  for (const user of DEFAULT_USERS) {
+    const hashedPassword = await hashPassword(user.password);
+    try {
+      await User.create({
+        name: user.name,
+        email: String(user.email).trim().toLowerCase(),
+        password: hashedPassword,
+        role: user.role,
+        status: user.status,
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        continue;
+      }
+      throw err;
+    }
+  }
+};
+
+const seedMongoProducts = async () => {
+  const existing = await Product.countDocuments();
+  if (existing > 0) return;
+
+  const normalized = rawProducts.map((product) => ({
+    name: String(product.name || "").trim(),
+    price: Number.isFinite(Number(product.price)) ? Number(product.price) : 0,
+    stock: Number.isFinite(Number(product.stock)) ? Number(product.stock) : 0,
+    category: String(product.category || "General").trim(),
+    fandom: String(product.fandom || "General").trim(),
+    status: sanitizeProductStatus(product.status),
+    imageUrl: String(product.image || product.imageUrl || "").trim(),
+  }));
+
+  const validEntries = normalized.filter((entry) => entry.name.length > 0);
+  if (validEntries.length === 0) return;
+
+  await Product.insertMany(validEntries);
+};
+
 const ensureSeedData = async () => {
-  await seedUsers();
-  await seedProducts();
   await seedOrders();
+  await seedMongoUsers();
+  await seedMongoProducts();
 };
 
 const normalizeStatus = (status) => {
@@ -303,141 +334,6 @@ const buildMonthlyRevenue = (orders, months = 6) => {
   });
 
   return Array.from(map.values());
-};
-
-const listUsers = async () => {
-  const { rows } = await query(
-    "SELECT id, name, email, role, status FROM users ORDER BY id"
-  );
-  return rows;
-};
-
-const findUserByEmail = async (email) => {
-  if (!email) return null;
-  const { rows } = await query(
-    "SELECT * FROM users WHERE email = $1 LIMIT 1",
-    [email.trim().toLowerCase()]
-  );
-  return rows[0] || null;
-};
-
-const addUser = async (payload) => {
-  if (!payload?.email || !payload?.name) return null;
-  const passwordHash = await hashPassword(payload?.password);
-  const { rows } = await query(
-    `
-    INSERT INTO users (name, email, password, role, status)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING id, name, email, role, status
-  `,
-    [
-      payload.name,
-      payload.email.trim().toLowerCase(),
-      passwordHash,
-      payload.role || "user",
-      payload.status || "Active",
-    ]
-  );
-  return rows[0] || null;
-};
-
-const updateUser = async (id, patch) => {
-  const hashedPassword = patch.password
-    ? await hashPassword(patch.password)
-    : null;
-
-  const { rows } = await query(
-    `
-    UPDATE users
-    SET name = COALESCE($1, name),
-        email = COALESCE($2, email),
-        role = COALESCE($3, role),
-        status = COALESCE($4, status),
-        password = COALESCE($5, password)
-    WHERE id = $6
-    RETURNING id, name, email, role, status
-  `,
-    [
-      patch.name,
-      patch.email ? patch.email.trim().toLowerCase() : null,
-      patch.role,
-      patch.status,
-      hashedPassword,
-      Number(id),
-    ]
-  );
-  return rows[0] || null;
-};
-
-const deleteUser = async (id) => {
-  const { rowCount } = await query("DELETE FROM users WHERE id = $1", [
-    Number(id),
-  ]);
-  return rowCount > 0;
-};
-
-const listProducts = async () => {
-  const { rows } = await query("SELECT * FROM products ORDER BY id");
-  return rows;
-};
-
-const addProduct = async (payload) => {
-  const { rows } = await query(
-    `
-    INSERT INTO products (name, category, fandom, price, stock, status)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *
-  `,
-    [
-      payload.name || "Untitled Product",
-      payload.category || "General",
-      payload.fandom || "General",
-      Number(payload.price) || 0,
-      Number(payload.stock) || 0,
-      payload.status || "Active",
-    ]
-  );
-  return rows[0] || null;
-};
-
-const updateProduct = async (id, patch) => {
-  const priceValue = Number.isFinite(Number(patch.price))
-    ? Number(patch.price)
-    : null;
-  const stockValue = Number.isFinite(Number(patch.stock))
-    ? Number(patch.stock)
-    : null;
-
-  const { rows } = await query(
-    `
-    UPDATE products
-    SET name = COALESCE($1, name),
-        category = COALESCE($2, category),
-        fandom = COALESCE($3, fandom),
-        price = COALESCE($4, price),
-        stock = COALESCE($5, stock),
-        status = COALESCE($6, status)
-    WHERE id = $7
-    RETURNING *
-  `,
-    [
-      patch.name,
-      patch.category,
-      patch.fandom,
-      priceValue,
-      stockValue,
-      patch.status,
-      Number(id),
-    ]
-  );
-  return rows[0] || null;
-};
-
-const deleteProduct = async (id) => {
-  const { rowCount } = await query("DELETE FROM products WHERE id = $1", [
-    Number(id),
-  ]);
-  return rowCount > 0;
 };
 
 const listOrders = async () => {
@@ -514,18 +410,18 @@ const deleteOrder = async (id) => {
 };
 
 const getDashboardStats = async () => {
-  const [ordersRes, usersRes, productsRes] = await Promise.all([
+  const [ordersRes, mongoUsers, mongoProducts] = await Promise.all([
     query("SELECT * FROM orders"),
-    query("SELECT * FROM users"),
-    query("SELECT * FROM products"),
+    User.find().lean(),
+    Product.find().lean(),
   ]);
 
   const orders = ordersRes.rows.map((order) => ({
     ...order,
     items: order.items || [],
   }));
-  const users = usersRes.rows.map((user) => safeUser(user));
-  const products = productsRes.rows;
+  const users = mongoUsers.map((user) => safeUser(user));
+  const products = mongoProducts;
 
   const totalRevenue = orders.reduce(
     (sum, o) => sum + (Number(o.total) || 0),
@@ -537,7 +433,11 @@ const getDashboardStats = async () => {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 5);
   const recentUsers = users
-    .sort((a, b) => b.id - a.id)
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB - dateA;
+    })
     .slice(0, 5);
   const activeUsers = users.filter((u) => u.status === "Active").length;
 
@@ -548,7 +448,7 @@ const getDashboardStats = async () => {
     activeUsers,
     inactiveUsers: users.length - activeUsers,
     adminCount: users.filter((u) => u.role === "admin").length,
-    productsCount: products.length,
+    productsCount: Array.isArray(products) ? products.length : 0,
     statusCounts,
     monthlyRevenue,
     recentOrders,
@@ -566,15 +466,7 @@ const initStore = async () => {
 module.exports = {
   initStore,
   safeUser,
-  listUsers,
-  findUserByEmail,
-  addUser,
-  updateUser,
-  deleteUser,
-  listProducts,
-  addProduct,
-  updateProduct,
-  deleteProduct,
+  safeProduct,
   listOrders,
   addOrder,
   updateOrder,
@@ -583,4 +475,5 @@ module.exports = {
   getPresenceRecords,
   markUserLogin,
   markUserLogout,
+  hashPassword,
 };

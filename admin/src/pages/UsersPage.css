@@ -1,7 +1,7 @@
 .users-container {
   padding: 32px;
   min-height: 100vh;
-  max-width: 1120px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -13,30 +13,172 @@
   transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
 }
 
+.main,
+.content {
+  overflow: visible;
+}
+
 /* =============== TABLO GENEL =============== */
+
+.users-table-wrap,
+.users-table-scroll {
+  width: 100%;
+  overflow: visible;
+}
+
+.users-table-scroll {
+  border: 1px solid var(--palette-border);
+  border-radius: 16px;
+  background: var(--palette-card);
+  box-shadow: var(--palette-card-shadow-soft);
+}
 
 .users-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
   background: var(--palette-card);
-  border: 1px solid var(--palette-border);
-  border-radius: 14px;
-  box-shadow: var(--palette-card-shadow-soft);
-  overflow: hidden;
+  color: var(--palette-text);
+}
+
+.users-table col.users-col-id {
+  width: 80px;
+}
+
+.users-table col.users-col-name {
+  width: 180px;
+}
+
+.users-table col.users-col-email {
+  width: 240px;
+}
+
+.users-table col.users-col-role,
+.users-table col.users-col-status,
+.users-table col.users-col-created,
+.users-table col.users-col-presence {
+  width: 110px;
+}
+
+.users-table col.users-col-actions {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+}
+
+.users-th-id,
+.users-td-id {
+  width: 80px;
+  min-width: 80px;
+}
+
+.users-th-name,
+.users-td-name {
+  width: 180px;
+  min-width: 150px;
+}
+
+.users-th-email,
+.users-td-email {
+  min-width: 220px;
+  max-width: 360px;
+}
+
+.users-th-role,
+.users-td-role,
+.users-th-status,
+.users-td-status,
+.users-th-created,
+.users-td-created,
+.users-th-presence,
+.users-td-presence {
+  width: 110px;
+  min-width: 110px;
+}
+
+.users-table-wrap .users-table th.users-th-actions,
+.users-table-wrap .users-table td.users-td-actions,
+.users-table-wrap .users-table th.users-col-actions,
+.users-table-wrap .users-table td.users-col-actions {
+  width: 160px;
+  min-width: 160px;
+  padding-right: 14px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.users-table-wrap .users-table th.users-th-actions,
+.users-table-wrap .users-table td.users-td-actions {
+  background: var(--palette-panel-soft);
+}
+
+.users-col-actions,
+.users-th-actions,
+.users-td-actions {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  box-shadow: -1px 0 0 rgba(15, 23, 42, 0.15);
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.users-table thead .users-th-actions {
+  z-index: 4;
+  box-shadow: -1px 0 0 rgba(15, 23, 42, 0.25);
+}
+
+.users-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  opacity: 1;
+  white-space: nowrap;
 }
 
 
 /* Başlık + hücre ortak */
 .users-table th,
 .users-table td {
-  padding: 12px 16px;
+  padding: 12px 14px;
   text-align: left;
   font-weight: 500;
   transition: background-color 0.15s ease, color 0.15s ease;
   color: var(--palette-text);
   border-bottom: 1px solid var(--palette-border);
   background: var(--palette-card);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.users-table th:not(.users-th-actions),
+.users-table td:not(.users-td-actions) {
+  overflow: hidden;
+}
+
+.users-table th.users-th-actions,
+.users-table td.users-td-actions {
+  overflow: visible;
+}
+
+.users-td-actions {
+  overflow: visible;
+}
+
+.users-table th {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.users-table td {
+  font-weight: 400;
 }
 
 /* DARK THEME TABLO */
@@ -754,9 +896,21 @@
 }
 
 .role-user {
-  border-color: var(--palette-border);
-  background: rgba(15, 23, 42, 0.2);
-  color: var(--palette-muted);
+  border-color: rgba(148, 163, 184, 0.8);
+  background: rgba(148, 163, 184, 0.18);
+  color: #0f172a;
+}
+
+[data-theme="light"] .role-user {
+  border-color: rgba(148, 163, 184, 0.8);
+  background: rgba(148, 163, 184, 0.16);
+  color: rgba(15, 23, 42, 0.95);
+}
+
+[data-theme="dark"] .role-user {
+  border-color: rgba(148, 163, 184, 0.9);
+  background: rgba(15, 23, 42, 0.65);
+  color: #e2e8f0;
 }
 
 /* =============== STATUS BADGES =============== */
