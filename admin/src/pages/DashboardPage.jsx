@@ -290,7 +290,6 @@ function DashboardPage() {
   useEffect(() => {
     loadPresenceData();
   }, [loadPresenceData]);
-  const locale = language || "en";
   const isLightTheme = colorMode === "light";
   const axisColor = isLightTheme ? "#6b7280" : "#e5e7eb";
   const gridColor = isLightTheme ? "#e2e8f0" : "#111827";
@@ -634,12 +633,13 @@ function DashboardPage() {
   const revenueData = useMemo(() => {
     if (!monthlyRevenueData?.length) return [];
     return monthlyRevenueData.map((entry) => ({
-      label: new Intl.DateTimeFormat(locale, { month: "short" }).format(
-        new Date(entry.year, entry.month, 1)
-      ),
-      revenue: entry.revenue,
+      label: entry.month || "-",
+      revenue:
+        typeof entry.value === "number" && Number.isFinite(entry.value)
+          ? entry.value
+          : 0,
     }));
-  }, [monthlyRevenueData, locale]);
+  }, [monthlyRevenueData]);
 
   // ==== PIE CHART: STATUS DISTRIBUTION ====
   const hasStatusData = statusChartData.length > 0;

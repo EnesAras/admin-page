@@ -1,15 +1,8 @@
 const express = require("express");
-const { mockStore } = require("../data/mockStore");
+const Order = require("../models/Order");
 const User = require("../models/User");
 
 const router = express.Router();
-
-const normalizeStatus = (value) => {
-  const normalized =
-    typeof value === "string" ? value.trim().toLowerCase() : "";
-  if (normalized === "canceled") return "cancelled";
-  return normalized || "pending";
-};
 
 const isoOrEpoch = (value) => {
   if (!value) {
@@ -22,26 +15,34 @@ const isoOrEpoch = (value) => {
   return date.toISOString();
 };
 
-const isRevenueOrder = (status) => {
-  return ["shipped", "delivered"].includes(status);
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const toOrderClient = (order) => {
+  if (!order) return null;
+  if (typeof order.toClient === "function") {
+    return order.toClient();
+  }
+  const { __v, _id, ...rest } = order;
+  return {
+    ...rest,
+    id: _id ? String(_id) : rest.id,
+  };
 };
 
-const buildOrderCounts = (list) => {
-  return list.reduce(
-    (acc, order) => {
-      const status = normalizeStatus(order.status);
-      acc.total += 1;
-      if (status === "pending") acc.pending += 1;
-      else if (status === "shipped") acc.shipped += 1;
-      else if (status === "cancelled") acc.cancelled += 1;
-      else acc.delivered += 1;
-      return acc;
-    },
-    { total: 0, pending: 0, shipped: 0, cancelled: 0, delivered: 0 }
-  );
-};
-
-const buildMonthlyRevenue = (list, months = 6) => {
+const buildMonthlyRevenue = (orders = [], months = 6) => {
   const now = new Date();
   const buckets = new Map();
 
@@ -49,16 +50,13 @@ const buildMonthlyRevenue = (list, months = 6) => {
     const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
     const key = `${date.getFullYear()}-${date.getMonth()}`;
     buckets.set(key, {
-      month: date.getMonth(),
-      year: date.getFullYear(),
-      revenue: 0,
+      label: MONTH_LABELS[date.getMonth()],
+      value: 0,
     });
   }
 
-  list.forEach((order) => {
-    const status = normalizeStatus(order.status);
-    if (!isRevenueOrder(status)) return;
-    const parsed = new Date(order.date);
+  orders.forEach((order) => {
+    const parsed = new Date(order.createdAt || order.date);
     if (Number.isNaN(parsed)) return;
     const key = `${parsed.getFullYear()}-${parsed.getMonth()}`;
     const bucket = buckets.get(key);
@@ -67,61 +65,27 @@ const buildMonthlyRevenue = (list, months = 6) => {
       typeof order.total === "number" && Number.isFinite(order.total)
         ? order.total
         : 0;
-    bucket.revenue += amount;
+    bucket.value += amount;
   });
 
-  return Array.from(buckets.values());
-};
-
-const buildRecentOrders = (list, limit = 5) => {
-  const cloned = [...list];
-  const sorted = cloned.sort((a, b) => {
-    const dateA = Date.parse(isoOrEpoch(a.date));
-    const dateB = Date.parse(isoOrEpoch(b.date));
-    if (dateB !== dateA) return dateB - dateA;
-    return (b.id || 0) - (a.id || 0);
-  });
-  return sorted.slice(0, limit).map((order) => ({
-    id: order.id,
-    customer: order.customer || "",
-    total:
-      typeof order.total === "number" && Number.isFinite(order.total)
-        ? order.total
-        : 0,
-    status: order.status || "",
-    date: isoOrEpoch(order.date),
+  return Array.from(buckets.values()).map((bucket) => ({
+    month: bucket.label,
+    value: bucket.value,
   }));
 };
 
-const buildDashboardPayload = (ordersList = []) => {
-  const storeOrders = Array.isArray(ordersList) ? ordersList : [];
-  const {
-    total: orderTotal,
-    pending,
-    shipped,
-    cancelled,
-  } = buildOrderCounts(storeOrders);
-
-  const monthlyRevenue = buildMonthlyRevenue(storeOrders);
-  const revenueTotal = monthlyRevenue.reduce(
-    (sum, bucket) => sum + bucket.revenue,
-    0
-  );
-
-  const recentOrders = buildRecentOrders(storeOrders);
-
+const mapRecentOrder = (order) => {
+  const payload = toOrderClient(order);
+  if (!payload) return null;
   return {
-    orders: {
-      total: orderTotal,
-      pending,
-      shipped,
-      cancelled,
-    },
-    revenue: {
-      total: revenueTotal,
-      monthly: monthlyRevenue,
-    },
-    recentOrders,
+    id: payload.id,
+    customer: payload.customer || "",
+    total:
+      typeof payload.total === "number" && Number.isFinite(payload.total)
+        ? payload.total
+        : 0,
+    status: payload.status || "",
+    date: isoOrEpoch(order.createdAt || payload.createdAt || payload.date),
   };
 };
 
@@ -139,10 +103,6 @@ const mapUser = (user) => {
 
 router.get("/", async (req, res) => {
   try {
-    const storeOrders = Array.isArray(mockStore.orders)
-      ? mockStore.orders
-      : [];
-    const payload = buildDashboardPayload(storeOrders);
     const [
       totalUsers,
       activeUsers,
@@ -150,6 +110,13 @@ router.get("/", async (req, res) => {
       adminUsers,
       owners,
       recentUsersFromDb,
+      totalOrders,
+      pendingOrders,
+      shippedOrders,
+      cancelledOrders,
+      recentOrdersFromDb,
+      revenueOrders,
+      rolesDistinct,
     ] = await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ status: { $regex: /^ACTIVE$/i } }),
@@ -157,16 +124,51 @@ router.get("/", async (req, res) => {
       User.countDocuments({ role: { $regex: /^Admin$/i } }),
       User.countDocuments({ role: { $regex: /^Owner$/i } }),
       User.find().sort({ createdAt: -1 }).limit(5),
+      Order.countDocuments({}),
+      Order.countDocuments({ status: { $regex: /^PENDING$/i } }),
+      Order.countDocuments({ status: { $regex: /^SHIPPED$/i } }),
+      Order.countDocuments({ status: { $regex: /^CANCELLED$/i } }),
+      Order.find().sort({ createdAt: -1 }).limit(5).lean(),
+      Order.find({
+        paymentStatus: { $regex: /^PAID$/i },
+        status: { $not: { $regex: /^CANCELLED$/i } },
+      }).lean(),
+      User.distinct("role"),
     ]);
-    const rolesDistinct = await User.distinct("role");
 
-    payload.users = {
-      total: totalUsers,
-      active: activeUsers,
-      inactive: inactiveUsers,
-      admins: adminUsers,
+    const revenueTotal = revenueOrders.reduce(
+      (sum, order) =>
+        sum +
+        (typeof order?.total === "number" && Number.isFinite(order.total)
+          ? order.total
+          : 0),
+      0
+    );
+    const monthlyRevenue = buildMonthlyRevenue(revenueOrders);
+
+    const payload = {
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        inactive: inactiveUsers,
+        admins: adminUsers,
+      },
+      orders: {
+        total: totalOrders,
+        pending: pendingOrders,
+        shipped: shippedOrders,
+        cancelled: cancelledOrders,
+      },
+      revenue: {
+        total: revenueTotal,
+        monthly: monthlyRevenue,
+      },
+      recentOrders: recentOrdersFromDb
+        .map(mapRecentOrder)
+        .filter(Boolean),
+      recentUsers: recentUsersFromDb.map(mapUser),
     };
-    payload.recentUsers = recentUsersFromDb.map(mapUser);
+
     console.log(
       "[dashboard users] total/active/inactive/admins/owners =",
       totalUsers,
