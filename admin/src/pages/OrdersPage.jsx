@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import "./OrdersPage.css";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
-import ordersMock from "../data/orders.mock";
 import { apiFetch } from "../lib/api";
 
 const STATUS_FLOW = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
@@ -56,11 +55,15 @@ function formatMoney(value) {
   return normalizeMonetaryValue(value).toFixed(2);
 }
 
-function normalizeOrder(order) {
+function normalizeOrder(order = {}) {
+  const date = order.createdAt ?? order.created_at ?? order.date;
   return {
     ...order,
+    date,
     status: normalizeStatusValue(order.status),
-    total: normalizeMonetaryValue(order.total ?? order.amount ?? order.price ?? 0),
+    total: normalizeMonetaryValue(
+      order.total ?? order.amount ?? order.price ?? 0
+    ),
   };
 }
 
@@ -121,16 +124,16 @@ function OrdersPage({ language }) {
   };
 
   // ==== STATE ====
-  const [orders, setOrders] = useState(() => ordersMock.map(normalizeOrder));
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("date");
   const [sortDirection, setSortDirection] = useState("desc");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [dateRange, setDateRange] = useState("all");
+  const [dateRange, setDateRange] = useState("ALL_TIME");
 
   // ✅ Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -152,28 +155,15 @@ function OrdersPage({ language }) {
         if (!isMounted) return;
 
         const normalized = normalizeOrdersPayload(payload).map(normalizeOrder);
-
-        if (normalized.length > 0) {
-          setOrders(normalized);
-        } else {
-          setOrders(ordersMock.map(normalizeOrder));
-          setError(
-            t(
-              "orders.fetchEmpty",
-              "There are no orders yet. Showing sample data."
-            )
-          );
-        }
+        setOrders(normalized);
+        setError(null);
       } catch (err) {
         console.error(err);
         if (!isMounted) return;
 
-        setOrders(ordersMock.map(normalizeOrder));
+        setOrders([]);
         setError(
-          t(
-            "orders.fetchError",
-            "There was a problem loading orders. Showing sample data."
-          )
+          t("orders.fetchError", "There was a problem loading orders.")
         );
       } finally {
         if (isMounted) setLoading(false);
@@ -214,10 +204,10 @@ function OrdersPage({ language }) {
         idStr.includes(term);
 
       const matchesStatus =
-        statusFilter === "all" || order.status === statusFilter;
+        statusFilter === "ALL" || order.status === statusFilter;
 
       let matchesDate = true;
-      if (dateRange !== "all" && order.date) {
+      if (dateRange !== "ALL_TIME" && order.date) {
         const orderMs = parseOrderDateMs(order.date);
         if (!Number.isNaN(orderMs)) {
           const diffDays = (nowMs - orderMs) / (1000 * 60 * 60 * 24);
@@ -332,7 +322,7 @@ function OrdersPage({ language }) {
       o.date,
       o.total,
       o.status,
-      o.method,
+      o.paymentStatus,
     ]);
 
     const csvContent = [
@@ -359,7 +349,9 @@ function OrdersPage({ language }) {
   const totalAmount = useMemo(
     () =>
       orders.reduce(
-        (sum, o) => sum + normalizeMonetaryValue(o.total ?? o.amount ?? o.price ?? 0),
+        (sum, o) =>
+          sum +
+          normalizeMonetaryValue(o.total ?? o.amount ?? o.price ?? 0),
         0
       ),
     [orders]
@@ -385,10 +377,18 @@ function OrdersPage({ language }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedOrder]);
 
-  const resultsTemplate = t("orders.resultsSummary", "Showing {current} of {total} orders");
+  const resultsTemplate = t(
+    "orders.resultsSummary",
+    "Showing {current} of {total} orders"
+  );
   const resultsText = resultsTemplate
     .replace("{current}", String(filteredOrders.length))
     .replace("{total}", String(orders.length));
+
+  const hasOrders = orders.length > 0;
+  const showEmptyState = !loading && !hasOrders && !error;
+  const noFilterResults =
+    hasOrders && paginatedOrders.length === 0 && !loading;
 
   return (
     <div className="orders-container">
@@ -415,7 +415,7 @@ function OrdersPage({ language }) {
                 onChange={(e) => setDateRange(e.target.value)}
                 className="orders-date-select"
               >
-                <option value="all">{t("orders.dateRangeAll", "All time")}</option>
+                <option value="ALL_TIME">{t("orders.dateRangeAll", "All time")}</option>
                 <option value="7">{t("orders.dateRange7", "Last 7 days")}</option>
                 <option value="30">{t("orders.dateRange30", "Last 30 days")}</option>
                 <option value="90">{t("orders.dateRange90", "Last 90 days")}</option>
@@ -423,7 +423,7 @@ function OrdersPage({ language }) {
               </select>
             </div>
 
-            <button className={`filter-btn ${statusFilter === "all" ? "active" : ""}`} onClick={() => setStatusFilter("all")}>
+            <button className={`filter-btn ${statusFilter === "ALL" ? "active" : ""}`} onClick={() => setStatusFilter("ALL")}>
               {t("orders.filterAll", "All")}
             </button>
             <button className={`filter-btn ${statusFilter === "Pending" ? "active" : ""}`} onClick={() => setStatusFilter("Pending")}>
@@ -489,6 +489,9 @@ function OrdersPage({ language }) {
       </div>
 
       <div className="orders-main-card">
+        <div className="orders-debug">
+          {t("orders.debugFetched", "Fetched orders:")} {orders.length}
+        </div>
         <div className="orders-table-wrapper">
           <table className="orders-table">
             <thead>
@@ -521,7 +524,13 @@ function OrdersPage({ language }) {
           </thead>
 
           <tbody>
-            {paginatedOrders.length === 0 && !loading ? (
+            {showEmptyState ? (
+              <tr>
+                <td colSpan="7" className="orders-empty">
+                  {t("orders.emptyState", "No orders yet.")}
+                </td>
+              </tr>
+            ) : noFilterResults ? (
               <tr>
                 <td colSpan="7" className="orders-empty">
                   {t("orders.empty", "No orders found for this filter.")}
@@ -535,12 +544,16 @@ function OrdersPage({ language }) {
                 return (
                   <tr
                     key={order.id}
-                    className={order.id === selectedOrderId ? "orders-row selected" : "orders-row"}
+                    className={
+                      order.id === selectedOrderId
+                        ? "orders-row selected"
+                        : "orders-row"
+                    }
                     onClick={() => setSelectedOrderId(order.id)}
                   >
                     <td>#{order.id}</td>
                     <td>{order.customer}</td>
-                    <td className="orders-email">{order.email}</td>
+                    <td className="orders-email">{order.email || "—"}</td>
                     <td>{formatDate(order.date)}</td>
                     <td>€{formatMoney(order.total)}</td>
                     <td>
@@ -556,11 +569,13 @@ function OrdersPage({ language }) {
                     </td>
                     <td>
                       <span
-                        className={`payment-pill payment-${String(order.method || "")
+                        className={`payment-pill payment-${String(
+                          order.paymentStatus || ""
+                        )
                           .toLowerCase()
                           .replace(/\s+/g, "-")}`}
                       >
-                        {order.method}
+                        {order.paymentStatus || "-"}
                       </span>
                     </td>
                   </tr>
@@ -661,7 +676,9 @@ function OrdersPage({ language }) {
                 <span className="details-label">
                   {t("orders.detailsPayment", "Payment method")}
                 </span>
-                <span className="details-value">{selectedOrder.method}</span>
+                <span className="details-value">
+                  {selectedOrder.paymentStatus || "—"}
+                </span>
               </div>
             </div>
           </div>
