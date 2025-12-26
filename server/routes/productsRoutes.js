@@ -3,13 +3,13 @@ const mongoose = require("mongoose");
 const Product = require("../db/Product");
 const { safeProduct } = require("../data/store");
 
-const STATUS_VALUES = ["Active", "Hidden", "OutOfStock"];
+const STATUS_VALUES = ["active", "inactive"];
 
 const sanitizeStatus = (value) => {
   const normalized =
-    typeof value === "string" ? value.trim() : "";
+    typeof value === "string" ? value.trim().toLowerCase() : "";
   if (!STATUS_VALUES.includes(normalized)) {
-    return "Active";
+    return "active";
   }
   return normalized;
 };
@@ -41,14 +41,17 @@ router.post("/", async (req, res) => {
       ? Number(payload.stock)
       : 0;
 
+    const normalizedCategory =
+      String(payload.category ?? "General").trim() || "General";
+    const imageValue = String(payload.image || payload.imageUrl || "").trim();
+
     const created = await Product.create({
       name,
       price: priceValue,
       stock: stockValue,
-      category: String(payload.category ?? "General").trim() || "General",
-      fandom: String(payload.fandom ?? "General").trim() || "General",
+      category: normalizedCategory,
       status: sanitizeStatus(payload.status),
-      imageUrl: String(payload.imageUrl || payload.image || "").trim(),
+      image: imageValue,
     });
 
     return res.status(201).json(safeProduct(created));
@@ -80,10 +83,6 @@ router.put("/:id", async (req, res) => {
       updates.category = String(payload.category ?? "General").trim() || "General";
     }
 
-    if (payload.fandom !== undefined) {
-      updates.fandom = String(payload.fandom ?? "General").trim() || "General";
-    }
-
     if (payload.price !== undefined) {
       const priceValue = Number(payload.price);
       if (!Number.isFinite(priceValue) || priceValue < 0) {
@@ -105,7 +104,7 @@ router.put("/:id", async (req, res) => {
     }
 
     if (payload.imageUrl !== undefined || payload.image !== undefined) {
-      updates.imageUrl = String(payload.imageUrl || payload.image || "").trim();
+      updates.image = String(payload.image ?? payload.imageUrl ?? "").trim();
     }
 
     if (!Object.keys(updates).length) {

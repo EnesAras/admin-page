@@ -18,59 +18,6 @@ import { apiFetch, emitApiToast } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
-const fallbackOrders = [
-  {
-    id: 101,
-    customer: "Alex Turner",
-    email: "alex.turner@example.com",
-    date: "2025-10-15",
-    total: 125.5,
-    status: "Pending",
-    method: "Credit Card",
-  },
-  {
-    id: 102,
-    customer: "Maria Lopez",
-    email: "maria.lopez@example.com",
-    date: "2025-11-03",
-    total: 89.99,
-    status: "Shipped",
-    method: "PayPal",
-  },
-  {
-    id: 103,
-    customer: "David Kim",
-    email: "david.kim@example.com",
-    date: "2025-12-05",
-    total: 42.0,
-    status: "Cancelled",
-    method: "Bank Transfer",
-  },
-];
-
-const fallbackUsers = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "johndoe36@kars.com",
-    role: "Admin",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "janesmith36@kars.com",
-    role: "User",
-    status: "Inactive",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mikejohnson36@kars.com",
-    role: "Moderator",
-    status: "Active",
-  },
-];
 const DASHBOARD_PRIORITY_ORDER = ["pending", "shipped", "delivered", "cancelled"];
 const ROLE_PRIORITY = {
   Owner: 1,
@@ -95,111 +42,31 @@ const normalizeTotal = (value) => {
 
 const formatMoney = (value) => normalizeTotal(value).toFixed(2);
 
-const normalizeOrder = (order) => ({
-  ...order,
-  date: order.date || order.createdAt || order.created_at || "",
-  total: normalizeTotal(order.total ?? order.amount ?? order.price ?? 0),
-  status: order.status || "Pending",
-});
-
-const computeUserStats = (usersList = []) => {
-  const entries = Array.isArray(usersList) ? usersList : [];
-  const totalUsers = entries.length;
-  const activeUsers = entries.filter(
-    (user) => String(user?.status ?? "").toLowerCase() === "active"
-  ).length;
-  const adminCount = entries.filter((user) =>
-    ["admin", "owner"].includes(String(user?.role ?? "").toLowerCase())
-  ).length;
-  return {
-    totalUsers,
-    activeUsers,
-    inactiveUsers: Math.max(0, totalUsers - activeUsers),
-    adminCount,
-  };
-};
-
-const buildStatusCounts = (ordersList) => {
-  const counts = ordersList.reduce((acc, order) => {
-    const raw = String(order?.status ?? "pending")
-      .trim()
-      .toLowerCase();
-    const key = raw === "canceled" ? "cancelled" : raw;
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-
-  return {
-    pending: 0,
-    shipped: 0,
-    delivered: 0,
-    cancelled: 0,
-    ...counts,
-  };
-};
-
-const buildMonthlyRevenue = (ordersList, months = 6) => {
-  const map = new Map();
-  const now = new Date();
-
-  for (let offset = months - 1; offset >= 0; offset -= 1) {
-    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    const key = `${d.getFullYear()}-${d.getMonth()}`;
-    map.set(key, { year: d.getFullYear(), month: d.getMonth(), revenue: 0 });
-  }
-
-  ordersList.forEach((order) => {
-    const date = new Date(order.date);
-    if (Number.isNaN(date)) return;
-    const key = `${date.getFullYear()}-${date.getMonth()}`;
-    const bucket = map.get(key);
-    if (!bucket) return;
-    bucket.revenue += normalizeTotal(order.total);
-  });
-
-  return Array.from(map.values());
-};
-
-const buildDashboardState = (ordersList, usersList) => {
-  const normalizedOrders = ordersList.map(normalizeOrder);
-  const statusCounts = buildStatusCounts(normalizedOrders);
-  const monthlyRevenue = buildMonthlyRevenue(normalizedOrders);
-  const recentOrders = [...normalizedOrders]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 5);
-
-  const sanitizedUsers = [...usersList].map((user) => ({ ...user }));
-  const recentUsers = sanitizedUsers
-    .sort((a, b) => b.id - a.id)
-    .slice(0, 5);
-
-  const activeUsers = usersList.filter((u) => u.status === "Active").length;
-  const adminCount = usersList.filter((u) => u.role === "Admin").length;
-
-  return {
-    totalUsers: usersList.length,
-    activeUsers,
-    inactiveUsers: usersList.length - activeUsers,
-    adminCount,
-    totalOrders: normalizedOrders.length,
-    totalRevenue: normalizedOrders.reduce(
-      (sum, o) => sum + normalizeTotal(o.total),
-      0
-    ),
-    statusCounts,
-    monthlyRevenue,
-    recentOrders,
-    recentUsers,
-    pendingOrders: statusCounts.pending,
-    shippedOrders: statusCounts.shipped,
-    productsCount: 0,
-  };
-};
-
 const CARD_FOOT_FALLBACKS = {
   cardFootPendingOrders: "ordersLabel",
   cardFootShippedOrders: "ordersLabel",
   cardFootTotalRevenue: "totalRevenue",
+};
+
+const INITIAL_DASHBOARD_DATA = {
+  users: { total: 0, active: 0, inactive: 0, admins: 0 },
+  totalUsers: 0,
+  activeUsers: 0,
+  inactiveUsers: 0,
+  adminCount: 0,
+  totalOrders: 0,
+  totalRevenue: 0,
+  pendingOrders: 0,
+  shippedOrders: 0,
+  statusCounts: {
+    pending: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  },
+  monthlyRevenue: [],
+  recentOrders: [],
+  recentUsers: [],
 };
 
 const formatPresenceTimestamp = (value) => {
@@ -294,6 +161,70 @@ let dashboardCache = null;
 let dashboardCacheTimestamp = 0;
 let dashboardFetchPromise = null;
 
+const normalizeDashboardPayload = (payload) => {
+  if (!payload) return null;
+  const userBucket = payload.users || {};
+  const orderBucket = payload.orders || {};
+  const revenueBucket = payload.revenue || {};
+  const totalOrders = Number.isFinite(Number(orderBucket.total))
+    ? Number(orderBucket.total)
+    : 0;
+  const pendingOrders = Number.isFinite(Number(orderBucket.pending))
+    ? Number(orderBucket.pending)
+    : 0;
+  const shippedOrders = Number.isFinite(Number(orderBucket.shipped))
+    ? Number(orderBucket.shipped)
+    : 0;
+  const cancelledOrders = Number.isFinite(Number(orderBucket.cancelled))
+    ? Number(orderBucket.cancelled)
+    : 0;
+  const deliveredOrders = Math.max(
+    0,
+    totalOrders - pendingOrders - shippedOrders - cancelledOrders
+  );
+  const normalizedUsers = {
+    total: Number.isFinite(Number(userBucket.total))
+      ? Number(userBucket.total)
+      : 0,
+    active: Number.isFinite(Number(userBucket.active))
+      ? Number(userBucket.active)
+      : 0,
+    inactive: Number.isFinite(Number(userBucket.inactive))
+      ? Number(userBucket.inactive)
+      : 0,
+    admins: Number.isFinite(Number(userBucket.admins))
+      ? Number(userBucket.admins)
+      : 0,
+  };
+
+  return {
+    users: normalizedUsers,
+    totalUsers: normalizedUsers.total,
+    activeUsers: normalizedUsers.active,
+    inactiveUsers: normalizedUsers.inactive,
+    adminCount: normalizedUsers.admins,
+    totalOrders,
+    pendingOrders,
+    shippedOrders,
+    totalRevenue: normalizeTotal(revenueBucket.total ?? 0),
+    statusCounts: {
+      pending: pendingOrders,
+      shipped: shippedOrders,
+      delivered: deliveredOrders,
+      cancelled: cancelledOrders,
+    },
+    monthlyRevenue: Array.isArray(revenueBucket.monthly)
+      ? revenueBucket.monthly
+      : [],
+    recentOrders: Array.isArray(payload.recentOrders)
+      ? payload.recentOrders
+      : [],
+    recentUsers: Array.isArray(payload.recentUsers)
+      ? payload.recentUsers
+      : [],
+  };
+};
+
 const fetchDashboardSnapshot = async () => {
   const now = Date.now();
   if (dashboardCache && now - dashboardCacheTimestamp < DASHBOARD_CACHE_TTL) {
@@ -311,9 +242,15 @@ const fetchDashboardSnapshot = async () => {
       if (shouldProfile) console.time(timerLabel);
       try {
         const data = await apiFetch("/api/dashboard");
-        dashboardCache = data;
+        console.log("[dashboard api payload]", data);
+        console.log("[dashboard api users]", data?.users);
+        const normalized = normalizeDashboardPayload(data);
+        if (!normalized) {
+          throw new Error("InvalidDashboardPayload");
+        }
+        dashboardCache = normalized;
         dashboardCacheTimestamp = Date.now();
-        return data;
+        return normalized;
       } finally {
         if (shouldProfile) console.timeEnd(timerLabel);
         dashboardFetchPromise = null;
@@ -368,11 +305,6 @@ function DashboardPage() {
     return key;
   };
 
-  const fallbackDashboard = useMemo(
-    () => buildDashboardState(fallbackOrders, fallbackUsers),
-    []
-  );
-
   const initialHealthMessage = t(
     "apiHealthIdle",
     "No API notifications yet."
@@ -389,10 +321,6 @@ function DashboardPage() {
       updatedAt: Date.now(),
     });
   }, []);
-
-  const [userStats, setUserStats] = useState(() =>
-    computeUserStats(fallbackUsers)
-  );
 
   const capabilityLabelMap = useMemo(
     () => ({
@@ -426,7 +354,7 @@ function DashboardPage() {
     }).format(new Date(value));
   };
 
-  const [dashboardData, setDashboardData] = useState(fallbackDashboard);
+  const [dashboardData, setDashboardData] = useState(INITIAL_DASHBOARD_DATA);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState("");
   const [auditEvents, setAuditEvents] = useState([]);
@@ -448,14 +376,7 @@ function DashboardPage() {
     try {
       const data = await fetchDashboardSnapshot();
       if (!dashboardMountedRef.current || !data) return;
-      setDashboardData((prev) => ({
-        ...prev,
-        ...data,
-        statusCounts: { ...prev.statusCounts, ...(data.statusCounts || {}) },
-        monthlyRevenue: data.monthlyRevenue || prev.monthlyRevenue,
-        recentOrders: data.recentOrders || prev.recentOrders,
-        recentUsers: data.recentUsers || prev.recentUsers,
-      }));
+      setDashboardData(data);
       emitApiToast({
         message: successMessage,
         type: "success",
@@ -471,7 +392,14 @@ function DashboardPage() {
       setDashboardError(errMessage);
       emitApiToast({ message: errMessage, type: "error" });
       updateApiHealth("error", errMessage);
-      console.warn("Failed to load dashboard data:", err);
+      console.error(
+        "Failed to load dashboard data:",
+        err,
+        "status:",
+        err?.status,
+        "data:",
+        err?.data ?? err?.message
+      );
     } finally {
       if (dashboardMountedRef.current) {
         setDashboardLoading(false);
@@ -490,46 +418,6 @@ function DashboardPage() {
   const handleRetryDashboard = useCallback(() => {
     loadDashboardData();
   }, [loadDashboardData]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadUsers = async () => {
-      const successMessage = t("api.toast.userSynced", "User data synced");
-      const failureMessage = t(
-        "api.health.error",
-        "API encountered an issue"
-      );
-      try {
-        const users = await apiFetch("/api/users");
-        if (!mounted) return;
-        setUserStats(computeUserStats(users));
-        emitApiToast({
-          message: successMessage,
-          type: "success",
-          dedupeKey: "users-sync",
-        });
-        updateApiHealth(
-          "healthy",
-          t("api.health.operational", "All systems operational")
-        );
-      } catch (err) {
-        if (!mounted) return;
-        const errMessage = err?.message || failureMessage;
-        emitApiToast({
-          message: errMessage,
-          type: "error",
-        });
-        updateApiHealth("error", errMessage);
-      }
-    };
-
-    loadUsers();
-
-    return () => {
-      mounted = false;
-    };
-  }, [language, t, updateApiHealth]);
 
   useEffect(() => {
     let mounted = true;
@@ -568,8 +456,20 @@ function DashboardPage() {
     monthlyRevenue: monthlyRevenueData = [],
     recentOrders: recentOrdersData = [],
     recentUsers: recentUsersData = [],
+    users: dashboardUsers = {},
   } = dashboardData;
-  const { totalUsers, activeUsers, inactiveUsers, adminCount } = userStats;
+  const totalUsers = Number.isFinite(Number(dashboardUsers.total))
+    ? Number(dashboardUsers.total)
+    : 0;
+  const activeUsers = Number.isFinite(Number(dashboardUsers.active))
+    ? Number(dashboardUsers.active)
+    : 0;
+  const inactiveUsers = Number.isFinite(Number(dashboardUsers.inactive))
+    ? Number(dashboardUsers.inactive)
+    : 0;
+  const adminCount = Number.isFinite(Number(dashboardUsers.admins))
+    ? Number(dashboardUsers.admins)
+    : 0;
 
   const activeRate =
     totalUsers === 0 ? 0 : Math.round((activeUsers / totalUsers) * 100);
@@ -1200,7 +1100,7 @@ function DashboardPage() {
                     : "";
 
                   return (
-                    <tr key={user.id}>
+                    <tr key={user.id || user.email}>
                       <td>{user.name}</td>
                       <td className="recent-email">{user.email}</td>
                       <td>

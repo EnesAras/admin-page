@@ -1,17 +1,21 @@
 const express = require("express");
-const { safeUser, hashPassword } = require("../data/store");
+const { hashPassword } = require("../data/store");
 const { getActorFromHeaders } = require("../utils/actor");
 const mongoose = require("mongoose");
-const User = require("../db/User");
+const User = require("../models/User");
 
 const router = express.Router();
+
+console.log("[usersRoutes] Mongo users routes mounted");
+
+const ROLE_VALUES = ["Owner", "Admin", "Moderator", "User"];
+const STATUS_VALUES = ["ACTIVE", "INACTIVE"];
 
 const isAdminOrOwner = (role) => {
   const normalized = String(role || "").toLowerCase();
   return normalized === "admin" || normalized === "owner";
 };
 
-// The frontend sets the actor metadata via x-actor-* headers (see lib/api) so we can trust the role here.
 const requireAdminRole = (req, res, next) => {
   const actorRole = getActorFromHeaders(req).role;
   if (!isAdminOrOwner(actorRole)) {
@@ -20,10 +24,20 @@ const requireAdminRole = (req, res, next) => {
   return next();
 };
 
+const mapUser = (user) => {
+  if (!user) return null;
+  const entity = user.toObject ? user.toObject() : user;
+  const { __v, _id, password, ...rest } = entity;
+  return {
+    ...rest,
+    id: _id ? String(_id) : undefined,
+  };
+};
+
 router.get("/", async (req, res) => {
   try {
     const users = await User.find().sort({ createdAt: -1 }).lean();
-    return res.json(users.map((user) => safeUser(user)));
+    return res.json(users.map(mapUser));
   } catch (err) {
     console.error("USER_FETCH_ERROR:", err);
     return res.status(500).json({ error: "UserFetchError" });
@@ -32,7 +46,8 @@ router.get("/", async (req, res) => {
 
 router.post("/", requireAdminRole, async (req, res) => {
   try {
-    const { name, email, role = "user", status = "Active" } = req.body || {};
+    const { name, email, role = "User", status = "ACTIVE", presence } =
+      req.body || {};
     if (!name || !email) {
       return res.status(400).json({ error: "Name and email are required." });
     }
@@ -44,7 +59,7 @@ router.post("/", requireAdminRole, async (req, res) => {
         .json({ error: "Password must be at least 8 characters." });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = String(email).trim().toLowerCase();
     const existing = await User.findOne({ email: normalizedEmail }).lean();
     if (existing) {
       return res
@@ -52,23 +67,23 @@ router.post("/", requireAdminRole, async (req, res) => {
         .json({ error: "This email is already registered." });
     }
     const passwordHash = await hashPassword(password);
-    const user = await User.create({
-      name: name.trim(),
+    const normalizedRole = ROLE_VALUES.includes(role)
+      ? role
+      : "User";
+    const normalizedStatus = STATUS_VALUES.includes(status.toUpperCase())
+      ? status.toUpperCase()
+      : "ACTIVE";
+
+    const created = await User.create({
+      name: String(name).trim(),
       email: normalizedEmail,
       password: passwordHash,
-      role,
-      status,
+      role: normalizedRole,
+      status: normalizedStatus,
+      presence: presence ? String(presence).trim() : undefined,
     });
 
-    console.log("CREATE USER payload:", {
-      name,
-      email: normalizedEmail,
-      role,
-      status,
-      passwordLength: password.length,
-    });
-
-    return res.status(201).json(safeUser(user));
+    return res.status(201).json(mapUser(created));
   } catch (err) {
     console.error("USER_CREATE_ERROR:", err);
     return res.status(500).json({ error: "UserCreateError" });
@@ -82,26 +97,15 @@ router.put("/:id", requireAdminRole, async (req, res) => {
       return res.status(400).json({ error: "InvalidUserId" });
     }
 
-    const {
-      name,
-      email,
-      role,
-      status,
-    } = req.body || {};
-    const passwordRaw = req.body?.password
-      ? String(req.body.password).trim()
-      : "";
+    const { name, email, role, status, presence } = req.body || {};
+    const passwordRaw = req.body?.password ? String(req.body.password).trim() : "";
 
     if (name !== undefined && !String(name).trim()) {
-      return res
-        .status(400)
-        .json({ error: "Name cannot be empty." });
+      return res.status(400).json({ error: "Name cannot be empty." });
     }
 
     if (email !== undefined && !String(email).trim()) {
-      return res
-        .status(400)
-        .json({ error: "Email cannot be empty." });
+      return res.status(400).json({ error: "Email cannot be empty." });
     }
 
     if (passwordRaw && passwordRaw.length < 8) {
@@ -110,29 +114,31 @@ router.put("/:id", requireAdminRole, async (req, res) => {
         .json({ error: "Password must be at least 8 characters." });
     }
 
-    let normalizedEmail = null;
+    const updates = {};
+    if (name !== undefined) {
+      updates.name = String(name).trim();
+    }
     if (email !== undefined) {
-      normalizedEmail = String(email).trim().toLowerCase();
+      const normalizedEmail = String(email).trim().toLowerCase();
       const existing = await User.findOne({ email: normalizedEmail }).lean();
       if (existing && String(existing._id) !== userId) {
         return res
           .status(409)
           .json({ error: "This email is already registered." });
       }
-    }
-
-    const updates = {};
-    if (name !== undefined) {
-      updates.name = String(name).trim();
-    }
-    if (normalizedEmail) {
       updates.email = normalizedEmail;
     }
-    if (role !== undefined) {
+    if (role !== undefined && ROLE_VALUES.includes(role)) {
       updates.role = role;
     }
     if (status !== undefined) {
-      updates.status = status;
+      const uppercase = String(status).trim().toUpperCase();
+      if (STATUS_VALUES.includes(uppercase)) {
+        updates.status = uppercase;
+      }
+    }
+    if (presence !== undefined) {
+      updates.presence = String(presence).trim();
     }
     if (passwordRaw) {
       updates.password = await hashPassword(passwordRaw);
@@ -144,19 +150,14 @@ router.put("/:id", requireAdminRole, async (req, res) => {
         .json({ error: "No fields provided to update." });
     }
 
-    console.log("UPDATE USER payload:", {
-      id: userId,
-      ...updates,
-      passwordLength: passwordRaw ? passwordRaw.length : 0,
-    });
-
     const updated = await User.findByIdAndUpdate(userId, updates, {
       new: true,
+      runValidators: true,
     }).lean();
     if (!updated) {
       return res.status(404).json({ error: "UserNotFound" });
     }
-    return res.json(safeUser(updated));
+    return res.json(mapUser(updated));
   } catch (err) {
     console.error("USER_UPDATE_ERROR:", err);
     return res.status(500).json({ error: "UserUpdateError" });

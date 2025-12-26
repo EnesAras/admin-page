@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const STATUS_VALUES = ["Active", "Hidden", "OutOfStock"];
+const STATUS_VALUES = ["active", "inactive"];
 
 const productSchema = new mongoose.Schema(
   {
@@ -15,35 +15,33 @@ const productSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
-    stock: {
-      type: Number,
-      required: true,
-      min: 0,
-      default: 0,
-    },
     category: {
       type: String,
       trim: true,
       default: "General",
     },
-    fandom: {
-      type: String,
-      trim: true,
-      default: "General",
+    stock: {
+      type: Number,
+      min: 0,
+      default: 0,
     },
     status: {
       type: String,
       enum: STATUS_VALUES,
-      default: "Active",
+      lowercase: true,
+      default: "active",
     },
-    imageUrl: {
+    image: {
       type: String,
       trim: true,
       default: "",
     },
+    createdAt: {
+      type: Date,
+      default: () => new Date(),
+    },
   },
   {
-    timestamps: true,
     toJSON: { virtuals: false },
     toObject: { virtuals: false },
   }

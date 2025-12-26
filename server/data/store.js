@@ -2,7 +2,6 @@ const fs = require("fs").promises;
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const { query } = require("../db");
-const rawProducts = require("./products");
 const Product = require("../db/Product");
 const User = require("../db/User");
 
@@ -129,14 +128,98 @@ const ORDER_ITEMS = [
   "LED Desk Lamp",
 ];
 
-const PRODUCT_STATUS_VALUES = ["Active", "Hidden", "OutOfStock"];
+const DEFAULT_PRODUCT_SEED = [
+  {
+    name: "Nebula Voyager Figure",
+    category: "Figure",
+    price: 59.99,
+    stock: 12,
+    status: "active",
+    image:
+      "https://images.example.com/products/nebula-voyager-figure.jpg",
+  },
+  {
+    name: "Polaris Tactical Backpack",
+    category: "Gear",
+    price: 134.5,
+    stock: 5,
+    status: "active",
+    image: "https://images.example.com/products/polaris-backpack.jpg",
+  },
+  {
+    name: "Cityscape Gaming Desk Mat",
+    category: "Accessories",
+    price: 29.95,
+    stock: 24,
+    status: "active",
+    image: "https://images.example.com/products/cityscape-desk-mat.jpg",
+  },
+  {
+    name: "Solar Flare LED Shelf",
+    category: "Lighting",
+    price: 74.0,
+    stock: 3,
+    status: "active",
+    image: "https://images.example.com/products/solar-flare-shelf.jpg",
+  },
+  {
+    name: "Echo Pulse Headset Stand",
+    category: "Accessories",
+    price: 17.5,
+    stock: 15,
+    status: "active",
+    image: "https://images.example.com/products/echo-pulse-stand.jpg",
+  },
+  {
+    name: "Midnight Pulse Hoodie",
+    category: "Apparel",
+    price: 64.99,
+    stock: 8,
+    status: "inactive",
+    image: "https://images.example.com/products/midnight-hoodie.jpg",
+  },
+  {
+    name: "Eclipse Collector Poster",
+    category: "Poster",
+    price: 21.0,
+    stock: 0,
+    status: "active",
+    image: "https://images.example.com/products/eclipse-poster.jpg",
+  },
+  {
+    name: "Quartermaster Journals Set",
+    category: "Stationery",
+    price: 39.99,
+    stock: 18,
+    status: "active",
+    image: "https://images.example.com/products/journals-set.jpg",
+  },
+  {
+    name: "Riftwalker Action Figure",
+    category: "Figure",
+    price: 48.75,
+    stock: 4,
+    status: "active",
+    image: "https://images.example.com/products/riftwalker-figure.jpg",
+  },
+  {
+    name: "Aurora Soundwave Speakers",
+    category: "Audio",
+    price: 129.99,
+    stock: 6,
+    status: "active",
+    image: "https://images.example.com/products/soundwave-speakers.jpg",
+  },
+];
+
+const PRODUCT_STATUS_VALUES = ["active", "inactive"];
 const sanitizeProductStatus = (value) => {
   const normalized =
-    typeof value === "string" ? value.trim() : "";
+    typeof value === "string" ? value.trim().toLowerCase() : "";
   if (PRODUCT_STATUS_VALUES.includes(normalized)) {
     return normalized;
   }
-  return "Active";
+  return "active";
 };
 
 const randomFrom = (arr, idx) => arr[idx % arr.length];
@@ -268,14 +351,13 @@ const seedMongoProducts = async () => {
   const existing = await Product.countDocuments();
   if (existing > 0) return;
 
-  const normalized = rawProducts.map((product) => ({
+  const normalized = DEFAULT_PRODUCT_SEED.map((product) => ({
     name: String(product.name || "").trim(),
     price: Number.isFinite(Number(product.price)) ? Number(product.price) : 0,
     stock: Number.isFinite(Number(product.stock)) ? Number(product.stock) : 0,
     category: String(product.category || "General").trim(),
-    fandom: String(product.fandom || "General").trim(),
     status: sanitizeProductStatus(product.status),
-    imageUrl: String(product.image || product.imageUrl || "").trim(),
+    image: String(product.image || "").trim(),
   }));
 
   const validEntries = normalized.filter((entry) => entry.name.length > 0);
@@ -288,6 +370,11 @@ const ensureSeedData = async () => {
   await seedOrders();
   await seedMongoUsers();
   await seedMongoProducts();
+};
+
+const logProductCount = async () => {
+  const count = await Product.countDocuments();
+  console.log(`[db] products count: ${count}`);
 };
 
 const normalizeStatus = (status) => {
@@ -461,6 +548,7 @@ const getDashboardStats = async () => {
 const initStore = async () => {
   await ensureSchema();
   await ensureSeedData();
+  await logProductCount();
 };
 
 module.exports = {

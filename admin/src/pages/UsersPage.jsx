@@ -10,30 +10,6 @@ import { useAuth } from "../context/AuthContext";
 
 const normalize = (value) => String(value ?? "").toLowerCase().trim();
 
-const usersData = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "johndoe36@kars.com",
-    role: "Admin",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "janesmith36@kars.com",
-    role: "User",
-    status: "Inactive",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    email: "mikejohnson36@kars.com",
-    role: "Moderator",
-    status: "Active",
-  },
-];
-
 function UsersPage({ language }) {
   const { settings, language: ctxLanguage } = useSettings();
   const { currentUser, hasRole } = useAuth();
@@ -90,7 +66,7 @@ function UsersPage({ language }) {
     return t(key, status);
   };
 
-  // İlk açılışta backend'ten çek, hata olursa usersData'ya düş
+  // İlk açılışta backend'ten çek
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -101,7 +77,7 @@ function UsersPage({ language }) {
         : Array.isArray(data?.users)
           ? data.users
           : [];
-      setUsers(normalized.length > 0 ? normalized : usersData);
+      setUsers(normalized);
     } catch (err) {
       console.error(err);
       setFetchError(
@@ -110,7 +86,7 @@ function UsersPage({ language }) {
           "There was a problem loading users. Showing local data."
         )
       );
-      setUsers(usersData);
+      setUsers([]);
     } finally {
       setLoading(false);
     }

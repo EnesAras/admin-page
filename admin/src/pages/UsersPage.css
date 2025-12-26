@@ -20,13 +20,13 @@
 
 /* =============== TABLO GENEL =============== */
 
-.users-table-wrap,
-.users-table-scroll {
+.users-table-wrap {
   width: 100%;
-  overflow: visible;
+  overflow-x: auto;
 }
 
 .users-table-scroll {
+  width: 100%;
   border: 1px solid var(--palette-border);
   border-radius: 16px;
   background: var(--palette-card);
@@ -62,9 +62,9 @@
 }
 
 .users-table col.users-col-actions {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
+  width: 170px;
+  min-width: 170px;
+  max-width: 170px;
 }
 
 .users-th-id,
@@ -101,36 +101,19 @@
 .users-table-wrap .users-table td.users-td-actions,
 .users-table-wrap .users-table th.users-col-actions,
 .users-table-wrap .users-table td.users-col-actions {
-  width: 160px;
-  min-width: 160px;
   padding-right: 14px;
   text-align: right;
   white-space: nowrap;
-  overflow: visible;
-}
-
-.users-table-wrap .users-table th.users-th-actions,
-.users-table-wrap .users-table td.users-td-actions {
   background: var(--palette-panel-soft);
 }
 
-.users-col-actions,
 .users-th-actions,
 .users-td-actions {
-  position: sticky;
-  right: 0;
-  z-index: 3;
-  box-shadow: -1px 0 0 rgba(15, 23, 42, 0.15);
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  flex-shrink: 0;
+  width: 170px;
+  min-width: 170px;
+  max-width: 170px;
+  text-align: right;
   white-space: nowrap;
-}
-
-.users-table thead .users-th-actions {
-  z-index: 4;
-  box-shadow: -1px 0 0 rgba(15, 23, 42, 0.25);
 }
 
 .users-actions {
@@ -155,19 +138,11 @@
   background: var(--palette-card);
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.users-table th:not(.users-th-actions),
-.users-table td:not(.users-td-actions) {
   overflow: hidden;
 }
 
 .users-table th.users-th-actions,
 .users-table td.users-td-actions {
-  overflow: visible;
-}
-
-.users-td-actions {
   overflow: visible;
 }
 

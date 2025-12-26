@@ -50,14 +50,6 @@
   border-radius: 10px;
   min-width: 150px;
 }
-.products-table th:last-child,
-.products-table td:last-child {
-  width: 1%;
-  white-space: nowrap;
-}
-.products-table {
-  width: 100%;
-}
 
 /* SEARCH INPUT FIX */
 .products-search {
@@ -232,7 +224,13 @@
 /* =============== TABLE =============== */
 
 .products-table-col {
+  width: 100%;
+}
+
+.products-table-wrap {
+  width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .products-table {
@@ -244,7 +242,7 @@
   border: 1px solid var(--palette-border);
   border-radius: 14px;
   box-shadow: var(--palette-card-shadow-soft);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .products-table th,
@@ -254,15 +252,21 @@
   border-bottom: 1px solid var(--palette-border);
   color: var(--palette-text);
   background: var(--palette-card);
-}
-
-/* ID, PRICE, STOCK, STATUS, ACTIONS gibi dar kolonlar için */
-.products-table th:last-child,
-.products-table td:last-child {
-  width: 1%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.products-th-actions,
+.products-td-actions {
+  width: 170px;
+  min-width: 170px;
+  max-width: 170px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ID, PRICE, STOCK, STATUS, ACTIONS gibi dar kolonlar için */
 /* thead */
 .products-table thead th {
   font-size: 11px;

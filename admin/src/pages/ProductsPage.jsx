@@ -459,7 +459,8 @@ const handleDelete = async (id) => {
         {/* MAIN CARD: TABLE + PANEL */}
         <div className={`products-main-card ${isPanelOpen ? "with-panel" : ""}`}>
           <div className="products-table-col">
-            <table className="users-table products-table">
+            <div className="products-table-wrap">
+              <table className="products-table">
               <thead>
                 <tr>
                   <th className="products-th-sortable" onClick={() => handleSort("id")}>
@@ -484,7 +485,9 @@ const handleDelete = async (id) => {
                     <span className="sort-indicator">{renderSortIndicator("stock")}</span>
                   </th>
                   <th>{t("products.statusLabel", "Status")}</th>
-                  <th></th>
+                  <th className="products-th-actions">
+                    {t("common.actions", "Actions")}
+                  </th>
                 </tr>
               </thead>
 
@@ -524,7 +527,7 @@ const handleDelete = async (id) => {
                         <td>
                           <span className={`product-status ${statusClass}`}>{statusLabel(status)}</span>
                         </td>
-                        <td>
+                        <td className="products-td-actions">
                           <div className="products-row-actions">
                             <button
                               className="products-edit-btn"
@@ -551,7 +554,8 @@ const handleDelete = async (id) => {
                   })
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
 
           {isPanelOpen && (
