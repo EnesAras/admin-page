@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const { safeUser } = require("../data/store");
+const safeUser = require("../utils/safeUser");
 const { logAuditEvent } = require("../data/auditLog");
 const { getActorFromHeaders } = require("../utils/actor");
 const User = require("../db/User");

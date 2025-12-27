@@ -1,5 +1,5 @@
 const express = require("express");
-const { hashPassword } = require("../data/store");
+const hashPassword = require("../utils/hashPassword");
 const { getActorFromHeaders } = require("../utils/actor");
 const mongoose = require("mongoose");
 const User = require("../models/User");

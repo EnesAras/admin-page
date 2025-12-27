@@ -1,21 +1,9 @@
 const fs = require("fs").promises;
 const path = require("path");
-const bcrypt = require("bcryptjs");
 const { query } = require("../db");
 const Product = require("../db/Product");
 const User = require("../db/User");
-
-const HASH_ROUNDS = 10;
-
-const normalizePassword = (value = "") => {
-  if (value === undefined || value === null) {
-    return "";
-  }
-  return String(value);
-};
-
-const hashPassword = async (password = "") =>
-  bcrypt.hash(normalizePassword(password), HASH_ROUNDS);
+const hashPassword = require("../utils/hashPassword");
 
 const presenceByUserId = new Map();
 const createPresenceEntry = (userId, initial = {}) => ({
@@ -265,31 +253,6 @@ const createPastOrder = (seed) => {
   };
 };
 
-const toPlainObject = (entity) => {
-  if (!entity) return null;
-  if (typeof entity.toObject === "function") {
-    return entity.toObject();
-  }
-  return { ...entity };
-};
-
-const safeUser = (user) => {
-  if (!user) return null;
-  const entity = toPlainObject(user);
-  if (!entity) return null;
-  const { password, __v, _id, ...rest } = entity;
-  const id = _id ? String(_id) : rest.id ? String(rest.id) : undefined;
-  return { ...rest, id };
-};
-
-const safeProduct = (product) => {
-  if (!product) return null;
-  const entity = toPlainObject(product);
-  if (!entity) return null;
-  const { __v, _id, ...rest } = entity;
-  return { ...rest, id: _id ? String(_id) : undefined };
-};
-
 const ensureSchema = async () => {
   const schemaPath = path.join(__dirname, "../db/schema.sql");
   const schemaSql = await fs.readFile(schemaPath, "utf8");
@@ -496,55 +459,6 @@ const deleteOrder = async (id) => {
   return rowCount > 0;
 };
 
-const getDashboardStats = async () => {
-  const [ordersRes, mongoUsers, mongoProducts] = await Promise.all([
-    query("SELECT * FROM orders"),
-    User.find().lean(),
-    Product.find().lean(),
-  ]);
-
-  const orders = ordersRes.rows.map((order) => ({
-    ...order,
-    items: order.items || [],
-  }));
-  const users = mongoUsers.map((user) => safeUser(user));
-  const products = mongoProducts;
-
-  const totalRevenue = orders.reduce(
-    (sum, o) => sum + (Number(o.total) || 0),
-    0
-  );
-  const statusCounts = buildStatusCounts(orders);
-  const monthlyRevenue = buildMonthlyRevenue(orders);
-  const recentOrders = orders
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 5);
-  const recentUsers = users
-    .sort((a, b) => {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
-      return dateB - dateA;
-    })
-    .slice(0, 5);
-  const activeUsers = users.filter((u) => u.status === "Active").length;
-
-  return {
-    totalRevenue,
-    totalOrders: orders.length,
-    totalUsers: users.length,
-    activeUsers,
-    inactiveUsers: users.length - activeUsers,
-    adminCount: users.filter((u) => u.role === "admin").length,
-    productsCount: Array.isArray(products) ? products.length : 0,
-    statusCounts,
-    monthlyRevenue,
-    recentOrders,
-    recentUsers,
-    pendingOrders: statusCounts.pending,
-    shippedOrders: statusCounts.shipped,
-  };
-};
-
 const initStore = async () => {
   await ensureSchema();
   await ensureSeedData();
@@ -553,15 +467,11 @@ const initStore = async () => {
 
 module.exports = {
   initStore,
-  safeUser,
-  safeProduct,
   listOrders,
   addOrder,
   updateOrder,
   deleteOrder,
-  getDashboardStats,
   getPresenceRecords,
   markUserLogin,
   markUserLogout,
-  hashPassword,
 };

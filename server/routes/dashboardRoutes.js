@@ -5,14 +5,9 @@ const User = require("../models/User");
 const router = express.Router();
 
 const isoOrEpoch = (value) => {
-  if (!value) {
-    return new Date(0).toISOString();
-  }
+  if (!value) return new Date(0).toISOString();
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return new Date(0).toISOString();
-  }
-  return date.toISOString();
+  return Number.isNaN(date.getTime()) ? new Date(0).toISOString() : date.toISOString();
 };
 
 const MONTH_LABELS = [
@@ -30,26 +25,13 @@ const MONTH_LABELS = [
   "Dec",
 ];
 
-const toOrderClient = (order) => {
-  if (!order) return null;
-  if (typeof order.toClient === "function") {
-    return order.toClient();
-  }
-  const { __v, _id, ...rest } = order;
-  return {
-    ...rest,
-    id: _id ? String(_id) : rest.id,
-  };
-};
-
 const buildMonthlyRevenue = (orders = [], months = 6) => {
   const now = new Date();
   const buckets = new Map();
 
   for (let offset = months - 1; offset >= 0; offset -= 1) {
     const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-    const key = `${date.getFullYear()}-${date.getMonth()}`;
-    buckets.set(key, {
+    buckets.set(`${date.getFullYear()}-${date.getMonth()}`, {
       label: MONTH_LABELS[date.getMonth()],
       value: 0,
     });
@@ -57,7 +39,7 @@ const buildMonthlyRevenue = (orders = [], months = 6) => {
 
   orders.forEach((order) => {
     const parsed = new Date(order.createdAt || order.date);
-    if (Number.isNaN(parsed)) return;
+    if (Number.isNaN(parsed.getTime())) return;
     const key = `${parsed.getFullYear()}-${parsed.getMonth()}`;
     const bucket = buckets.get(key);
     if (!bucket) return;
@@ -74,27 +56,24 @@ const buildMonthlyRevenue = (orders = [], months = 6) => {
   }));
 };
 
-const mapRecentOrder = (order) => {
-  const payload = toOrderClient(order);
-  if (!payload) return null;
+const mapOrderForRecent = (order) => {
+  if (!order) return null;
   return {
-    id: payload.id,
-    customer: payload.customer || "",
+    id: order._id ? String(order._id) : order.id,
+    customer: order.customer || "",
     total:
-      typeof payload.total === "number" && Number.isFinite(payload.total)
-        ? payload.total
+      typeof order.total === "number" && Number.isFinite(order.total)
+        ? order.total
         : 0,
-    status: payload.status || "",
-    date: isoOrEpoch(order.createdAt || payload.createdAt || payload.date),
+    status: order.status || "",
+    date: isoOrEpoch(order.createdAt || order.date),
   };
 };
 
-const mapUser = (user) => {
+const mapUserForRecent = (user) => {
   if (!user) return null;
-  if (typeof user.toClient === "function") {
-    return user.toClient();
-  }
-  const { __v, _id, password, ...rest } = user;
+  const payload = typeof user.toClient === "function" ? user.toClient() : user;
+  const { _id, __v, password, ...rest } = payload;
   return {
     ...rest,
     id: _id ? String(_id) : rest.id,
@@ -108,21 +87,18 @@ router.get("/", async (req, res) => {
       activeUsers,
       inactiveUsers,
       adminUsers,
-      owners,
-      recentUsersFromDb,
+      recentUsers,
       totalOrders,
       pendingOrders,
       shippedOrders,
       cancelledOrders,
-      recentOrdersFromDb,
+      recentOrders,
       revenueOrders,
-      rolesDistinct,
     ] = await Promise.all([
       User.countDocuments({}),
       User.countDocuments({ status: { $regex: /^ACTIVE$/i } }),
       User.countDocuments({ status: { $regex: /^INACTIVE$/i } }),
-      User.countDocuments({ role: { $regex: /^Admin$/i } }),
-      User.countDocuments({ role: { $regex: /^Owner$/i } }),
+      User.countDocuments({ role: { $regex: /^ADMIN$/i } }),
       User.find().sort({ createdAt: -1 }).limit(5),
       Order.countDocuments({}),
       Order.countDocuments({ status: { $regex: /^PENDING$/i } }),
@@ -133,7 +109,6 @@ router.get("/", async (req, res) => {
         paymentStatus: { $regex: /^PAID$/i },
         status: { $not: { $regex: /^CANCELLED$/i } },
       }).lean(),
-      User.distinct("role"),
     ]);
 
     const revenueTotal = revenueOrders.reduce(
@@ -146,7 +121,7 @@ router.get("/", async (req, res) => {
     );
     const monthlyRevenue = buildMonthlyRevenue(revenueOrders);
 
-    const payload = {
+    res.json({
       users: {
         total: totalUsers,
         active: activeUsers,
@@ -163,23 +138,11 @@ router.get("/", async (req, res) => {
         total: revenueTotal,
         monthly: monthlyRevenue,
       },
-      recentOrders: recentOrdersFromDb
-        .map(mapRecentOrder)
+      recentUsers: recentUsers.map(mapUserForRecent).filter(Boolean),
+      recentOrders: recentOrders
+        .map(mapOrderForRecent)
         .filter(Boolean),
-      recentUsers: recentUsersFromDb.map(mapUser),
-    };
-
-    console.log(
-      "[dashboard users] total/active/inactive/admins/owners =",
-      totalUsers,
-      activeUsers,
-      inactiveUsers,
-      adminUsers,
-      owners
-    );
-    console.log("[dashboard users] roles distinct:", rolesDistinct);
-
-    res.json(payload);
+    });
   } catch (err) {
     console.error("dashboard.error", err.stack || err);
     res.status(500).json({ error: "Internal Server Error" });

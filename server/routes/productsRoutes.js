@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Product = require("../db/Product");
-const { safeProduct } = require("../data/store");
+const safeProduct = require("../utils/safeProduct");
 
 const STATUS_VALUES = ["active", "inactive"];
 

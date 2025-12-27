@@ -9,7 +9,6 @@ const ordersRoutes = require("./routes/ordersRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const presenceRoutes = require("./routes/presenceRoutes");
-const { initStore } = require("./data/store");
 const { connectMongo } = require("./db/mongoose");
 
 dotenv.config();
@@ -114,7 +113,6 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectMongo();
-    await initStore();
   } catch (err) {
     console.error("Failed to initialize data store:", err);
     process.exit(1);

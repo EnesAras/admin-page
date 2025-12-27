@@ -1,13 +1,9 @@
 const express = require("express");
-const {
-  getPresenceRecords,
-  markUserLogin,
-  markUserLogout,
-  safeUser,
-} = require("../data/store");
+const { getPresenceRecords, markUserLogin, markUserLogout } = require("../data/store");
 const { logAuditEvent } = require("../data/auditLog");
 const { getActorFromHeaders } = require("../utils/actor");
 const User = require("../db/User");
+const safeUser = require("../utils/safeUser");
 
 const router = express.Router();
 
