@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
 import translations from "../i18n/translations";
 import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../lib/api";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -254,30 +255,31 @@ function LoginPage() {
   useEffect(() => {
     const controller = new AbortController();
 
+    const parseNumberMetric = (value) =>
+      typeof value === "number" ? value : null;
+
     const fetchMetrics = async () => {
       if (!isMountedRef.current) return;
       setMetricsStatus("loading");
       try {
-        const response = await fetch(DASHBOARD_ENDPOINT, {
+        const payload = await apiFetch(DASHBOARD_ENDPOINT, {
           signal: controller.signal,
         });
-        if (!response.ok) {
-          throw new Error("DashboardFetchFailed");
-        }
-        const payload = await response.json();
         if (!isMountedRef.current) return;
+        const users = payload?.users || {};
         setDashboardMetrics({
-          totalUsers:
-            typeof payload.totalUsers === "number" ? payload.totalUsers : null,
-          activeUsers:
-            typeof payload.activeUsers === "number" ? payload.activeUsers : null,
-          inactiveUsers:
-            typeof payload.inactiveUsers === "number" ? payload.inactiveUsers : null,
-          adminUsers:
-            typeof payload.adminCount === "number" ? payload.adminCount : null,
+          totalUsers: parseNumberMetric(users.total),
+          activeUsers: parseNumberMetric(users.active),
+          inactiveUsers: parseNumberMetric(users.inactive),
+          adminUsers: parseNumberMetric(users.admins),
         });
         setMetricsStatus("success");
       } catch (err) {
+        console.error(
+          "[LoginPage] dashboard fetch failed",
+          err.status,
+          err.data ?? err.message
+        );
         if (!isMountedRef.current) return;
         setMetricsStatus("error");
       }
